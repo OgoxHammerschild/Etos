@@ -24,11 +24,13 @@ struct FResource
 {
 	GENERATED_BODY()
 
-		UPROPERTY()
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Resource)
 		EResource Type = EResource::None;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Resource)
 		int32 Amount;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Resource)
 		UTexture2D* Icon;
 };
 
@@ -37,8 +39,10 @@ struct FBuildingData
 {
 	GENERATED_BODY()
 
-		// building info
-		UPROPERTY()
+public:
+
+	// building info
+	UPROPERTY()
 		FName Name = FName(TEXT("New Building"));
 	UPROPERTY()
 		UTexture2D* BuildingIcon;

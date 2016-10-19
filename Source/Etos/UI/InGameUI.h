@@ -15,24 +15,32 @@ class ETOS_API UInGameUI : public UUserWidget
 {
 	GENERATED_BODY()
 
-
 private:
 
 	AEtosPlayerController* playerController;
 
 	TMap<EResource, UTextBlock* > texts;
 
+	UUniformGridPanel* gridPanel;
+
 public:
 
 	virtual void NativeConstruct() override;
 
-	UFUNCTION(BlueprintCallable, Category = Penis)
+	// Create a reference between the elements in the designer and the elements in C++
+	UFUNCTION(BlueprintCallable, Category = "Referencing")
+		void SetGridPanel(UPARAM(DisplayName = "Button Grid Panel") UUniformGridPanel* panel);
+
+	// Create a reference between the elements in the designer and the elements in C++
+	UFUNCTION(BlueprintCallable, Category = "Referencing")
 		void LinkTextToResource(UTextBlock* text, EResource resource);
 
-	UFUNCTION(BlueprintCallable, Category = Penis)
+	UFUNCTION(BlueprintCallable, Category = "Update")
 		void UpdateResourceAmounts();
 
 private:
 
 	AEtosPlayerController* GetPlayerController();
+
+	void CreateButtons();
 };

@@ -2,11 +2,18 @@
 
 #include "Etos.h"
 #include "InGameUI.h"
+#include "Etos/UI/BuildMenuButton.h"
+#include "Etos/Game/EtosGameMode.h"
 
 void UInGameUI::NativeConstruct()
 {
 	Super::NativeConstruct();
 	UpdateResourceAmounts();
+}
+
+void UInGameUI::SetGridPanel(UUniformGridPanel* panel)
+{
+	gridPanel = panel;
 }
 
 void UInGameUI::LinkTextToResource(UTextBlock* text, EResource resource)
@@ -47,4 +54,20 @@ AEtosPlayerController * UInGameUI::GetPlayerController()
 	}
 
 	return nullptr;
+}
+
+void UInGameUI::CreateButtons()
+{
+	if (UWorld * World = GetWorld())
+	{
+		for (int32 buildingID = 0; buildingID < 10/* amount of buildings*/; buildingID++)
+		{
+			UBuildMenuButton* button = CreateWidget<UBuildMenuButton>(World);
+			if (button)
+			{
+				//button->BuildingIcon = 
+				FPredefinedBuildingData = 
+			}
+		}
+	}
 }
