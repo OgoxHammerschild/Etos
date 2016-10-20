@@ -15,12 +15,20 @@ ABuilding::ABuilding()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent->SetMobility(EComponentMobility::Movable);
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Static Mesh"));
-	Mesh->SetupAttachment(RootComponent);
+	BuildingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Building Mesh"));
+	BuildingMesh->SetupAttachment(RootComponent);
+
+	FoundationMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Foundation"));
+	ConstructorHelpers::FObjectFinder<UStaticMesh> quadFinder = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/BasicMeshes/SM_Quad_1x1m.SM_Quad_1x1m'"));
+	if (quadFinder.Succeeded())
+	{
+		FoundationMesh->SetStaticMesh(quadFinder.Object);
+	}
 
 	InitOccupiedBuildSpace();
 	InitTracePoints();
 	BindDelayAction();
+	SetFoundationSize(1, 1);
 }
 
 // Called when the game starts or when spawned
@@ -85,6 +93,18 @@ void ABuilding::OnConstruction(const FTransform& Transform)
 	}
 }
 
+#if WITH_EDITOR
+void ABuilding::PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEvent)
+{
+	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+
+	if ((PropertyName == GET_MEMBER_NAME_CHECKED(ABuilding, Width)) || (PropertyName == GET_MEMBER_NAME_CHECKED(ABuilding, Height)))
+	{
+		SetFoundationSize(Width, Height);
+	}
+}
+#endif
+
 void ABuilding::OnBuild()
 {
 	Data.PathConnections = Data.PossibleConnections;
@@ -106,10 +126,20 @@ void ABuilding::ResetStoredResources()
 	Data.ProducedResource.Amount = 0;
 }
 
+void ABuilding::SetFoundationSize(int32 width, int32 height)
+{
+	float halfTileSize = 50;
+	Width = width;
+	Height = height;
+	FoundationMesh->SetWorldScale3D(FVector(width, height, 1));
+	OccupiedBuildSpace->SetBoxExtent(FVector(halfTileSize * width - 1, halfTileSize * height - 1, halfTileSize - 1));
+}
+
 void ABuilding::InitOccupiedBuildSpace()
 {
 	OccupiedBuildSpace = CreateDefaultSubobject<UBoxComponent>(TEXT("Occupied Build Space"));
 	OccupiedBuildSpace->SetupAttachment(RootComponent);
+	OccupiedBuildSpace->SetRelativeLocation(FVector(0, 0, 50));
 	OccupiedBuildSpace->SetBoxExtent(FVector(49));
 	OccupiedBuildSpace->SetVisibility(true);
 	OccupiedBuildSpace->bHiddenInGame = true;
@@ -209,6 +239,16 @@ void ABuilding::MoveToMouseLocation()
 	float X = UKismetMathLibrary::Round(Hit.ImpactPoint.X / 100) * 100;
 	float Y = UKismetMathLibrary::Round(Hit.ImpactPoint.Y / 100) * 100;
 	float Z = Hit.ImpactPoint.Z;
+
+	if (Width % 2 != 0)
+	{
+		X += 50;
+	}
+
+	if (Height % 2 != 0)
+	{
+		Y += 50;
+	}
 
 	SetActorLocation(FVector(X, Y, Z));
 }

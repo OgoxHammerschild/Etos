@@ -16,7 +16,9 @@ enum class EResource : uint8
 	Money,
 	Wood,
 	Tool,
-	Stone
+	Stone,
+
+	EResource_MAX
 };
 
 USTRUCT(BlueprintType)
@@ -42,44 +44,50 @@ struct FBuildingData
 public:
 
 	// building info
-	UPROPERTY()
+
+	UPROPERTY(EditAnywhere)
 		FName Name = FName(TEXT("New Building"));
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		UTexture2D* BuildingIcon;
 
+	
 	// placement of the building
-	UPROPERTY()
+	
+	UPROPERTY(EditAnywhere)
 		bool bIsHeld = false;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		bool bPositionIsBlocked = false;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		bool bIsBuilt = false;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		TArray<FResource> BuildCost;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		TArray<APath*> PossibleConnections;
 
 
 	// producing resources
-	UPROPERTY()
+	
+	UPROPERTY(EditAnywhere)
 		FResource NeededResource1;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		FResource NeededResource2;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		FResource ProducedResource;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		float ProductionTime;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		int32 MaxStoredResources;
 
+	
 	// getting resources to other buildings
-	UPROPERTY()
+	
+	UPROPERTY(EditAnywhere)
 		TArray<ABuilding*> BuildingsInRadius;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		bool bBarrowIsOnTheWay;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		TArray<APath*> PathConnections;
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		float Radius;
 };
 
@@ -90,8 +98,11 @@ class ETOS_API ABuilding : public AActor
 
 public:
 
+	UPROPERTY(EditAnywhere)
+		UStaticMeshComponent* BuildingMesh;
+
 	UPROPERTY()
-		UStaticMeshComponent* Mesh;
+		UStaticMeshComponent* FoundationMesh;
 
 	UPROPERTY()
 		UBoxComponent* OccupiedBuildSpace;
@@ -101,8 +112,16 @@ public:
 
 public:
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		FBuildingData Data;
+
+	// Width in Tiles
+	UPROPERTY(EditAnywhere)
+		int32 Width;
+
+	// Height in Tiles
+	UPROPERTY(EditAnywhere)
+		int32 Height;
 
 protected:
 
@@ -126,10 +145,14 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent);
+
 	UFUNCTION()
 		virtual void OnBuild();
 
 	void ResetStoredResources();
+
+	void SetFoundationSize(int32 width, int32 height);
 
 protected:
 

@@ -53,7 +53,7 @@ public:
 	UPROPERTY()
 		TArray<FPredefinedBuildingData> Buildings;
 
-private:
+public:
 
 	FPredefinedBuildingData* GetPredefinedBuildingData(int32 buildingID);
 };

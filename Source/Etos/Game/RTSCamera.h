@@ -36,7 +36,7 @@ private:
 		float cameraHeightAngleMin = 10;
 
 	UPROPERTY()
-		float cameraHeightAngleMax = 90;
+		float cameraHeightAngleMax = 70;
 
 	UPROPERTY()
 		float rotationSpeed = 4.0f;

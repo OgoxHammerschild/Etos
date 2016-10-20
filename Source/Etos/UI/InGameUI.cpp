@@ -21,7 +21,7 @@ void UInGameUI::LinkTextToResource(UTextBlock* text, EResource resource)
 	texts.Emplace(resource, text);
 }
 
-#define LOCTEXT_NAMESPACE "InGameUI" 
+#define LOCTEXT_NAMESPACE "InGameGUI" 
 void UInGameUI::UpdateResourceAmounts()
 {
 	if (GetPlayerController())
@@ -60,13 +60,29 @@ void UInGameUI::CreateButtons()
 {
 	if (UWorld * World = GetWorld())
 	{
-		for (int32 buildingID = 0; buildingID < 10/* amount of buildings*/; buildingID++)
+		if (AEtosGameMode * GameMode = UUtilityFunctionLibrary::GetEtosGameMode(this))
 		{
-			UBuildMenuButton* button = CreateWidget<UBuildMenuButton>(World);
-			if (button)
+			for (int32 buildingID = 0; buildingID < 10/* amount of buildings*/; buildingID++)
 			{
-				//button->BuildingIcon = 
-				FPredefinedBuildingData = 
+				if (UBuildMenuButton* button = CreateWidget<UBuildMenuButton>(World))
+				{
+					FPredefinedBuildingData preDefData = *GameMode->GetPredefinedBuildingData(buildingID);
+					FBuildingData data = FBuildingData();
+					data.BuildCost = preDefData.BuildCost;
+					data.BuildingIcon = preDefData.BuildingIcon;
+					data.MaxStoredResources = preDefData.MaxStoredResources;
+					data.Name = preDefData.Name;
+					data.NeededResource1.Type = preDefData.NeededResource1;
+					data.NeededResource2.Type = preDefData.NeededResource2;
+					data.ProducedResource.Type = preDefData.ProducedResource;
+					data.ProductionTime = preDefData.ProductionTime;
+					data.Radius = preDefData.Radius;
+
+					button->Data = data;
+					button->BuildingIcon->SetBrushFromTexture(preDefData.BuildingIcon);
+					//button->Building =
+
+				}
 			}
 		}
 	}

@@ -7,22 +7,15 @@
 #include "Etos/UI/InGameUI.h"
 #include "Etos/Game/EtosHUD.h"
 
-//ABuilding * AEtosPlayerController::GetBuildingUnderCursor()
-//{
-//
-//	UKismetSystemLibrary::LineTraceSingleForObjects(this, )
-//	return nullptr;
-//}
-
 void AEtosPlayerController::BeginPlay()
 {
-	SetupInputComponent();
 	AddHUDToViewport();
 	InitResourceMapping();
 }
 
-FORCEINLINE void AEtosPlayerController::SetupInputComponent()
+void AEtosPlayerController::SetupInputComponent()
 {
+	Super::SetupInputComponent();
 	InputComponent->BindAction("Build", IE_Pressed, this, &AEtosPlayerController::BuildNewBuilding);
 	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame);
 	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu);
@@ -50,7 +43,7 @@ FORCEINLINE void AEtosPlayerController::RemoveResource(FResource resource)
 
 FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(EResource resource)
 {
-	return resourceAmounts[resource];
+	return resourceAmounts.FindOrAdd(resource);
 }
 
 FORCEINLINE UInGameUI * AEtosPlayerController::GetInGameUI()
@@ -109,11 +102,24 @@ FORCEINLINE bool AEtosPlayerController::HasEnoughResources(TArray<FResource> bui
 
 FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
 {
-	GetInGameUI()->AddToViewport();
+	if (UInGameUI * GUI = GetInGameUI())
+	{
+		GUI->AddToViewport();
+	}
+	else if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(1, 5, FColor(1, 1, 1, 1), TEXT("Gui was not found"));
+	}
 }
 
 FORCEINLINE void AEtosPlayerController::InitResourceMapping()
 {
+	uint8 max = static_cast<uint8>(EResource::EResource_MAX);
+
+	for (uint8 i = 0; i < max; i++)
+	{
+		resourceAmounts.Add(static_cast<EResource>(i));
+	}
 }
 
 FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding()

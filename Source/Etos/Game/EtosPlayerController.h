@@ -29,7 +29,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void SetupInputComponent();
+	virtual void SetupInputComponent() override;
 
 	void AddResource(FResource resource);
 
