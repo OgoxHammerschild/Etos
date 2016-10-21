@@ -17,6 +17,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PredefinedBuildingData)
 		FName Name = FName(TEXT("New Building"));
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PredefinedBuildingData)
+		TSubclassOf<ABuilding> BuildingBlueprint = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PredefinedBuildingData)
 		UTexture2D* BuildingIcon = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PredefinedBuildingData)
@@ -46,6 +48,8 @@ class ETOS_API AEtosGameMode : public AGameMode
 	GENERATED_BODY()
 
 public:
+
+	AEtosGameMode();
 
 	UPROPERTY()
 		UDataTable* PredefinedBuildingData;

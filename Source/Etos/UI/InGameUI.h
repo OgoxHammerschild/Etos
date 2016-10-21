@@ -15,13 +15,25 @@ class ETOS_API UInGameUI : public UUserWidget
 {
 	GENERATED_BODY()
 
+public:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Build Button")
+		TSubclassOf<class UBuildMenuButton> BuildMenuButtonBlueprint;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build Button")
+		int32 ButtonsPerRow = 4;
+
+
 private:
 
-	AEtosPlayerController* playerController;
+	UPROPERTY()
+		AEtosPlayerController* playerController;
 
-	TMap<EResource, UTextBlock* > texts;
+	UPROPERTY()
+		TMap<EResource, UTextBlock* > texts;
 
-	UUniformGridPanel* gridPanel;
+	UPROPERTY()
+		UUniformGridPanel* gridPanel;
 
 public:
 

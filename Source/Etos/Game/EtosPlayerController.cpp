@@ -9,6 +9,10 @@
 
 void AEtosPlayerController::BeginPlay()
 {
+	bShowMouseCursor = true;
+	bEnableClickEvents = true;
+	bEnableMouseOverEvents = true;
+
 	AddHUDToViewport();
 	InitResourceMapping();
 }
@@ -160,6 +164,29 @@ FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, FB
 	if (UWorld* World = GetWorld())
 	{
 		newBuilding = World->SpawnActor<ABuilding>(Class->GetClass());
+		newBuilding->Data = data;
+		newBuilding->Data.bIsHeld = true;
+		bIsHoldingObject = true;
+
+		//TODO: make building transparent
+		return newBuilding;
+	}
+	return nullptr;
+}
+
+ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, FBuildingData Data)
+{
+	if (bIsHoldingObject)
+		return nullptr;
+
+	if (!Subclass)
+		return nullptr;
+
+	FBuildingData data = Data;
+
+	if (UWorld* World = GetWorld())
+	{
+		newBuilding = World->SpawnActor<ABuilding>(Subclass);
 		newBuilding->Data = data;
 		newBuilding->Data.bIsHeld = true;
 		bIsHoldingObject = true;

@@ -15,7 +15,7 @@ public:
 	UPROPERTY()
 		USceneComponent* Root;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 		UArrowComponent* Origin;
 
 	UPROPERTY()

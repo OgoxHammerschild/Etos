@@ -40,6 +40,7 @@ public:
 	class UInGameUI* GetInGameUI();
 
 	ABuilding* SpawnBuilding(ABuilding* Class, FBuildingData Data);
+	ABuilding* SpawnBuilding(TSubclassOf<ABuilding> Subclass, FBuildingData Data);
 
 private:
 

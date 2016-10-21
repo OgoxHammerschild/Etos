@@ -9,6 +9,7 @@ void UInGameUI::NativeConstruct()
 {
 	Super::NativeConstruct();
 	UpdateResourceAmounts();
+	CreateButtons();
 }
 
 void UInGameUI::SetGridPanel(UUniformGridPanel* panel)
@@ -58,30 +59,38 @@ AEtosPlayerController * UInGameUI::GetPlayerController()
 
 void UInGameUI::CreateButtons()
 {
-	if (UWorld * World = GetWorld())
+	if (AEtosPlayerController * PlayerController = UUtilityFunctionLibrary::GetFirstEtosPlayerController(this))
 	{
 		if (AEtosGameMode * GameMode = UUtilityFunctionLibrary::GetEtosGameMode(this))
 		{
-			for (int32 buildingID = 0; buildingID < 10/* amount of buildings*/; buildingID++)
+			for (int32 buildingID = 1; buildingID < 7/* amount of buildings*/; buildingID++)
 			{
-				if (UBuildMenuButton* button = CreateWidget<UBuildMenuButton>(World))
+				if (FPredefinedBuildingData* preDefData = GameMode->GetPredefinedBuildingData(buildingID))
 				{
-					FPredefinedBuildingData preDefData = *GameMode->GetPredefinedBuildingData(buildingID);
-					FBuildingData data = FBuildingData();
-					data.BuildCost = preDefData.BuildCost;
-					data.BuildingIcon = preDefData.BuildingIcon;
-					data.MaxStoredResources = preDefData.MaxStoredResources;
-					data.Name = preDefData.Name;
-					data.NeededResource1.Type = preDefData.NeededResource1;
-					data.NeededResource2.Type = preDefData.NeededResource2;
-					data.ProducedResource.Type = preDefData.ProducedResource;
-					data.ProductionTime = preDefData.ProductionTime;
-					data.Radius = preDefData.Radius;
+					if (UBuildMenuButton* button = CreateWidget<UBuildMenuButton>(PlayerController, BuildMenuButtonBlueprint))
+					{
+						FBuildingData data = FBuildingData();
+						data.BuildCost = preDefData->BuildCost;
+						data.BuildingIcon = preDefData->BuildingIcon;
+						data.MaxStoredResources = preDefData->MaxStoredResources;
+						data.Name = preDefData->Name;
+						data.NeededResource1.Type = preDefData->NeededResource1;
+						data.NeededResource2.Type = preDefData->NeededResource2;
+						data.ProducedResource.Type = preDefData->ProducedResource;
+						data.ProductionTime = preDefData->ProductionTime;
+						data.Radius = preDefData->Radius;
 
-					button->Data = data;
-					button->BuildingIcon->SetBrushFromTexture(preDefData.BuildingIcon);
-					//button->Building =
+						button->Data = data;
+						check(button->BuildingIcon);
+						button->BuildingIcon->SetBrushFromTexture(preDefData->BuildingIcon);
+						button->Building = preDefData->BuildingBlueprint;
 
+						UUniformGridSlot* buttonSlot = gridPanel->AddChildToUniformGrid(button);
+						buttonSlot->SetColumn(buildingID % ButtonsPerRow);
+						buttonSlot->SetRow(buildingID / ButtonsPerRow);
+						buttonSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);
+						buttonSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Top);
+					}
 				}
 			}
 		}
