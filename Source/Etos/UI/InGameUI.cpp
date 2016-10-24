@@ -81,9 +81,12 @@ void UInGameUI::CreateButtons()
 						data.Radius = preDefData->Radius;
 
 						button->Data = data;
+
 						check(button->BuildingIcon);
 						button->BuildingIcon->SetBrushFromTexture(preDefData->BuildingIcon);
 						button->Building = preDefData->BuildingBlueprint;
+
+						check(gridPanel);
 
 						UUniformGridSlot* buttonSlot = gridPanel->AddChildToUniformGrid(button);
 						buttonSlot->SetColumn(buildingID % ButtonsPerRow);

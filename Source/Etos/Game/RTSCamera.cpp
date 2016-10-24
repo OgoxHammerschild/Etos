@@ -17,6 +17,9 @@ ARTSCamera::ARTSCamera()
 	Origin->SetRelativeRotation(FRotator(90, 0, 0));
 	Origin->ArrowColor = FColor(255, 0, 0, 255);
 	Origin->ArrowSize = 0.2f;
+	Origin->bRenderInMainPass = false;
+	Origin->bReceivesDecals = false;
+	Origin->bHiddenInGame = true;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
