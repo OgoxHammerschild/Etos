@@ -15,6 +15,16 @@ void AEtosPlayerController::BeginPlay()
 
 	AddHUDToViewport();
 	InitResourceMapping();
+
+	// for testing
+	FResource money = FResource();
+	money.Type = EResource::Money;
+	money.Amount = 1000;
+	FResource tools = FResource();
+	tools.Type = EResource::Tool;
+	tools.Amount = 50;
+	AddResource(money);
+	AddResource(tools);
 }
 
 void AEtosPlayerController::SetupInputComponent()
@@ -75,7 +85,9 @@ FORCEINLINE void AEtosPlayerController::BuildNewBuilding(FKey key)
 
 				newBuilding->OnBuild();
 			}
+			else UE_LOG(LogTemp, Warning, TEXT("Not enough resources"));
 		}
+		else UE_LOG(LogTemp, Warning, TEXT("Position is blocked"));
 	}
 }
 
@@ -87,8 +99,9 @@ FORCEINLINE void AEtosPlayerController::ClickRepeatedly(FKey key)
 {
 	if (bIsHoldingObject)
 	{
+		FBuildingData data = FBuildingData(newBuilding->Data);
 		BuildNewBuilding(key);
-		SpawnBuilding(newBuilding, newBuilding->Data);
+		SpawnBuilding(newBuilding, data);
 	}
 }
 
@@ -134,6 +147,8 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding()
 		{
 			newBuilding->Destroy();
 			bIsHoldingObject = false;
+			UE_LOG(LogTemp, Warning, TEXT("building canceled"));
+
 		}
 	}
 }

@@ -19,6 +19,7 @@ ABuilding::ABuilding()
 	BuildingMesh->SetupAttachment(RootComponent);
 
 	FoundationMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Foundation"));
+	FoundationMesh->SetupAttachment(RootComponent);
 	ConstructorHelpers::FObjectFinder<UStaticMesh> quadFinder = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/BasicMeshes/SM_Quad_1x1m.SM_Quad_1x1m'"));
 	if (quadFinder.Succeeded())
 	{
@@ -194,7 +195,7 @@ void ABuilding::AddResource()
 bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult)
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery1);//Building
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));//Building
 
 	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, ObjectTypes, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
 }
@@ -203,7 +204,7 @@ bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& 
 bool ABuilding::TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults)
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery1);//Building
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));//Building
 
 	return UKismetSystemLibrary::LineTraceMultiForObjects(this, Start, End, ObjectTypes, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true);
 }
@@ -211,7 +212,7 @@ bool ABuilding::TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitRe
 bool ABuilding::TraceSingleForFloor(FVector Start, FVector End, FHitResult & Hit)
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery2);//Floor
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel2));//Floor
 
 	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, ObjectTypes, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
 }
@@ -228,27 +229,35 @@ void ABuilding::CallActionDelayed(float pastTime, float delayDuration)
 
 void ABuilding::MoveToMouseLocation()
 {
-	FVector MouseLocation;
-	FVector MouseDirection;
-	GetWorld()->GetFirstPlayerController()->DeprojectMousePositionToWorld(MouseLocation, MouseDirection);
-	MouseDirection *= 100000;
-
-	FHitResult Hit;
-	TraceSingleForFloor(MouseLocation, MouseLocation + MouseDirection, Hit);
-
-	float X = UKismetMathLibrary::Round(Hit.ImpactPoint.X / 100) * 100;
-	float Y = UKismetMathLibrary::Round(Hit.ImpactPoint.Y / 100) * 100;
-	float Z = Hit.ImpactPoint.Z;
-
-	if (Width % 2 != 0)
+	if (UWorld* World = GetWorld())
 	{
-		X += 50;
-	}
+		if (APlayerController* PlayerController = World->GetFirstPlayerController())
+		{
+			FVector MouseLocation;
+			FVector MouseDirection;
+			PlayerController->DeprojectMousePositionToWorld(MouseLocation, MouseDirection);
+			MouseDirection *= 100000;
 
-	if (Height % 2 != 0)
-	{
-		Y += 50;
-	}
+			FHitResult Hit;
+			if (TraceSingleForFloor(MouseLocation, MouseLocation + MouseDirection, Hit))
+			{
 
-	SetActorLocation(FVector(X, Y, Z));
+				float X = UKismetMathLibrary::Round(Hit.ImpactPoint.X / 100) * 100;
+				float Y = UKismetMathLibrary::Round(Hit.ImpactPoint.Y / 100) * 100;
+				float Z = Hit.ImpactPoint.Z;
+
+				if (Width % 2 == 0)
+				{
+					X += 50;
+				}
+
+				if (Height % 2 == 0)
+				{
+					Y += 50;
+				}
+
+				SetActorLocation(FVector(X, Y, Z));
+			}
+		}
+	}
 }

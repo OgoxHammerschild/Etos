@@ -45,20 +45,22 @@ private:
 		float cameraRadius = 2048.f;
 
 	UPROPERTY()
-		float zoomSpeed = 256.f;
+		float zoomSpeed = 768.f;
 
 	UPROPERTY()
 		float radiusMin = 256.f;
 
 	UPROPERTY()
-		float radiusMax = 2048.f;
+		float radiusMax = 1792.f;
 
 	UPROPERTY()
 		float movementSpeed = 10.f;
 
+	//idk what that is good for
 	UPROPERTY()
 		float edgeForwardAxis = 0.f;
 
+	//idk what that is good for
 	UPROPERTY()
 		float edgeRightAxis = 0.f;
 

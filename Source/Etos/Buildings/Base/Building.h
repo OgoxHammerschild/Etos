@@ -53,15 +53,15 @@ public:
 	
 	// placement of the building
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		bool bIsHeld = false;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		bool bPositionIsBlocked = false;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		bool bIsBuilt = false;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		TArray<FResource> BuildCost;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		TArray<APath*> PossibleConnections;
 
 
@@ -81,11 +81,11 @@ public:
 	
 	// getting resources to other buildings
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		TArray<ABuilding*> BuildingsInRadius;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		bool bBarrowIsOnTheWay;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		TArray<APath*> PathConnections;
 	UPROPERTY(EditAnywhere)
 		float Radius;
@@ -101,7 +101,7 @@ public:
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* BuildingMesh;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		UStaticMeshComponent* FoundationMesh;
 
 	UPROPERTY()
