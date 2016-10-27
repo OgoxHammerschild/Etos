@@ -64,7 +64,7 @@ void ABuilding::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (Data.bIsBuilt)
 	{
-		CallActionDelayed(DeltaTime, Data.ProductionTime);
+		CallDelayAction(DeltaTime, Data.ProductionTime);
 	}
 	else if (Data.bIsHeld)
 	{
@@ -119,6 +119,8 @@ void ABuilding::OnBuild()
 		}
 	}
 
+	BuildEvent.Broadcast();
+
 	Data.bIsBuilt = true;
 }
 
@@ -171,7 +173,7 @@ void ABuilding::InitTracePoints()
 
 void ABuilding::BindDelayAction()
 {
-	Action.BindUFunction(this, TEXT("AddResource")); // reflection is probably fine
+	Action.BindDynamic(this, &ABuilding::AddResource);
 }
 
 void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
@@ -192,38 +194,52 @@ void ABuilding::AddResource()
 	}
 }
 
-bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult)
+TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 {
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));//Building
+	FVector Location = this->GetActorLocation();
 
-	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, ObjectTypes, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
+	TArray<FHitResult> HitResults;
+
+	TArray<ABuilding*> BuildingsInRange;
+
+	if (UKismetSystemLibrary::SphereTraceMultiForObjects(this, Location, Location, Data.Radius, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true))
+	{
+		for (FHitResult hit : HitResults)
+		{
+			ABuilding * building = dynamic_cast<ABuilding*, AActor>(&*hit.Actor);
+			if (building)
+			{
+				BuildingsInRange.Emplace(building);
+			}
+		}
+	}
+
+	return BuildingsInRange;
 }
 
-//Daniel'sche Trace-Funktion
+bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult)
+{
+	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
+}
+
 bool ABuilding::TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults)
 {
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1));//Building
-
-	return UKismetSystemLibrary::LineTraceMultiForObjects(this, Start, End, ObjectTypes, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true);
+	return UKismetSystemLibrary::LineTraceMultiForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true);
 }
 
 bool ABuilding::TraceSingleForFloor(FVector Start, FVector End, FHitResult & Hit)
 {
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel2));//Floor
-
-	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, ObjectTypes, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
+	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
 }
 
-void ABuilding::CallActionDelayed(float pastTime, float delayDuration)
+void ABuilding::CallDelayAction(float pastTime, float delayDuration)
 {
-	pastDelayTimerTime += pastTime;
-	if (pastDelayTimerTime >= delayDuration)
+	this->pastDelayTimerTime += pastTime;
+	//UE_LOG(LogTemp, Warning, TEXT("timer: %f duration : %f delta time: %f"), this->pastDelayTimerTime, delayDuration, pastTime);
+	if (this->pastDelayTimerTime >= delayDuration)
 	{
-		pastDelayTimerTime = 0;
-		Action.ExecuteIfBound();
+		this->pastDelayTimerTime = 0;
+		this->Action.ExecuteIfBound();
 	}
 }
 

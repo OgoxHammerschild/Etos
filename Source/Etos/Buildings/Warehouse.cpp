@@ -21,7 +21,7 @@ FORCEINLINE void AWarehouse::DecreaseBarrowsInUse()
 
 void AWarehouse::BindDelayAction()
 {
-	Action.BindUFunction(this, "SendMarketBarrows");
+	Action.BindDynamic(this, &AWarehouse::SendMarketBarrows);
 }
 
 AEtosPlayerController * AWarehouse::GetMyPlayerController()

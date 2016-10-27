@@ -7,7 +7,8 @@
 class ABuilding;
 class APath;
 
-DECLARE_DYNAMIC_DELEGATE(FDelayedAction);
+DECLARE_DYNAMIC_DELEGATE(FDelayedActionDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBuildingDelegate);
 
 UENUM(BlueprintType)
 enum class EResource : uint8
@@ -50,9 +51,9 @@ public:
 	UPROPERTY(EditAnywhere)
 		UTexture2D* BuildingIcon;
 
-	
+
 	// placement of the building
-	
+
 	UPROPERTY(VisibleAnywhere)
 		bool bIsHeld = false;
 	UPROPERTY(VisibleAnywhere)
@@ -66,7 +67,7 @@ public:
 
 
 	// producing resources
-	
+
 	UPROPERTY(EditAnywhere)
 		FResource NeededResource1;
 	UPROPERTY(EditAnywhere)
@@ -78,9 +79,9 @@ public:
 	UPROPERTY(EditAnywhere)
 		int32 MaxStoredResources;
 
-	
+
 	// getting resources to other buildings
-	
+
 	UPROPERTY(VisibleAnywhere)
 		TArray<ABuilding*> BuildingsInRadius;
 	UPROPERTY(VisibleAnywhere)
@@ -126,7 +127,10 @@ public:
 protected:
 
 	UPROPERTY()
-		FDelayedAction Action;
+		FDelayedActionDelegate Action;
+
+	UPROPERTY()
+		FBuildingDelegate BuildEvent;
 
 private:
 
@@ -165,13 +169,15 @@ protected:
 	UFUNCTION()
 		virtual void BindDelayAction();
 
+	TArray<ABuilding*> GetBuildingsInRange();
+
 	bool TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult);
 
 	bool TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults);
 
 	bool TraceSingleForFloor(FVector Start, FVector End, FHitResult& Hit);
 
-	void CallActionDelayed(float pastTime, float delayDuration = 1);
+	void CallDelayAction(float pastTime, float delayDuration = 1);
 
 private:
 
@@ -181,7 +187,8 @@ private:
 	UFUNCTION()
 		void BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	void AddResource();
+	UFUNCTION()
+		void AddResource();
 
 	void MoveToMouseLocation();
 };

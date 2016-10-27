@@ -6,6 +6,9 @@
 #include "Etos/Game/EtosPlayerController.h"
 #include "UtilityFunctionLibrary.h"
 
+TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::BuildingObjectType = InitBuildingObjectType();
+TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::FloorObjectType = InitFloorObjectType();
+
 AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* WorldContextObject)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject);
@@ -68,4 +71,20 @@ AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerController(UObject
 		}
 	}
 	return nullptr;
+}
+
+TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitBuildingObjectType()
+{
+	TArray<TEnumAsByte<EObjectTypeQuery>> buildingObjectType;
+	buildingObjectType.Init(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1/*Building*/), 1);
+
+	return buildingObjectType;
+}
+
+TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitFloorObjectType()
+{
+	TArray<TEnumAsByte<EObjectTypeQuery>> floorObjectType;
+	floorObjectType.Init(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel2/*Floor*/), 1);
+
+	return floorObjectType;
 }

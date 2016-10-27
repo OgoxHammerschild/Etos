@@ -37,5 +37,6 @@ private:
 
 	AEtosPlayerController* GetMyPlayerController();
 
+	UFUNCTION()
 	void SendMarketBarrows();
 };

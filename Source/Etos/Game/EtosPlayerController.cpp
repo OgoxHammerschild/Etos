@@ -6,6 +6,7 @@
 #include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
 #include "Etos/UI/InGameUI.h"
 #include "Etos/Game/EtosHUD.h"
+#include "Etos/Buildings/Path.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -16,15 +17,23 @@ void AEtosPlayerController::BeginPlay()
 	AddHUDToViewport();
 	InitResourceMapping();
 
-	// for testing
+	// for testing ############
 	FResource money = FResource();
 	money.Type = EResource::Money;
-	money.Amount = 1000;
+	money.Amount = 10000;
+
+	FResource wood = FResource();
+	wood.Type = EResource::Wood;
+	wood.Amount = 50;
+
 	FResource tools = FResource();
 	tools.Type = EResource::Tool;
 	tools.Amount = 50;
+
 	AddResource(money);
+	AddResource(wood);
 	AddResource(tools);
+	//#########################
 }
 
 void AEtosPlayerController::SetupInputComponent()
@@ -77,6 +86,11 @@ FORCEINLINE void AEtosPlayerController::BuildNewBuilding(FKey key)
 		{
 			if (HasEnoughResources(newBuilding->Data.BuildCost))
 			{
+				if (APath* newPath = dynamic_cast<APath*, ABuilding>(newBuilding))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("It's a path!"));
+				}
+
 				newBuilding->Data.bIsHeld = false;
 				bIsHoldingObject = false;
 				PayCostsOfBuilding(newBuilding->Data.BuildCost);
