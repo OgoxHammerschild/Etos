@@ -75,8 +75,11 @@ void UInGameUI::CreateButtons()
 						data.MaxStoredResources = preDefData->MaxStoredResources;
 						data.Name = preDefData->Name;
 						data.NeededResource1.Type = preDefData->NeededResource1;
+						data.NeededResource1.Amount = 0;
 						data.NeededResource2.Type = preDefData->NeededResource2;
+						data.NeededResource2.Amount = 0;
 						data.ProducedResource.Type = preDefData->ProducedResource;
+						data.ProducedResource.Amount = 0;
 						data.ProductionTime = preDefData->ProductionTime;
 						data.Radius = preDefData->Radius;
 

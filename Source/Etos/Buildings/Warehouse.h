@@ -17,9 +17,9 @@ class ETOS_API AWarehouse : public ABuilding
 private:
 
 	UPROPERTY()
-		int32 barrowsInUse;
+		int32 barrowsInUse = 0;
 	UPROPERTY()
-		int32 maxBarrows;
+		int32 maxBarrows = 1;
 	UPROPERTY()
 		AEtosPlayerController* MyPlayerController;
 

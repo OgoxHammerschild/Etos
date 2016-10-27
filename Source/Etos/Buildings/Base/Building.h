@@ -158,7 +158,7 @@ public:
 
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent);
 
-	virtual void Destroyed() override;
+	virtual void BeginDestroy() override;
 
 	virtual void OnBuild();
 

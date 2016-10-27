@@ -45,16 +45,17 @@ void AWarehouse::SendMarketBarrows()
 				{
 					// TODO: search path
 
-					AMarketBarrow* newMarketBarrow = GetWorld()->SpawnActor<AMarketBarrow>(Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 25), FRotator());
-
-					// TODO: init barrow
-
-					if (!newMarketBarrow->GetController())
+					if (AMarketBarrow* newMarketBarrow = GetWorld()->SpawnActor<AMarketBarrow>(Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 25), FRotator()))
 					{
-						newMarketBarrow->SpawnDefaultController();
-					}
+						// TODO: init barrow
 
-					barrowsInUse++;
+						if (!newMarketBarrow->GetController())
+						{
+							newMarketBarrow->SpawnDefaultController();
+						}
+
+						barrowsInUse++;
+					}
 				}
 			}
 		}

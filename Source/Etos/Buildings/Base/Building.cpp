@@ -89,9 +89,9 @@ void ABuilding::Tick(float DeltaTime)
 //	}
 //}
 
-void ABuilding::Destroyed()
+void ABuilding::BeginDestroy()
 {
-	Super::Destroyed();
+	Super::BeginDestroy();
 }
 
 #if WITH_EDITOR
@@ -327,7 +327,8 @@ bool ABuilding::TraceSingleForFloor(FVector Start, FVector End, FHitResult & Hit
 void ABuilding::CallDelayAction(float pastTime, float delayDuration)
 {
 	this->pastDelayTimerTime += pastTime;
-	//UE_LOG(LogTemp, Warning, TEXT("timer: %f duration : %f delta time: %f"), this->pastDelayTimerTime, delayDuration, pastTime);
+	UE_LOG(LogTemp, Warning, TEXT("my name is %s and you better not wear it out"), *GetName());
+	UE_LOG(LogTemp, Warning, TEXT("timer: %f duration : %f delta time: %f"), this->pastDelayTimerTime, delayDuration, pastTime);
 	if (this->pastDelayTimerTime >= delayDuration)
 	{
 		this->pastDelayTimerTime = 0;
@@ -357,10 +358,11 @@ void ABuilding::MoveToMouseLocation()
 			FHitResult Hit;
 			if (TraceSingleForFloor(MouseLocation, MouseLocation + MouseDirection, Hit))
 			{
+				float heightOffset = 5;
 
 				float X = UKismetMathLibrary::Round(Hit.ImpactPoint.X / 100) * 100;
 				float Y = UKismetMathLibrary::Round(Hit.ImpactPoint.Y / 100) * 100;
-				float Z = Hit.ImpactPoint.Z;
+				float Z = Hit.ImpactPoint.Z + heightOffset;
 
 				if (Width % 2 == 0)
 				{

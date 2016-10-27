@@ -39,9 +39,9 @@ void AMarketBarrow::SetupPlayerInputComponent(class UInputComponent* InputCompon
 
 }
 
-void AMarketBarrow::Destroyed()
+void AMarketBarrow::BeginDestroy()
 {
-	Super::Destroyed();
+	Super::BeginDestroy();
 
 	TargetBuilding->Data.bBarrowIsOnTheWay = false;
 	MyWarehouse->DecreaseBarrowsInUse();
