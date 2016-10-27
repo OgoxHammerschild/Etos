@@ -26,9 +26,10 @@ protected:
 	virtual void ReloacteTracePoints() override;
 
 	virtual void GetSurroundingBuildings() override;
+
 public:
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		TArray<ABuilding*> PossibleConnections;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		TArray<ABuilding*> Connections;
 };
