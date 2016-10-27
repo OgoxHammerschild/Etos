@@ -3,29 +3,29 @@
 #include "Etos.h"
 #include "Path.h"
 
-void APath::OnConstruction(const FTransform& Transform)
-{
-	PossibleConnections.Empty(4);
-	TArray<FHitResult> AllHitResults;
-	AllHitResults.Reserve(4);
-
-	FHitResult HitResult;
-
-	for (int32 i = 1; i < 5; i++)
-	{
-		TraceSingleForBuildings(TracePoints[0]->GetComponentLocation(), TracePoints[i]->GetComponentLocation(), HitResult);
-		AllHitResults.Add(HitResult);
-	}
-
-	for (FHitResult hit : AllHitResults)
-	{
-		ABuilding* building = dynamic_cast<ABuilding*, AActor> (&*hit.Actor);
-		if (building)
-		{
-			PossibleConnections.AddUnique(building);
-		}
-	}
-}
+//void APath::OnConstruction(const FTransform& Transform)
+//{
+//	PossibleConnections.Empty(4);
+//	TArray<FHitResult> AllHitResults;
+//	AllHitResults.Reserve(4);
+//
+//	FHitResult HitResult;
+//
+//	for (int32 i = 1; i < 5; i++)
+//	{
+//		TraceSingleForBuildings(TracePoints[0]->GetComponentLocation(), TracePoints[i]->GetComponentLocation(), HitResult);
+//		AllHitResults.Add(HitResult);
+//	}
+//
+//	for (FHitResult hit : AllHitResults)
+//	{
+//		ABuilding* building = dynamic_cast<ABuilding*, AActor> (&*hit.Actor);
+//		if (building)
+//		{
+//			PossibleConnections.AddUnique(building);
+//		}
+//	}
+//}
 
 void APath::OnBuild()
 {
@@ -49,17 +49,62 @@ void APath::OnBuild()
 	Data.bIsBuilt = true;
 }
 
-void APath::InitTracePoints()
+void APath::CreateTracePoints()
 {
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Start")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Point Top")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Point Bot")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Point Left")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Point Right")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Point Top")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Point Bot")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Point Left")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Point Right")));
 
 	for (USceneComponent* point : TracePoints)
 	{
 		point->SetupAttachment(OccupiedBuildSpace);
 		point->SetVisibility(false);
+	}
+}
+
+void APath::ReloacteTracePoints()
+{
+	float hight = 0;
+	float offset = 100;
+
+	FVector location = FVector(0, 0, hight);
+	TracePoints[0]->SetRelativeLocation(location);
+
+	location = FVector(offset, 0, hight);
+	TracePoints[1]->SetRelativeLocation(location);
+
+	location = FVector(-offset, 0, hight);
+	TracePoints[2]->SetRelativeLocation(location);
+
+	location = FVector(0, offset, hight);
+	TracePoints[3]->SetRelativeLocation(location);
+
+	location = FVector(0, -offset, hight);
+	TracePoints[4]->SetRelativeLocation(location);
+}
+
+void APath::GetSurroundingBuildings()
+{
+	PossibleConnections.Empty(4);
+	TArray<FHitResult> AllHitResults;
+	AllHitResults.Reserve(4);
+
+	FHitResult HitResult;
+
+	for (int32 i = 1; i < 5; i++)
+	{
+		TraceSingleForBuildings(TracePoints[0]->GetComponentLocation(), TracePoints[i]->GetComponentLocation(), HitResult);
+		AllHitResults.Add(HitResult);
+	}
+
+	for (FHitResult hit : AllHitResults)
+	{
+		ABuilding* building = dynamic_cast<ABuilding*, AActor> (&*hit.Actor);
+		if (building)
+		{
+			PossibleConnections.AddUnique(building);
+		}
 	}
 }

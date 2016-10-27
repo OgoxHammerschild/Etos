@@ -62,3 +62,4 @@ Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+/Source/Etos/Buildings/Base/Building.cpp~RF97b8792.TMP

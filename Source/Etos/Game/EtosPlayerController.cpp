@@ -195,6 +195,7 @@ FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, FB
 		newBuilding = World->SpawnActor<ABuilding>(Class->GetClass());
 		newBuilding->Data = data;
 		newBuilding->Data.bIsHeld = true;
+		newBuilding->Radius->SetSphereRadius(data.Radius);
 		bIsHoldingObject = true;
 
 		//TODO: make building transparent
@@ -203,7 +204,7 @@ FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, FB
 	return nullptr;
 }
 
-ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, FBuildingData Data)
+FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, FBuildingData Data)
 {
 	if (bIsHoldingObject)
 		return nullptr;
@@ -218,6 +219,7 @@ ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass
 		newBuilding = World->SpawnActor<ABuilding>(Subclass);
 		newBuilding->Data = data;
 		newBuilding->Data.bIsHeld = true;
+		newBuilding->Radius->SetSphereRadius(data.Radius);
 		bIsHoldingObject = true;
 
 		//TODO: make building transparent

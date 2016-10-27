@@ -26,36 +26,30 @@ ABuilding::ABuilding()
 		FoundationMesh->SetStaticMesh(quadFinder.Object);
 	}
 
+	Radius = CreateDefaultSubobject<USphereComponent>(TEXT("Radius"));
+	Radius->SetupAttachment(RootComponent);
+	Radius->SetVisibility(false);
+	Radius->SetCollisionProfileName(TEXT("OverlapBuildings"));
+	Radius->OnComponentBeginOverlap.AddDynamic(this, &ABuilding::BuildingEnteredRadius);
+	Radius->OnComponentEndOverlap.AddDynamic(this, &ABuilding::BuildingLeftRadius);
+	Radius->SetSphereRadius(Data.Radius);
+
 	InitOccupiedBuildSpace();
-	InitTracePoints();
-	BindDelayAction();
 	SetFoundationSize(1, 1);
+}
+
+void ABuilding::PostInitProperties()
+{
+	Super::PostInitProperties();
+	CreateTracePoints();
+	BindDelayAction();
 }
 
 // Called when the game starts or when spawned
 void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
-
-	FVector BoxExtend = OccupiedBuildSpace->GetScaledBoxExtent();
-	FVector Start;
-	FVector End;
-	//top
-	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, true, false, true, EOffsetDirections::TopRight, EOffsetDirections::TopLeft, Start, End);
-	TracePoints[0]->SetRelativeLocation(Start);
-	TracePoints[1]->SetRelativeLocation(End);
-	//bot
-	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, false, false, false, EOffsetDirections::BotRight, EOffsetDirections::BotLeft, Start, End);
-	TracePoints[2]->SetRelativeLocation(Start);
-	TracePoints[3]->SetRelativeLocation(End);
-	//left
-	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, true, true, false, EOffsetDirections::BotLeft, EOffsetDirections::TopLeft, Start, End);
-	TracePoints[4]->SetRelativeLocation(Start);
-	TracePoints[5]->SetRelativeLocation(End);
-	//right
-	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, false, true, false, false, EOffsetDirections::BotRight, EOffsetDirections::TopRight, Start, End);
-	TracePoints[6]->SetRelativeLocation(Start);
-	TracePoints[7]->SetRelativeLocation(End);
+	ReloacteTracePoints();
 }
 
 // Called every frame
@@ -69,29 +63,35 @@ void ABuilding::Tick(float DeltaTime)
 	else if (Data.bIsHeld)
 	{
 		MoveToMouseLocation();
+		GetSurroundingBuildings();
 	}
 }
 
-void ABuilding::OnConstruction(const FTransform& Transform)
+//void ABuilding::OnConstruction(const FTransform& Transform)
+//{
+//	Data.PossibleConnections.Empty();
+//	TArray<FHitResult> AllHitResults;
+//	TArray<FHitResult> HitResults;
+//
+//	for (int32 i = 0; i < 8; i += 2)
+//	{
+//		TraceMultiForBuildings(TracePoints[i]->GetComponentLocation(), TracePoints[1 + i]->GetComponentLocation(), HitResults);
+//		AllHitResults.Append(HitResults);
+//	}
+//
+//	for (FHitResult hit : AllHitResults)
+//	{
+//		APath* path = dynamic_cast<APath*, AActor> (&*hit.Actor);
+//		if (path)
+//		{
+//			Data.PossibleConnections.AddUnique(path);
+//		}
+//	}
+//}
+
+void ABuilding::Destroyed()
 {
-	Data.PossibleConnections.Empty();
-	TArray<FHitResult> AllHitResults;
-	TArray<FHitResult> HitResults;
-
-	for (int32 i = 0; i < 8; i += 2)
-	{
-		TraceMultiForBuildings(TracePoints[i]->GetComponentLocation(), TracePoints[1 + i]->GetComponentLocation(), HitResults);
-		AllHitResults.Append(HitResults);
-	}
-
-	for (FHitResult hit : AllHitResults)
-	{
-		APath* path = dynamic_cast<APath*, AActor> (&*hit.Actor);
-		if (path)
-		{
-			Data.PossibleConnections.AddUnique(path);
-		}
-	}
+	Super::Destroyed();
 }
 
 #if WITH_EDITOR
@@ -111,6 +111,9 @@ void ABuilding::OnBuild()
 	Data.PathConnections = Data.PossibleConnections;
 	Data.PossibleConnections.Empty();
 
+	Data.BuildingsInRadius = Data.PossibleBuildingsInRadius;
+	Data.PossibleBuildingsInRadius.Empty();
+
 	for (APath* path : Data.PathConnections)
 	{
 		if (path)
@@ -119,7 +122,7 @@ void ABuilding::OnBuild()
 		}
 	}
 
-	BuildEvent.Broadcast();
+	BuildEvent.Broadcast(this);
 
 	Data.bIsBuilt = true;
 }
@@ -153,21 +156,66 @@ void ABuilding::InitOccupiedBuildSpace()
 	OccupiedBuildSpace->OnComponentEndOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap);
 }
 
-void ABuilding::InitTracePoints()
+void ABuilding::CreateTracePoints()
 {
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Start Top")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace End Top")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Start Bot")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace End Bot")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Start Left")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace End Left")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace Start Right")));
-	TracePoints.Add(CreateDefaultSubobject<USceneComponent>(TEXT("Trace End Right")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start Top")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace End Top")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start Bot")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace End Bot")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start Left")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace End Left")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start Right")));
+	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace End Right")));
 
 	for (USceneComponent* point : TracePoints)
 	{
 		point->SetupAttachment(OccupiedBuildSpace);
 		point->SetVisibility(false);
+	}
+}
+
+void ABuilding::ReloacteTracePoints()
+{
+	FVector BoxExtend = OccupiedBuildSpace->GetScaledBoxExtent();
+	FVector Start;
+	FVector End;
+	//top
+	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, true, false, true, EOffsetDirections::TopRight, EOffsetDirections::TopLeft, Start, End);
+	TracePoints[0]->SetRelativeLocation(Start);
+	TracePoints[1]->SetRelativeLocation(End);
+	//bot
+	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, false, false, false, EOffsetDirections::BotRight, EOffsetDirections::BotLeft, Start, End);
+	TracePoints[2]->SetRelativeLocation(Start);
+	TracePoints[3]->SetRelativeLocation(End);
+	//left
+	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, true, true, false, EOffsetDirections::BotLeft, EOffsetDirections::TopLeft, Start, End);
+	TracePoints[4]->SetRelativeLocation(Start);
+	TracePoints[5]->SetRelativeLocation(End);
+	//right
+	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, false, true, false, false, EOffsetDirections::BotRight, EOffsetDirections::TopRight, Start, End);
+	TracePoints[6]->SetRelativeLocation(Start);
+	TracePoints[7]->SetRelativeLocation(End);
+}
+
+void ABuilding::GetSurroundingBuildings()
+{
+	Data.PossibleConnections.Empty();
+	TArray<FHitResult> AllHitResults;
+	TArray<FHitResult> HitResults;
+
+	for (int32 i = 0; i < 8; i += 2)
+	{
+		TraceMultiForBuildings(TracePoints[i]->GetComponentLocation(), TracePoints[1 + i]->GetComponentLocation(), HitResults);
+		AllHitResults.Append(HitResults);
+	}
+
+	for (FHitResult hit : AllHitResults)
+	{
+		APath* path = dynamic_cast<APath*, AActor> (&*hit.Actor);
+		if (path)
+		{
+			Data.PossibleConnections.AddUnique(path);
+		}
 	}
 }
 
@@ -184,6 +232,50 @@ void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedCompone
 void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	Data.bPositionIsBlocked = false;
+}
+
+void ABuilding::BuildingEnteredRadius(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	ABuilding * building = dynamic_cast<ABuilding*, AActor>(OtherActor);
+	if (building)
+	{
+		if (building->Data.bIsBuilt)
+		{
+			if (Data.bIsHeld)
+			{
+				Data.PossibleBuildingsInRadius.AddUnique(building);
+			}
+		}
+		else if (building->Data.bIsHeld)
+		{
+			if (Data.bIsBuilt)
+			{
+				building->BuildEvent.AddDynamic(this, &ABuilding::AddNewBuildingInRange);
+			}
+		}
+	}
+}
+
+void ABuilding::BuildingLeftRadius(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
+{
+	ABuilding * building = dynamic_cast<ABuilding*, AActor>(OtherActor);
+	if (building)
+	{
+		if (building->Data.bIsBuilt)
+		{
+			if (Data.bIsHeld)
+			{
+				Data.PossibleBuildingsInRadius.Remove(building);
+			}
+		}
+		else if (building->Data.bIsHeld)
+		{
+			if (Data.bIsBuilt)
+			{
+				building->BuildEvent.RemoveDynamic(this, &ABuilding::AddNewBuildingInRange);
+			}
+		}
+	}
 }
 
 void ABuilding::AddResource()
@@ -219,7 +311,7 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 
 bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult)
 {
-	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
+	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::ForDuration, HitResult, true);
 }
 
 bool ABuilding::TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults)
@@ -240,6 +332,14 @@ void ABuilding::CallDelayAction(float pastTime, float delayDuration)
 	{
 		this->pastDelayTimerTime = 0;
 		this->Action.ExecuteIfBound();
+	}
+}
+
+void ABuilding::AddNewBuildingInRange(ABuilding * buildingInRange)
+{
+	if (buildingInRange && !buildingInRange->IsPendingKillOrUnreachable())
+	{
+		Data.BuildingsInRadius.AddUnique(buildingInRange);
 	}
 }
 

@@ -15,15 +15,17 @@ class ETOS_API APath : public ABuilding
 
 public:
 
-	virtual void OnConstruction(const FTransform& Transform) override;
+	//virtual void OnConstruction(const FTransform& Transform) override;
 
 	virtual void OnBuild() override;
 
 protected:
 
-	UFUNCTION()
-		virtual void InitTracePoints() override;
+	virtual void CreateTracePoints() override;
 
+	virtual void ReloacteTracePoints() override;
+
+	virtual void GetSurroundingBuildings() override;
 public:
 	UPROPERTY()
 		TArray<ABuilding*> PossibleConnections;

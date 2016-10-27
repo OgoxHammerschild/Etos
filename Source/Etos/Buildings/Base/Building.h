@@ -8,7 +8,7 @@ class ABuilding;
 class APath;
 
 DECLARE_DYNAMIC_DELEGATE(FDelayedActionDelegate);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FBuildingDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBuildingDelegate, ABuilding*, sender);
 
 UENUM(BlueprintType)
 enum class EResource : uint8
@@ -32,7 +32,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Resource)
 		EResource Type = EResource::None;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Resource)
-		int32 Amount;
+		int32 Amount = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Resource)
 		UTexture2D* Icon;
 };
@@ -64,6 +64,8 @@ public:
 		TArray<FResource> BuildCost;
 	UPROPERTY(VisibleAnywhere)
 		TArray<APath*> PossibleConnections;
+	UPROPERTY(VisibleAnywhere)
+		TArray<ABuilding*> PossibleBuildingsInRadius;
 
 
 	// producing resources
@@ -111,6 +113,9 @@ public:
 	UPROPERTY()
 		TArray<USceneComponent*> TracePoints;
 
+	UPROPERTY()
+		USphereComponent* Radius;
+
 public:
 
 	UPROPERTY(EditAnywhere)
@@ -141,18 +146,21 @@ public:
 	// Sets default values for this actor's properties
 	ABuilding();
 
+	virtual void PostInitProperties() override;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
 
-	virtual void OnConstruction(const FTransform& Transform) override;
+	//virtual void OnConstruction(const FTransform& Transform) override;
 
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent);
 
-	UFUNCTION()
-		virtual void OnBuild();
+	virtual void Destroyed() override;
+
+	virtual void OnBuild();
 
 	void ResetStoredResources();
 
@@ -160,14 +168,15 @@ public:
 
 protected:
 
-	UFUNCTION()
-		virtual void InitOccupiedBuildSpace();
+	virtual void CreateTracePoints();
 
-	UFUNCTION()
-		virtual void InitTracePoints();
+	virtual void ReloacteTracePoints();
 
-	UFUNCTION()
-		virtual void BindDelayAction();
+	virtual void GetSurroundingBuildings();
+
+	virtual void BindDelayAction();
+
+	void InitOccupiedBuildSpace();
 
 	TArray<ABuilding*> GetBuildingsInRange();
 
@@ -188,7 +197,16 @@ private:
 		void BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UFUNCTION()
+		void BuildingEnteredRadius(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+
+	UFUNCTION()
+		void BuildingLeftRadius(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
 		void AddResource();
+
+	UFUNCTION()
+		void AddNewBuildingInRange(ABuilding* buildingInRange);
 
 	void MoveToMouseLocation();
 };
