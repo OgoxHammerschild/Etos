@@ -142,6 +142,9 @@ private:
 	UPROPERTY()
 		float pastDelayTimerTime = 0;
 
+	UPROPERTY()
+		bool bMovedOnce = false;
+
 public:
 	// Sets default values for this actor's properties
 	ABuilding();

@@ -152,23 +152,25 @@ void ABuilding::InitOccupiedBuildSpace()
 	OccupiedBuildSpace->SetEnableGravity(false);
 	OccupiedBuildSpace->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OccupiedBuildSpace->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
+	OccupiedBuildSpace->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	OccupiedBuildSpace->OnComponentBeginOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnBeginOverlap);
 	OccupiedBuildSpace->OnComponentEndOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap);
 }
 
 void ABuilding::CreateTracePoints()
 {
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start Top")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace End Top")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start Bot")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace End Bot")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start Left")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace End Left")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start Right")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace End Right")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Top")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Top")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Bot")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Bot")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Left")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Left")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Right")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Right")));
 
 	for (USceneComponent* point : TracePoints)
 	{
+		//point->RegisterComponent();
 		point->SetupAttachment(OccupiedBuildSpace);
 		point->SetVisibility(false);
 	}
@@ -226,18 +228,30 @@ void ABuilding::BindDelayAction()
 
 void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	Data.bPositionIsBlocked = true;
+	if (bMovedOnce)
+	{
+		Data.bPositionIsBlocked = true;
+	}
 }
 
 void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	Data.bPositionIsBlocked = false;
+	if (bMovedOnce)
+	{
+		Data.bPositionIsBlocked = false;
+	}
 }
 
 void ABuilding::BuildingEnteredRadius(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	ABuilding * building = dynamic_cast<ABuilding*, AActor>(OtherActor);
-	if (building)
+	if (APath* path = dynamic_cast<APath*, AActor>(OtherActor))
+	{
+		// don't consider paths as bulidings in range
+		// paths are stored as connections
+		return;
+	}
+
+	if (ABuilding * building = dynamic_cast<ABuilding*, AActor>(OtherActor))
 	{
 		if (building->Data.bIsBuilt)
 		{
@@ -258,8 +272,14 @@ void ABuilding::BuildingEnteredRadius(UPrimitiveComponent * OverlappedComponent,
 
 void ABuilding::BuildingLeftRadius(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
 {
-	ABuilding * building = dynamic_cast<ABuilding*, AActor>(OtherActor);
-	if (building)
+	if (APath* path = dynamic_cast<APath*, AActor>(OtherActor))
+	{
+		// don't consider paths as bulidings in range
+		// paths are stored as connections
+		return;
+	}
+
+	if (ABuilding * building = dynamic_cast<ABuilding*, AActor>(OtherActor))
 	{
 		if (building->Data.bIsBuilt)
 		{
@@ -327,8 +347,8 @@ bool ABuilding::TraceSingleForFloor(FVector Start, FVector End, FHitResult & Hit
 void ABuilding::CallDelayAction(float pastTime, float delayDuration)
 {
 	this->pastDelayTimerTime += pastTime;
-	UE_LOG(LogTemp, Warning, TEXT("my name is %s and you better not wear it out"), *GetName());
-	UE_LOG(LogTemp, Warning, TEXT("timer: %f duration : %f delta time: %f"), this->pastDelayTimerTime, delayDuration, pastTime);
+	//UE_LOG(LogTemp, Warning, TEXT("my name is %s and you better not wear it out"), *GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("timer: %f duration : %f delta time: %f"), this->pastDelayTimerTime, delayDuration, pastTime);
 	if (this->pastDelayTimerTime >= delayDuration)
 	{
 		this->pastDelayTimerTime = 0;
@@ -358,7 +378,7 @@ void ABuilding::MoveToMouseLocation()
 			FHitResult Hit;
 			if (TraceSingleForFloor(MouseLocation, MouseLocation + MouseDirection, Hit))
 			{
-				float heightOffset = 5;
+				float heightOffset = 2;
 
 				float X = UKismetMathLibrary::Round(Hit.ImpactPoint.X / 100) * 100;
 				float Y = UKismetMathLibrary::Round(Hit.ImpactPoint.Y / 100) * 100;
@@ -375,6 +395,7 @@ void ABuilding::MoveToMouseLocation()
 				}
 
 				SetActorLocation(FVector(X, Y, Z));
+				bMovedOnce = true;
 			}
 		}
 	}

@@ -51,14 +51,15 @@ void APath::OnBuild()
 
 void APath::CreateTracePoints()
 {
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Start")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Point Top")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Point Bot")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Point Left")));
-	TracePoints.Add(NewObject<USceneComponent>(this, TEXT("Trace Point Right")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Top")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Bot")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Left")));
+	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Right")));
 
 	for (USceneComponent* point : TracePoints)
 	{
+		//point->RegisterComponent();
 		point->SetupAttachment(OccupiedBuildSpace);
 		point->SetVisibility(false);
 	}
