@@ -73,6 +73,11 @@ AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerController(UObject
 	return nullptr;
 }
 
+FString UUtilityFunctionLibrary::BoolToString(const bool & b)
+{
+	return b ? FString(TEXT("true")) : FString(TEXT("false"));
+}
+
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitBuildingObjectType()
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> buildingObjectType;
