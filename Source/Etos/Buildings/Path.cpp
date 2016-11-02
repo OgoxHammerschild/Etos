@@ -64,7 +64,6 @@ void APath::CreateTracePoints()
 
 	for (USceneComponent* point : TracePoints)
 	{
-		//point->RegisterComponent();
 		point->SetupAttachment(OccupiedBuildSpace);
 		point->SetVisibility(false);
 	}

@@ -145,6 +145,9 @@ private:
 	UPROPERTY()
 		bool bMovedOnce = false;
 
+	UPROPERTY()
+		TArray<AActor*> collisions = TArray<AActor*>();
+
 public:
 	// Sets default values for this actor's properties
 	ABuilding();

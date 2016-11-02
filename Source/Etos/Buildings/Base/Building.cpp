@@ -176,7 +176,6 @@ void ABuilding::CreateTracePoints()
 
 	for (USceneComponent* point : TracePoints)
 	{
-		//point->RegisterComponent();
 		point->SetupAttachment(OccupiedBuildSpace);
 		point->SetVisibility(false);
 	}
@@ -234,17 +233,29 @@ void ABuilding::BindDelayAction()
 
 void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	if (bMovedOnce)
+	if (bMovedOnce && Data.bIsHeld && !Data.bIsBuilt)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *OtherActor->GetName());
+
+		collisions.Add(OtherActor);
 		Data.bPositionIsBlocked = true;
 	}
 }
 
 void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (bMovedOnce)
+	if (bMovedOnce && Data.bIsHeld && !Data.bIsBuilt)
 	{
-		Data.bPositionIsBlocked = false;
+		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *OtherActor->GetName());
+		
+		collisions.RemoveSingle(OtherActor);
+
+		UE_LOG(LogTemp, Warning, TEXT("%s is colliding with %i actors"), *GetName(), collisions.Num());
+
+		if (collisions.Num() == 0)
+		{
+			Data.bPositionIsBlocked = false;
+		}
 	}
 }
 
@@ -353,8 +364,7 @@ bool ABuilding::TraceSingleForFloor(FVector Start, FVector End, FHitResult & Hit
 void ABuilding::CallDelayAction(float pastTime, float delayDuration)
 {
 	this->pastDelayTimerTime += pastTime;
-	//UE_LOG(LogTemp, Warning, TEXT("my name is %s and you better not wear it out"), *GetName());
-	//UE_LOG(LogTemp, Warning, TEXT("timer: %f duration : %f delta time: %f"), this->pastDelayTimerTime, delayDuration, pastTime);
+
 	if (this->pastDelayTimerTime >= delayDuration)
 	{
 		this->pastDelayTimerTime = 0;
