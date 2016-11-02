@@ -2,6 +2,7 @@
 
 #include "Etos.h"
 #include "Etos/Buildings/Base/Building.h"
+#include "Etos/Buildings/Path.h"
 #include "BuildingFunctionLibrary.h"
 
 void UBuildingFunctionLibrary::CalcVectors(UPARAM(DisplayName = "X-Extend") float XExtend, UPARAM(DisplayName = "Y-Extend") float YExtend, UPARAM(DisplayName = "Z-Extend") float ZExtend, bool negateX1, bool negateY1, bool negateX2, bool negateY2, EOffsetDirections StartOffset, EOffsetDirections GoalOffset, FVector& OutStart, FVector& OutGoal, float ZHeight)
@@ -70,40 +71,34 @@ void UBuildingFunctionLibrary::CalcVectors(UPARAM(DisplayName = "X-Extend") floa
 	}
 }
 
-bool UBuildingFunctionLibrary::FindPathTo(const ABuilding * target)
+bool UBuildingFunctionLibrary::FindPath(const ABuilding* Source, const ABuilding* Target)
 {
-	if (target)
+	if (Target && Source)
 	{
-		if (AActor* Owner = GetOwner())
+		if (Target == Source)
 		{
-			if (ABuilding* Source = dynamic_cast<ABuilding*, AActor>(Owner))
+			return true;
+		}
+
+		TArray<ABuilding*> openList = TArray<ABuilding*>();
+		openList.Empty(Source->Data.PathConnections.Num());
+		openList.Append(Source->Data.PathConnections);
+
+		while (openList.Num() > 0)
+		{
+			if (openList[0] == Target)
 			{
-				if (target == Source)
+				return true;
+			}
+
+			if (APath* current = dynamic_cast<APath*, ABuilding>(openList[0]))
+			{
+				for (ABuilding* building : current->Connections)
 				{
-					return true;
-				}
-
-				TArray<ABuilding*> openList = TArray<ABuilding*>();
-				openList.Empty(Source->Data.PathConnections.Num());
-				openList.Append(Source->Data.PathConnections);
-
-				while (openList.Num() > 0)
-				{
-					if (openList[0] == target)
-					{
-						return true;
-					}
-
-					if (APath* current = dynamic_cast<APath*, ABuilding>(openList[0]))
-					{
-						for (ABuilding* building : current->Connections)
-						{
-							openList.AddUnique(building);
-						}
-					}
-					openList.RemoveAt(0);
+					openList.AddUnique(building);
 				}
 			}
+			openList.RemoveAt(0);
 		}
 	}
 	return false;

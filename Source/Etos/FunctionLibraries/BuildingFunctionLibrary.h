@@ -30,7 +30,9 @@ public:
 		static void CalcVectors(float XExtend, float YExtend, float ZExtend, bool negateX1, bool negateY1, bool negateX2, bool negateY2, EOffsetDirections StartOffset, EOffsetDirections GoalOffset, FVector& OutStart, FVector& OutGoal, float ZHeight = 25);
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingUtilFunctions")
-		static bool FindPathTo(const ABuilding* target);
+		static bool FindPath(const ABuilding* Source, const ABuilding* Target);
 
 	static FVector MakeVector(float X, float Y, FVector2D offset, float Z = 25);
 };
+
+typedef UBuildingFunctionLibrary BFuncs;

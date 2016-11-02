@@ -5,6 +5,7 @@
 #include "MarketBarrow.h"
 #include "Etos/Game/EtosPlayerController.h"
 #include "Etos/Buildings/Path.h"
+#include "Etos/FunctionLibraries/BuildingFunctionLibrary.h"
 
 FORCEINLINE void AWarehouse::ReceiveResource(const FResource& resource)
 {
@@ -35,25 +36,24 @@ FORCEINLINE AEtosPlayerController * AWarehouse::GetMyPlayerController()
 
 inline void AWarehouse::SendMarketBarrows()
 {
-	for (ABuilding* building : Data.BuildingsInRadius)
+	if (BP_MarketBarrow)
 	{
-		if (barrowsInUse < maxBarrows)
+		for (ABuilding* building : Data.BuildingsInRadius)
 		{
-			if (building && building->Data.ProducedResource.Amount > 0)
+			if (barrowsInUse < maxBarrows)
 			{
-				if (!building->Data.bBarrowIsOnTheWay)
+				if (building && building->Data.ProducedResource.Amount > 0)
 				{
-					// TODO: search path
-
-					if (BP_MarketBarrow)
+					if (!building->Data.bBarrowIsOnTheWay)
 					{
-						if (Data.PathConnections.IsValidIndex(0))
+						if (BFuncs::FindPath(this, building))
 						{
 							if (UWorld* World = GetWorld())
 							{
 								FActorSpawnParameters params = FActorSpawnParameters();
 								params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
+								// TODO: find closest path tiles
 								if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
 								{
 									AMarketBarrow* newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, FRotator(0, 0, 0), params);
@@ -64,7 +64,6 @@ inline void AWarehouse::SendMarketBarrows()
 								}
 							}
 						}
-						else UE_LOG(LogTemp, Warning, TEXT("no path connection in warehouse"))
 					}
 				}
 			}
