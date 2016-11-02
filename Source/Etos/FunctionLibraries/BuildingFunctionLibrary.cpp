@@ -1,9 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// © 2016 - 2017 Daniel Bortfeld
 
 #include "Etos.h"
+#include "Etos/Buildings/Base/Building.h"
 #include "BuildingFunctionLibrary.h"
 
-void UBuildingFunctionLibrary::CalcVectors(UPARAM(DisplayName="X-Extend") float XExtend, UPARAM(DisplayName = "Y-Extend") float YExtend, UPARAM(DisplayName = "Z-Extend") float ZExtend, bool negateX1, bool negateY1, bool negateX2, bool negateY2, EOffsetDirections StartOffset, EOffsetDirections GoalOffset, FVector& OutStart, FVector& OutGoal, float ZHeight)
+void UBuildingFunctionLibrary::CalcVectors(UPARAM(DisplayName = "X-Extend") float XExtend, UPARAM(DisplayName = "Y-Extend") float YExtend, UPARAM(DisplayName = "Z-Extend") float ZExtend, bool negateX1, bool negateY1, bool negateX2, bool negateY2, EOffsetDirections StartOffset, EOffsetDirections GoalOffset, FVector& OutStart, FVector& OutGoal, float ZHeight)
 {
 	FVector2D TopLeftOffset = FVector2D(-50, -50);
 	FVector2D TopRightOffset = FVector2D(50, -50);
@@ -67,6 +68,45 @@ void UBuildingFunctionLibrary::CalcVectors(UPARAM(DisplayName="X-Extend") float 
 	default:
 		break;
 	}
+}
+
+bool UBuildingFunctionLibrary::FindPathTo(const ABuilding * target)
+{
+	if (target)
+	{
+		if (AActor* Owner = GetOwner())
+		{
+			if (ABuilding* Source = dynamic_cast<ABuilding*, AActor>(Owner))
+			{
+				if (target == Source)
+				{
+					return true;
+				}
+
+				TArray<ABuilding*> openList = TArray<ABuilding*>();
+				openList.Empty(Source->Data.PathConnections.Num());
+				openList.Append(Source->Data.PathConnections);
+
+				while (openList.Num() > 0)
+				{
+					if (openList[0] == target)
+					{
+						return true;
+					}
+
+					if (APath* current = dynamic_cast<APath*, ABuilding>(openList[0]))
+					{
+						for (ABuilding* building : current->Connections)
+						{
+							openList.AddUnique(building);
+						}
+					}
+					openList.RemoveAt(0);
+				}
+			}
+		}
+	}
+	return false;
 }
 
 FORCEINLINE FVector UBuildingFunctionLibrary::MakeVector(float X, float Y, FVector2D offset, float Z)
