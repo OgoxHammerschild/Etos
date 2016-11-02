@@ -3,6 +3,11 @@
 #include "Etos.h"
 #include "Path.h"
 
+APath::APath()
+{
+	FoundationMesh->SetCanEverAffectNavigation(true);
+}
+
 //void APath::OnConstruction(const FTransform& Transform)
 //{
 //	PossibleConnections.Empty(4);
@@ -65,7 +70,7 @@ void APath::CreateTracePoints()
 	}
 }
 
-void APath::ReloacteTracePoints()
+void APath::RelocateTracePoints()
 {
 	float hight = 0;
 	float offset = 100;

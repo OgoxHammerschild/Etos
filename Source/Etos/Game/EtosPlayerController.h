@@ -19,10 +19,10 @@ private:
 	UPROPERTY()
 		bool bIsHoldingObject;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		TMap<EResource, int32> resourceAmounts;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		ABuilding* newBuilding;
 
 public:
@@ -31,16 +31,16 @@ public:
 
 	virtual void SetupInputComponent() override;
 
-	void AddResource(FResource resource);
+	void AddResource(const FResource& resource);
 
-	void RemoveResource(FResource resource);
+	void RemoveResource(const FResource& resource);
 	
-	int32 GetResourceAmount(EResource resource);
+	int32 GetResourceAmount(const EResource& resource);
 
 	class UInGameUI* GetInGameUI();
 
-	ABuilding* SpawnBuilding(ABuilding* Class, FBuildingData Data);
-	ABuilding* SpawnBuilding(TSubclassOf<ABuilding> Subclass, FBuildingData Data);
+	ABuilding* SpawnBuilding(ABuilding* Class, const FBuildingData& Data);
+	ABuilding* SpawnBuilding(TSubclassOf<ABuilding> Subclass, const FBuildingData& Data);
 
 private:
 
@@ -57,9 +57,9 @@ private:
 		void ClickRepeatedly(FKey key);
 
 	UFUNCTION()
-		void CancelBuilding(FKey key);
+		void CancelPlacementOfBuilding(FKey key);
 
-	bool HasEnoughResources(TArray<FResource> buildCost);
+	bool HasEnoughResources(const TArray<FResource>& buildCost);
 
 	//ABuilding* GetBuildingUnderCursor();
 
@@ -67,7 +67,7 @@ private:
 
 	void InitResourceMapping();
 
-	void CancelPlacementOfBuilding();
+	void PayCostsOfBuilding(const TArray<FResource>& buildCost);
 
-	void PayCostsOfBuilding(TArray<FResource> buildCost);
+	ABuilding* SpawnBuilding_Internal(UClass* Class, const FBuildingData& Data);
 };

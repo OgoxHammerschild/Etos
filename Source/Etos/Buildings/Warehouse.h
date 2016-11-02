@@ -3,6 +3,7 @@
 #pragma once
 
 class AEtosPlayerController;
+class AMarketBarrow;
 #include "Buildings/Base/Building.h"
 #include "Warehouse.generated.h"
 
@@ -14,18 +15,23 @@ class ETOS_API AWarehouse : public ABuilding
 {
 	GENERATED_BODY()
 	
+public:
+
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<AMarketBarrow> BP_MarketBarrow;
+
 private:
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		int32 barrowsInUse = 0;
-	UPROPERTY()
-		int32 maxBarrows = 1;
+	UPROPERTY(EditAnywhere)
+		int32 maxBarrows = 2;
 	UPROPERTY()
 		AEtosPlayerController* MyPlayerController;
 
 public:
 
-	void ReceiveResource(FResource resource);
+	void ReceiveResource(const FResource& resource);
 
 	void DecreaseBarrowsInUse();
 

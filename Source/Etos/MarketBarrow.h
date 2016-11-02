@@ -40,6 +40,8 @@ public:
 	// Sets default values for this character's properties
 	AMarketBarrow();
 
+	static AMarketBarrow* Construct(UObject* WorldContextObject, TSubclassOf<AMarketBarrow> ClassToSpawn, const FVector& SpawnLocation, const FVector& TargetLocation, AWarehouse* MyWarehouse, ABuilding* TargetBuilding, const FRotator& Rotation = FRotator(), const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -57,6 +59,8 @@ private:
 		void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult);
 
 	AAIController* GetAIController();
+
+	void BindToOnMoveCompleted();
 
 	void MoveToTarget();
 

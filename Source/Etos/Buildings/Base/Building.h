@@ -173,7 +173,7 @@ protected:
 
 	virtual void CreateTracePoints();
 
-	virtual void ReloacteTracePoints();
+	virtual void RelocateTracePoints();
 
 	virtual void GetSurroundingBuildings();
 

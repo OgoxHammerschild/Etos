@@ -27,7 +27,7 @@ class ETOS_API UUtilityFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
-		public:
+public:
 
 	static TArray<TEnumAsByte<EObjectTypeQuery>> BuildingObjectType;
 	static TArray<TEnumAsByte<EObjectTypeQuery>> FloorObjectType;
@@ -47,7 +47,11 @@ public:
 		static AEtosPlayerController* GetEtosPlayerController(UObject* WorldContextObject, int32 PlayerIndex);
 
 	UFUNCTION(BlueprintPure, Category = "Conversion")
-		static FString BoolToString(const bool& b);
+		static FString ConvertBoolToString(const bool& b);
+
+	// https://wiki.unrealengine.com/Enums_For_Both_C%2B%2B_and_BP#Get_Name_of_Enum_as_String
+	template<typename TEnum>
+	static FString ConvertEnumValueToString(const FString& EnumName, TEnum Value);
 
 private:
 

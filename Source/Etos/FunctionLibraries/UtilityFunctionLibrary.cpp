@@ -9,7 +9,7 @@
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::BuildingObjectType = InitBuildingObjectType();
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::FloorObjectType = InitFloorObjectType();
 
-AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* WorldContextObject)
+FORCEINLINE AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* WorldContextObject)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject);
 	AEtosGameMode* gm = dynamic_cast<AEtosGameMode*, AGameMode>(World->GetAuthGameMode());
@@ -22,7 +22,7 @@ AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* WorldContextObj
 	return nullptr;
 }
 
-AEtosHUD * UUtilityFunctionLibrary::GetEtosHUD(UObject* WorldContextObject, int32 PlayerIndex)
+FORCEINLINE AEtosHUD * UUtilityFunctionLibrary::GetEtosHUD(UObject* WorldContextObject, int32 PlayerIndex)
 {
 	AEtosHUD* hud = dynamic_cast<AEtosHUD*, AHUD>(GetEtosPlayerController(WorldContextObject, PlayerIndex)->GetHUD());
 
@@ -34,7 +34,7 @@ AEtosHUD * UUtilityFunctionLibrary::GetEtosHUD(UObject* WorldContextObject, int3
 	return nullptr;
 }
 
-AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerController(UObject* WorldContextObject)
+FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerController(UObject* WorldContextObject)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject);
 	AEtosPlayerController* pc = dynamic_cast<AEtosPlayerController*, APlayerController>(World->GetFirstPlayerController());
@@ -47,7 +47,7 @@ AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerController(UO
 	return nullptr;
 }
 
-AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerController(UObject* WorldContextObject, int32 PlayerIndex)
+FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerController(UObject* WorldContextObject, int32 PlayerIndex)
 {
 	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject))
 	{
@@ -73,12 +73,24 @@ AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerController(UObject
 	return nullptr;
 }
 
-FString UUtilityFunctionLibrary::BoolToString(const bool & b)
+FORCEINLINE FString UUtilityFunctionLibrary::ConvertBoolToString(const bool & b)
 {
 	return b ? FString(TEXT("true")) : FString(TEXT("false"));
 }
 
-TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitBuildingObjectType()
+template<typename TEnum>
+FORCEINLINE FString UUtilityFunctionLibrary::ConvertEnumValueToString(const FString& EnumName, TEnum Value)
+{
+	const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, *EnumName, true);
+	if (!enumPtr)
+	{
+		return FString("Invalid");
+	}
+
+	return enumPtr->GetEnumName((int32)Value);
+}
+
+FORCEINLINE TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitBuildingObjectType()
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> buildingObjectType;
 	buildingObjectType.Init(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1/*Building*/), 1);
@@ -86,7 +98,7 @@ TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitBuildingObjec
 	return buildingObjectType;
 }
 
-TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitFloorObjectType()
+FORCEINLINE TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitFloorObjectType()
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> floorObjectType;
 	floorObjectType.Init(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel2/*Floor*/), 1);

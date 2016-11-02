@@ -6,11 +6,11 @@
 #include "Etos/Game/EtosPlayerController.h"
 #include "Etos/Buildings/Path.h"
 
-void AWarehouse::ReceiveResource(FResource resource)
+FORCEINLINE void AWarehouse::ReceiveResource(const FResource& resource)
 {
 	if (GetMyPlayerController())
 	{
-		//MyPlayerController->addresou
+		MyPlayerController->AddResource(resource);
 	}
 }
 
@@ -19,12 +19,12 @@ FORCEINLINE void AWarehouse::DecreaseBarrowsInUse()
 	barrowsInUse--;
 }
 
-void AWarehouse::BindDelayAction()
+inline void AWarehouse::BindDelayAction()
 {
 	Action.BindDynamic(this, &AWarehouse::SendMarketBarrows);
 }
 
-AEtosPlayerController * AWarehouse::GetMyPlayerController()
+FORCEINLINE AEtosPlayerController * AWarehouse::GetMyPlayerController()
 {
 	if (!MyPlayerController)
 	{
@@ -33,7 +33,7 @@ AEtosPlayerController * AWarehouse::GetMyPlayerController()
 	return MyPlayerController;
 }
 
-void AWarehouse::SendMarketBarrows()
+inline void AWarehouse::SendMarketBarrows()
 {
 	for (ABuilding* building : Data.BuildingsInRadius)
 	{
@@ -45,16 +45,26 @@ void AWarehouse::SendMarketBarrows()
 				{
 					// TODO: search path
 
-					if (AMarketBarrow* newMarketBarrow = GetWorld()->SpawnActor<AMarketBarrow>(Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 25), FRotator()))
+					if (BP_MarketBarrow)
 					{
-						// TODO: init barrow
-
-						if (!newMarketBarrow->GetController())
+						if (Data.PathConnections.IsValidIndex(0))
 						{
-							newMarketBarrow->SpawnDefaultController();
-						}
+							if (UWorld* World = GetWorld())
+							{
+								FActorSpawnParameters params = FActorSpawnParameters();
+								params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-						barrowsInUse++;
+								if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
+								{
+									AMarketBarrow* newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, FRotator(0, 0, 0), params);
+									if (newMarketBarrow != nullptr)
+									{
+										barrowsInUse++;
+									}
+								}
+							}
+						}
+						else UE_LOG(LogTemp, Warning, TEXT("no path connection in warehouse"))
 					}
 				}
 			}

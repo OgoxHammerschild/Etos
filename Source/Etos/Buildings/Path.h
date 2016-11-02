@@ -15,6 +15,8 @@ class ETOS_API APath : public ABuilding
 
 public:
 
+	APath();
+
 	//virtual void OnConstruction(const FTransform& Transform) override;
 
 	virtual void OnBuild() override;
@@ -23,7 +25,7 @@ protected:
 
 	virtual void CreateTracePoints() override;
 
-	virtual void ReloacteTracePoints() override;
+	virtual void RelocateTracePoints() override;
 
 	virtual void GetSurroundingBuildings() override;
 

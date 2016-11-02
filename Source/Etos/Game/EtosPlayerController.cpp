@@ -43,10 +43,10 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame);
 	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu);
 	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly);
-	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelBuilding);
+	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding);
 }
 
-FORCEINLINE void AEtosPlayerController::AddResource(FResource resource)
+FORCEINLINE void AEtosPlayerController::AddResource(const FResource& resource)
 {
 	if (resource.Type != EResource::None)
 	{
@@ -55,7 +55,7 @@ FORCEINLINE void AEtosPlayerController::AddResource(FResource resource)
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::RemoveResource(FResource resource)
+FORCEINLINE void AEtosPlayerController::RemoveResource(const FResource& resource)
 {
 	if (resource.Type != EResource::None)
 	{
@@ -64,7 +64,7 @@ FORCEINLINE void AEtosPlayerController::RemoveResource(FResource resource)
 	}
 }
 
-FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(EResource resource)
+FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(const EResource& resource)
 {
 	return resourceAmounts.FindOrAdd(resource);
 }
@@ -119,7 +119,7 @@ FORCEINLINE void AEtosPlayerController::ClickRepeatedly(FKey key)
 	}
 }
 
-FORCEINLINE bool AEtosPlayerController::HasEnoughResources(TArray<FResource> buildCost)
+FORCEINLINE bool AEtosPlayerController::HasEnoughResources(const TArray<FResource>& buildCost)
 {
 	for (FResource cost : buildCost)
 	{
@@ -153,7 +153,7 @@ FORCEINLINE void AEtosPlayerController::InitResourceMapping()
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding()
+FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 {
 	if (bIsHoldingObject)
 	{
@@ -162,12 +162,11 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding()
 			newBuilding->Destroy();
 			bIsHoldingObject = false;
 			UE_LOG(LogTemp, Warning, TEXT("building canceled"));
-
 		}
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(TArray<FResource> buildCost)
+FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(const TArray<FResource>& buildCost)
 {
 	for (FResource resource : buildCost)
 	{
@@ -175,12 +174,7 @@ FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(TArray<FResource> bui
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::CancelBuilding(FKey key)
-{
-	CancelPlacementOfBuilding();
-}
-
-FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, FBuildingData Data)
+FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * Class, const FBuildingData & Data)
 {
 	if (bIsHoldingObject)
 		return nullptr;
@@ -192,9 +186,10 @@ FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, FB
 
 	if (UWorld* World = GetWorld())
 	{
-		newBuilding = World->SpawnActor<ABuilding>(Class->GetClass());
+		newBuilding = World->SpawnActor<ABuilding>(Class);
 		newBuilding->Data = data;
 		newBuilding->Data.bIsHeld = true;
+		newBuilding->Data.bPositionIsBlocked = false;
 		newBuilding->Radius->SetSphereRadius(data.Radius);
 		bIsHoldingObject = true;
 
@@ -204,26 +199,12 @@ FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, FB
 	return nullptr;
 }
 
-FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, FBuildingData Data)
+FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, const FBuildingData& Data)
 {
-	if (bIsHoldingObject)
-		return nullptr;
+	return SpawnBuilding_Internal(Class->GetClass(), Data);
+}
 
-	if (!Subclass)
-		return nullptr;
-
-	FBuildingData data = Data;
-
-	if (UWorld* World = GetWorld())
-	{
-		newBuilding = World->SpawnActor<ABuilding>(Subclass);
-		newBuilding->Data = data;
-		newBuilding->Data.bIsHeld = true;
-		newBuilding->Radius->SetSphereRadius(data.Radius);
-		bIsHoldingObject = true;
-
-		//TODO: make building transparent
-		return newBuilding;
-	}
-	return nullptr;
+FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, const FBuildingData& Data)
+{
+	return SpawnBuilding_Internal(Subclass, Data);
 }

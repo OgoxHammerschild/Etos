@@ -10,16 +10,21 @@
 // Sets default values
 ABuilding::ABuilding()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent->SetMobility(EComponentMobility::Movable);
 
 	BuildingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Building Mesh"));
 	BuildingMesh->SetupAttachment(RootComponent);
+	BuildingMesh->SetCanEverAffectNavigation(false);
+	BuildingMesh->CastShadow = false;
 
 	FoundationMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Foundation"));
 	FoundationMesh->SetupAttachment(RootComponent);
+	FoundationMesh->SetCanEverAffectNavigation(false);
+	FoundationMesh->CastShadow = false;
 	ConstructorHelpers::FObjectFinder<UStaticMesh> quadFinder = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/BasicMeshes/SM_Quad_1x1m.SM_Quad_1x1m'"));
 	if (quadFinder.Succeeded())
 	{
@@ -33,6 +38,7 @@ ABuilding::ABuilding()
 	Radius->OnComponentBeginOverlap.AddDynamic(this, &ABuilding::BuildingEnteredRadius);
 	Radius->OnComponentEndOverlap.AddDynamic(this, &ABuilding::BuildingLeftRadius);
 	Radius->SetSphereRadius(Data.Radius);
+	Radius->SetCanEverAffectNavigation(false);
 
 	InitOccupiedBuildSpace();
 	SetFoundationSize(1, 1);
@@ -49,7 +55,7 @@ void ABuilding::PostInitProperties()
 void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
-	ReloacteTracePoints();
+	RelocateTracePoints();
 }
 
 // Called every frame
@@ -176,7 +182,7 @@ void ABuilding::CreateTracePoints()
 	}
 }
 
-void ABuilding::ReloacteTracePoints()
+void ABuilding::RelocateTracePoints()
 {
 	FVector BoxExtend = OccupiedBuildSpace->GetScaledBoxExtent();
 	FVector Start;
@@ -331,7 +337,7 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 
 bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult)
 {
-	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::ForDuration, HitResult, true);
+	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
 }
 
 bool ABuilding::TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults)
