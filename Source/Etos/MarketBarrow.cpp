@@ -110,10 +110,10 @@ namespace EPathFollowingResult
 
 void AMarketBarrow::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult)
 {
-	//if (AcceptanceRadius < FVector::Dist(TargetLocation, GetActorLocation()))
-	//{
-	//	MovementResult = EPathFollowingResult::OffPath;
-	//}
+	if (AcceptanceRadius < FVector::Dist(TargetLocation, GetActorLocation()))
+	{
+		MovementResult = EPathFollowingResult::OffPath;
+	}
 
 	UE_LOG(LogTemp, Warning, TEXT("MovementResult: %s"), *EPathFollowingResult::ToString(MovementResult));
 
