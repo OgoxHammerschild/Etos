@@ -13,6 +13,9 @@ AMarketBarrow::AMarketBarrow()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	UCapsuleComponent* CapsuleComponent = dynamic_cast<UCapsuleComponent*, USceneComponent>(RootComponent);
+	CapsuleComponent->bDynamicObstacle = false;
+	CapsuleComponent->AreaClass = nullptr;
 }
 
 AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassOf<AMarketBarrow> ClassToSpawn, const FVector & SpawnLocation, const FVector & TargetLocation, AWarehouse * MyWarehouse, ABuilding * TargetBuilding, const FRotator & Rotation, const FActorSpawnParameters & SpawnParameters)
@@ -41,6 +44,7 @@ AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassO
 			barrow->StartLocation = SpawnLocation;
 			barrow->TargetLocation = TargetLocation;
 			barrow->TargetBuilding->Data.bBarrowIsOnTheWay = true;
+			barrow->SetCanEverAffectNavigationOnComponents(false);
 
 			//TODO: fade in
 
@@ -106,6 +110,11 @@ namespace EPathFollowingResult
 
 void AMarketBarrow::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult)
 {
+	//if (AcceptanceRadius < FVector::Dist(TargetLocation, GetActorLocation()))
+	//{
+	//	MovementResult = EPathFollowingResult::OffPath;
+	//}
+
 	UE_LOG(LogTemp, Warning, TEXT("MovementResult: %s"), *EPathFollowingResult::ToString(MovementResult));
 
 	switch (MovementResult)
@@ -203,4 +212,14 @@ FORCEINLINE void AMarketBarrow::HaveLunchBreak()
 
 	// on fade out finished:
 	Destroy();
+}
+
+FORCEINLINE void AMarketBarrow::SetCanEverAffectNavigationOnComponents(bool bRelevance)
+{
+	TArray<UActorComponent*> comps;
+	GetComponents(comps);
+	for (auto comp : comps)
+	{
+		comp->SetCanEverAffectNavigation(bRelevance);
+	}
 }

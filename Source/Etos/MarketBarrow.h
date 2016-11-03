@@ -25,7 +25,9 @@ public:
 		AWarehouse* MyWarehouse;
 	UPROPERTY()
 		ABuilding* TargetBuilding;
-
+	// the radius from the target location in which a completed move counts as successfull
+	//UPROPERTY()
+	//	float AcceptanceRadius;
 private:
 
 	UPROPERTY()
@@ -71,4 +73,6 @@ private:
 	void AddResourceToPlayer();
 
 	void HaveLunchBreak();
+
+	void SetCanEverAffectNavigationOnComponents(bool bRelevance);
 };

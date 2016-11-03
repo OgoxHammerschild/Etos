@@ -235,7 +235,7 @@ void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedCompone
 {
 	if (bMovedOnce && Data.bIsHeld && !Data.bIsBuilt)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *OtherActor->GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *OtherActor->GetName());
 
 		collisions.Add(OtherActor);
 		Data.bPositionIsBlocked = true;
@@ -246,11 +246,11 @@ void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent
 {
 	if (bMovedOnce && Data.bIsHeld && !Data.bIsBuilt)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *OtherActor->GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *OtherActor->GetName());
 		
 		collisions.RemoveSingle(OtherActor);
 
-		UE_LOG(LogTemp, Warning, TEXT("%s is colliding with %i actors"), *GetName(), collisions.Num());
+		//UE_LOG(LogTemp, Warning, TEXT("%s is colliding with %i actors"), *GetName(), collisions.Num());
 
 		if (collisions.Num() == 0)
 		{
