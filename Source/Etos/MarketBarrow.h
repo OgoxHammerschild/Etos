@@ -26,7 +26,7 @@ public:
 	UPROPERTY()
 		ABuilding* TargetBuilding;
 	// the radius from the target location in which a completed move counts as successfull
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float AcceptanceRadius;
 private:
 
