@@ -82,23 +82,23 @@ bool UBuildingFunctionLibrary::FindPath(const ABuilding* Source, const ABuilding
 
 		TArray<ABuilding*> openList = TArray<ABuilding*>();
 		openList.Empty(Source->Data.PathConnections.Num());
+
 		openList.Append(Source->Data.PathConnections);
 
-		while (openList.Num() > 0)
+		for (int32 i = 0; i < openList.Num(); ++i)
 		{
-			if (openList[0] == Target)
+			if (openList[i] == Target)
 			{
 				return true;
 			}
 
-			if (APath* current = dynamic_cast<APath*, ABuilding>(openList[0]))
+			if (APath* current = dynamic_cast<APath*, ABuilding>(openList[i]))
 			{
 				for (ABuilding* building : current->Connections)
 				{
 					openList.AddUnique(building);
 				}
 			}
-			openList.RemoveAt(0);
 		}
 	}
 	return false;
