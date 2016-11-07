@@ -6,6 +6,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Etos/Buildings/Path.h"
+#include "Etos/Game/EtosPlayerController.h"
 
 // Sets default values
 ABuilding::ABuilding()
@@ -39,6 +40,15 @@ ABuilding::ABuilding()
 	Radius->OnComponentEndOverlap.AddDynamic(this, &ABuilding::BuildingLeftRadius);
 	Radius->SetSphereRadius(Data.Radius);
 	Radius->SetCanEverAffectNavigation(false);
+
+	if (!ResourcePopup)
+	{
+		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopup.BP_ResourcePopup'"));
+		if (popupFinder.Succeeded())
+		{
+			ResourcePopup = (UClass*)popupFinder.Object->GeneratedClass;
+		}
+	}
 
 	InitOccupiedBuildSpace();
 	SetFoundationSize(1, 1);
@@ -147,6 +157,16 @@ void ABuilding::SetFoundationSize(int32 width, int32 height)
 	OccupiedBuildSpace->SetBoxExtent(FVector(halfTileSize * width - 1, halfTileSize * height - 1, halfTileSize - 1));
 }
 
+FORCEINLINE bool ABuilding::operator<(ABuilding & B) const
+{
+	return Data.ProducedResource.Amount < B.Data.ProducedResource.Amount;
+}
+
+FORCEINLINE bool ABuilding::operator<(const ABuilding & B) const
+{
+	return Data.ProducedResource.Amount < B.Data.ProducedResource.Amount;
+}
+
 void ABuilding::InitOccupiedBuildSpace()
 {
 	OccupiedBuildSpace = CreateDefaultSubobject<UBoxComponent>(TEXT("Occupied Build Space"));
@@ -165,19 +185,23 @@ void ABuilding::InitOccupiedBuildSpace()
 
 void ABuilding::CreateTracePoints()
 {
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Top")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Top")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Bot")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Bot")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Left")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Left")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Right")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Right")));
-
-	for (USceneComponent* point : TracePoints)
+	if (UWorld* World = GetWorld())
 	{
-		point->SetupAttachment(OccupiedBuildSpace);
-		point->SetVisibility(false);
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Top")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Top")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Bot")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Bot")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Left")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Left")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Right")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Right")));
+
+		for (USceneComponent* point : TracePoints)
+		{
+			point->SetupAttachment(OccupiedBuildSpace);
+			point->RegisterComponentWithWorld(World);
+			point->SetVisibility(false);
+		}
 	}
 }
 
@@ -235,7 +259,7 @@ void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedCompone
 {
 	if (bMovedOnce && Data.bIsHeld && !Data.bIsBuilt)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *OtherActor->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *OtherActor->GetName());
 
 		collisions.Add(OtherActor);
 		Data.bPositionIsBlocked = true;
@@ -246,11 +270,11 @@ void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent
 {
 	if (bMovedOnce && Data.bIsHeld && !Data.bIsBuilt)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *OtherActor->GetName());
-		
+		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *OtherActor->GetName());
+
 		collisions.RemoveSingle(OtherActor);
 
-		//UE_LOG(LogTemp, Warning, TEXT("%s is colliding with %i actors"), *GetName(), collisions.Num());
+		UE_LOG(LogTemp, Warning, TEXT("%s is colliding with %i actors"), *GetName(), collisions.Num());
 
 		if (collisions.Num() == 0)
 		{
@@ -320,6 +344,7 @@ void ABuilding::AddResource()
 	if (Data.ProducedResource.Amount < Data.MaxStoredResources)
 	{
 		Data.ProducedResource.Amount++;
+		SpawnResourcePopup();
 	}
 }
 
@@ -369,6 +394,27 @@ void ABuilding::CallDelayAction(float pastTime, float delayDuration)
 	{
 		this->pastDelayTimerTime = 0;
 		this->Action.ExecuteIfBound();
+	}
+}
+
+void ABuilding::SpawnResourcePopup(FVector offset)
+{
+	if (ResourcePopup)
+	{
+		if (UWorld* const World = GetWorld())
+		{
+			FActorSpawnParameters params = FActorSpawnParameters();
+			params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			if (APlayerCameraManager* const PlayerCameraManager = Util::GetFirstEtosPlayerController(this)->PlayerCameraManager)
+			{
+				FVector cameraLocation = PlayerCameraManager->GetCameraLocation();
+
+				FRotator rotation = UKismetMathLibrary::FindLookAtRotation(cameraLocation + PlayerCameraManager->GetCameraRotation().Vector(), cameraLocation);
+
+				World->SpawnActor<AActor>(ResourcePopup, GetActorLocation() + offset, rotation, params);
+			}
+		}
 	}
 }
 

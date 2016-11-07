@@ -6,6 +6,7 @@
 #include "Building.generated.h"
 class ABuilding;
 class APath;
+class UWidgetComponent;
 
 DECLARE_DYNAMIC_DELEGATE(FDelayedActionDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBuildingDelegate, ABuilding*, sender);
@@ -118,6 +119,9 @@ public:
 
 public:
 
+	UPROPERTY()
+		TSubclassOf<AActor> ResourcePopup;
+
 	UPROPERTY(EditAnywhere)
 		FBuildingData Data;
 
@@ -172,6 +176,10 @@ public:
 
 	void SetFoundationSize(int32 width, int32 height);
 
+	bool operator<(ABuilding& B)const;
+
+	bool operator<(const ABuilding& B) const;
+
 protected:
 
 	virtual void CreateTracePoints();
@@ -193,6 +201,8 @@ protected:
 	bool TraceSingleForFloor(FVector Start, FVector End, FHitResult& Hit);
 
 	void CallDelayAction(float pastTime, float delayDuration = 1);
+
+	void SpawnResourcePopup(FVector offset = FVector(0,0,200));
 
 private:
 
