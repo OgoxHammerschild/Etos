@@ -194,11 +194,11 @@ protected:
 
 	TArray<ABuilding*> GetBuildingsInRange();
 
-	bool TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult);
+	//bool TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult);
 
-	bool TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults);
+	//bool TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults);
 
-	bool TraceSingleForFloor(FVector Start, FVector End, FHitResult& Hit);
+	//bool TraceSingleForFloor(FVector Start, FVector End, FHitResult& Hit);
 
 	void CallDelayAction(float pastTime, float delayDuration = 1);
 

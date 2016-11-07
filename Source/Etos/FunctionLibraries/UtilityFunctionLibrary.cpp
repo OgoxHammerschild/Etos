@@ -5,51 +5,57 @@
 #include "Etos/Game/EtosHUD.h"
 #include "Etos/Game/EtosPlayerController.h"
 #include "UtilityFunctionLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::BuildingObjectType = InitBuildingObjectType();
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::FloorObjectType = InitFloorObjectType();
 
 FORCEINLINE AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* WorldContextObject)
 {
-	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject);
-	AEtosGameMode* gm = dynamic_cast<AEtosGameMode*, AGameMode>(World->GetAuthGameMode());
-
-	if (gm)
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
 	{
+		static AEtosGameMode* gm;
+
+		if (!gm)
+		{
+			gm = dynamic_cast<AEtosGameMode*, AGameMode>(World->GetAuthGameMode());
+		}
 		return gm;
 	}
-
 	return nullptr;
 }
 
 FORCEINLINE AEtosHUD * UUtilityFunctionLibrary::GetEtosHUD(UObject* WorldContextObject, int32 PlayerIndex)
 {
-	AEtosHUD* hud = dynamic_cast<AEtosHUD*, AHUD>(GetEtosPlayerController(WorldContextObject, PlayerIndex)->GetHUD());
+	static AEtosHUD* hud;
 
-	if (hud)
+	if (!hud)
 	{
-		return hud;
+		hud = dynamic_cast<AEtosHUD*, AHUD>(GetEtosPlayerController(WorldContextObject, PlayerIndex)->GetHUD());
 	}
 
-	return nullptr;
+	return hud;
 }
 
 FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerController(UObject* WorldContextObject)
 {
-	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject);
-	AEtosPlayerController* pc = dynamic_cast<AEtosPlayerController*, APlayerController>(World->GetFirstPlayerController());
-
-	if (pc)
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
 	{
+		static AEtosPlayerController* pc;
+
+		if (!pc)
+		{
+			pc = dynamic_cast<AEtosPlayerController*, APlayerController>(World->GetFirstPlayerController());
+		}
+
 		return pc;
 	}
-
 	return nullptr;
 }
 
 FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerController(UObject* WorldContextObject, int32 PlayerIndex)
 {
-	if (UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
 	{
 		uint32 Index = 0;
 		for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
@@ -57,20 +63,44 @@ FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerContro
 			APlayerController* PlayerController = *Iterator;
 			if (Index == PlayerIndex)
 			{
-				AEtosPlayerController* pc = dynamic_cast<AEtosPlayerController*, APlayerController>(PlayerController);
-				if (pc)
-				{
-					return pc;
-				}
-				else
-				{
-					return nullptr;
-				}
+				return dynamic_cast<AEtosPlayerController*, APlayerController>(PlayerController);
 			}
 			Index++;
 		}
 	}
 	return nullptr;
+}
+
+FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & HitResult)
+{
+	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
+}
+
+FORCEINLINE bool UUtilityFunctionLibrary::TraceMultiForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, TArray<FHitResult>& HitResults)
+{
+	return UKismetSystemLibrary::LineTraceMultiForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true);
+}
+
+FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForFloor(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & Hit)
+{
+	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
+}
+
+inline bool UUtilityFunctionLibrary::TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, float Range)
+{
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	{
+		if (APlayerController* const PlayerController = World->GetFirstPlayerController())
+		{
+			FVector MouseLocation;
+			FVector MouseDirection;
+			PlayerController->DeprojectMousePositionToWorld(MouseLocation, MouseDirection);
+			MouseDirection *= Range;
+
+			return TraceSingleForFloor(WorldContextObject, MouseLocation, MouseLocation + MouseDirection, Hit);
+		}
+	}
+	return false;
 }
 
 FORCEINLINE FString UUtilityFunctionLibrary::ConvertBoolToString(const bool & b)

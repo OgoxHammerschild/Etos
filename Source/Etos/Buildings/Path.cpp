@@ -104,7 +104,7 @@ void APath::GetSurroundingBuildings()
 
 	for (int32 i = 1; i < 5; i++)
 	{
-		TraceSingleForBuildings(TracePoints[0]->GetComponentLocation(), TracePoints[i]->GetComponentLocation(), HitResult);
+		Util::TraceSingleForBuildings(this, TracePoints[0]->GetComponentLocation(), TracePoints[i]->GetComponentLocation(), HitResult);
 		AllHitResults.Add(HitResult);
 	}
 
