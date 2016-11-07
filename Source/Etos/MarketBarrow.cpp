@@ -65,7 +65,7 @@ void AMarketBarrow::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UE_LOG(LogTemp, Warning, TEXT("%s: I live!"), *GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("%s: I live!"), *GetName());
 }
 
 // Called every frame
@@ -85,7 +85,7 @@ void AMarketBarrow::SetupPlayerInputComponent(class UInputComponent* InputCompon
 // called by garbage collection (default 60sec interval)
 void AMarketBarrow::BeginDestroy()
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s: Goodbye cruel world. D:"), *GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("%s: Goodbye cruel world. D:"), *GetName());
 	Super::BeginDestroy();
 
 	//if (!this)
@@ -103,29 +103,27 @@ namespace EPathFollowingResult
 		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EPathFollowingResult"), true);
 		if (!EnumPtr) return FString("InvalidEnum");
 
-		return EnumPtr->GetEnumName((int32)EnumValue); // for EnumValue == VE_Dance returns "VE_Dance"
+		return EnumPtr->GetEnumName((int32)EnumValue);
 	}
 }
 #endif
 
 void AMarketBarrow::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type MovementResult)
 {
-	if (AcceptanceRadius < FVector::Dist(TargetLocation, GetActorLocation()))
-	{
-		MovementResult = EPathFollowingResult::OffPath;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("MovementResult: %s"), *EPathFollowingResult::ToString(MovementResult));
+	//UE_LOG(LogTemp, Warning, TEXT("MovementResult: %s"), *EPathFollowingResult::ToString(MovementResult));
 
 	switch (MovementResult)
 	{
 	case EPathFollowingResult::Success:
 		if (bArrivedAtTarget)
 		{
-			AddResourceToPlayer();
-			HaveLunchBreak();
+			if (AcceptanceRadius < FVector::Dist(TargetLocation, GetActorLocation()))
+			{
+				AddResourceToPlayer();
+				HaveLunchBreak();
+			}
 		}
-		else
+		else if (AcceptanceRadius < FVector::Dist(StartLocation, GetActorLocation()))
 		{
 			bArrivedAtTarget = true;
 			GetResource();

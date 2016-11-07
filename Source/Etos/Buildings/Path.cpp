@@ -56,16 +56,20 @@ void APath::OnBuild()
 
 void APath::CreateTracePoints()
 {
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Top")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Bot")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Left")));
-	TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Right")));
-
-	for (USceneComponent* point : TracePoints)
+	if (UWorld* World = GetWorld())
 	{
-		point->SetupAttachment(OccupiedBuildSpace);
-		point->SetVisibility(false);
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Top")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Bot")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Left")));
+		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Point Right")));
+
+		for (USceneComponent* point : TracePoints)
+		{
+			point->SetupAttachment(OccupiedBuildSpace);
+			point->RegisterComponentWithWorld(World);
+			point->SetVisibility(false);
+		}
 	}
 }
 

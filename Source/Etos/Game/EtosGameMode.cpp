@@ -17,6 +17,7 @@ FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(int32 building
 	check(PredefinedBuildingData);
 
 	// DataTable.h:97 variable swap error
+	// UObjectGlobals.h typo in NewObject assert
 
 	//if(buildingID is valid)
 	//{
