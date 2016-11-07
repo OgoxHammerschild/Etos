@@ -38,6 +38,7 @@ inline void AWarehouse::SendMarketBarrows()
 {
 	if (BP_MarketBarrow)
 	{
+		Data.BuildingsInRadius.Sort([&](ABuilding& A, ABuilding& B) {return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount; });
 		for (ABuilding* building : Data.BuildingsInRadius)
 		{
 			if (barrowsInUse < maxBarrows)
