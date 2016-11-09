@@ -17,7 +17,7 @@ class ETOS_API AEtosPlayerController : public APlayerController
 private:
 
 	UPROPERTY()
-		bool bIsHoldingObject;
+		bool bIsHoldingObject = false;
 
 	UPROPERTY(VisibleAnywhere)
 		TMap<EResource, int32> resourceAmounts;
@@ -25,16 +25,30 @@ private:
 	UPROPERTY(VisibleAnywhere)
 		ABuilding* newBuilding;
 
+	UPROPERTY(VisibleAnywhere)
+		TArray<APath*> tempPaths;
+
+	UPROPERTY(VisibleAnywhere)
+		bool bIsBulidingPath = false;
+
+	UPROPERTY(VisibleAnywhere)
+		FVector previousMouseLocation;
+
+	UPROPERTY(EditDefaultsOnly)
+		float mouseMoveThreshold = 20.f;
+
 public:
 
 	virtual void BeginPlay() override;
+
+	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupInputComponent() override;
 
 	void AddResource(const FResource& resource);
 
 	void RemoveResource(const FResource& resource);
-	
+
 	int32 GetResourceAmount(const EResource& resource);
 
 	class UInGameUI* GetInGameUI();
@@ -65,9 +79,19 @@ private:
 
 	void AddHUDToViewport();
 
+	void Panic(const std::exception& e);
+
 	void InitResourceMapping();
 
 	void PayCostsOfBuilding(const TArray<FResource>& buildCost);
 
 	ABuilding* SpawnBuilding_Internal(UClass* Class, const FBuildingData& Data);
+
+	void BuildNewBuilding_Internal();
+
+	void StartBuildingPath(APath* newPath);
+
+	void UpdatePathPreview();
+
+	void SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World);
 };

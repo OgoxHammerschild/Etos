@@ -3,13 +3,16 @@
 #include "Etos.h"
 #include "EtosPlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
+#include "Etos/FunctionLibraries/BuildingFunctionLibrary.h"
 #include "Etos/UI/InGameUI.h"
 #include "Etos/Game/EtosHUD.h"
 #include "Etos/Buildings/Path.h"
 
 void AEtosPlayerController::BeginPlay()
 {
+	PrimaryActorTick.bCanEverTick = true;
 	bShowMouseCursor = true;
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
@@ -18,22 +21,18 @@ void AEtosPlayerController::BeginPlay()
 	InitResourceMapping();
 
 	// for testing ############
-	FResource money = FResource();
-	money.Type = EResource::Money;
-	money.Amount = 10000;
-
-	FResource wood = FResource();
-	wood.Type = EResource::Wood;
-	wood.Amount = 50;
-
-	FResource tools = FResource();
-	tools.Type = EResource::Tool;
-	tools.Amount = 50;
-
-	AddResource(money);
-	AddResource(wood);
-	AddResource(tools);
+	AddResource(FResource(EResource::Money, 10000));
+	AddResource(FResource(EResource::Wood, 50));
+	AddResource(FResource(EResource::Tool, 50));
 	//#########################
+}
+
+void AEtosPlayerController::Tick(float DeltaTime)
+{
+	if (bIsBulidingPath)
+	{
+		UpdatePathPreview();
+	}
 }
 
 void AEtosPlayerController::SetupInputComponent()
@@ -78,26 +77,54 @@ FORCEINLINE void AEtosPlayerController::PauseGame(FKey key)
 {
 }
 
-FORCEINLINE void AEtosPlayerController::BuildNewBuilding(FKey key)
+FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, const FBuildingData& Data)
 {
-	if (newBuilding && newBuilding->Data.bIsHeld)
+	return SpawnBuilding_Internal(Class->GetClass(), Data);
+}
+
+FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, const FBuildingData& Data)
+{
+	return SpawnBuilding_Internal(Subclass, Data);
+}
+
+inline void AEtosPlayerController::BuildNewBuilding(FKey key)
+{
+	static bool bSkipStartBuildingPath;
+
+	if (newBuilding && (newBuilding->Data.bIsHeld || bIsBulidingPath))
 	{
 		if (!newBuilding->Data.bPositionIsBlocked)
 		{
 			if (HasEnoughResources(newBuilding->Data.BuildCost))
 			{
-				if (APath* newPath = dynamic_cast<APath*, ABuilding>(newBuilding))
+				if (bIsBulidingPath)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("It's a path!"));
+					bSkipStartBuildingPath = true;
+					bIsBulidingPath = false;
+					for (APath* path : tempPaths)
+					{
+						path->Data.bIsHeld = true;
+						newBuilding = path;
+						BuildNewBuilding(key);
+					}
+					tempPaths.Empty();
+					bSkipStartBuildingPath = false;
 				}
-
-				newBuilding->Data.bIsHeld = false;
-				bIsHoldingObject = false;
-				PayCostsOfBuilding(newBuilding->Data.BuildCost);
-
-				//TODO: make building opaque
-
-				newBuilding->OnBuild();
+				else
+				{
+					if (bSkipStartBuildingPath)
+					{
+						BuildNewBuilding_Internal();
+					}
+					else if (APath* newPath = dynamic_cast<APath*, ABuilding>(newBuilding))
+					{
+						StartBuildingPath(newPath);
+					}
+					else
+					{
+						BuildNewBuilding_Internal();
+					}
+				}
 			}
 			else UE_LOG(LogTemp, Warning, TEXT("Not enough resources"));
 		}
@@ -133,14 +160,27 @@ FORCEINLINE bool AEtosPlayerController::HasEnoughResources(const TArray<FResourc
 
 FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
 {
-	if (UInGameUI * GUI = GetInGameUI())
+	try
 	{
-		GUI->AddToViewport();
+		UInGameUI* const GUI = GetInGameUI();
+		if (GUI != nullptr)
+		{
+			GUI->AddToViewport();
+		}
+		else if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(1, 5, FColor(1, 1, 1, 1), TEXT("Gui was not found"));
+		}
 	}
-	else if (GEngine)
+	catch (const std::exception& e)
 	{
-		GEngine->AddOnScreenDebugMessage(1, 5, FColor(1, 1, 1, 1), TEXT("Gui was not found"));
+		Panic(e);
 	}
+}
+
+void AEtosPlayerController::Panic(const std::exception & wait)
+{
+	UE_LOG(LogTemp, Error, TEXT("A %s occured. Oh Shit!"), wait.what());
 }
 
 FORCEINLINE void AEtosPlayerController::InitResourceMapping()
@@ -157,7 +197,18 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 {
 	if (bIsHoldingObject)
 	{
-		if (newBuilding)
+		if (tempPaths.Num() > 0)
+		{
+			for (int32 i = tempPaths.Num() - 1; i >= 0; --i)
+			{
+				tempPaths[i]->Destroy();
+			}
+			tempPaths.Empty(1);
+			bIsHoldingObject = false;
+			bIsBulidingPath = false;
+			UE_LOG(LogTemp, Warning, TEXT("building canceled"));
+		}
+		else if (newBuilding)
 		{
 			newBuilding->Destroy();
 			bIsHoldingObject = false;
@@ -193,18 +244,77 @@ FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * C
 		newBuilding->Radius->SetSphereRadius(data.Radius);
 		bIsHoldingObject = true;
 
-		//TODO: make building transparent
 		return newBuilding;
 	}
 	return nullptr;
 }
 
-FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, const FBuildingData& Data)
+FORCEINLINE void AEtosPlayerController::BuildNewBuilding_Internal()
 {
-	return SpawnBuilding_Internal(Class->GetClass(), Data);
+	newBuilding->Data.bIsHeld = false;
+	bIsHoldingObject = false;
+
+	PayCostsOfBuilding(newBuilding->Data.BuildCost);
+
+	newBuilding->OnBuild();
 }
 
-FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, const FBuildingData& Data)
+FORCEINLINE void AEtosPlayerController::StartBuildingPath(APath* newPath)
 {
-	return SpawnBuilding_Internal(Subclass, Data);
+	tempPaths.Add(newPath);
+	newPath->Data.bIsHeld = false;
+	bIsBulidingPath = true;
+	previousMouseLocation = newPath->GetActorLocation();
+}
+
+inline void AEtosPlayerController::UpdatePathPreview()
+{
+	FHitResult Hit;
+	if (Util::TraceSingleAtMousePosition(this, Hit))
+	{
+		if (FVector::Dist(Hit.ImpactPoint, previousMouseLocation) > mouseMoveThreshold)
+		{
+			previousMouseLocation = Hit.ImpactPoint;
+
+			if (UWorld* const World = GetWorld())
+			{
+				for (int32 i = tempPaths.Num() - 1; i > 0; --i)
+				{
+					tempPaths[i]->Destroy();
+				}
+
+				FVector mouseGridLocation = BFuncs::GetNextGridLocation(Hit.ImpactPoint, FVector2Di(1, 1));
+				FVector startLocation = tempPaths[0]->GetActorLocation();
+
+				FVector offsetX = startLocation.X < mouseGridLocation.X ? FVector(100, 0, 0) : FVector(-100, 0, 0);
+
+				APath* p = tempPaths[0];
+				tempPaths.Empty(UKismetMathLibrary::Abs(UKismetMathLibrary::Abs(mouseGridLocation.X) - UKismetMathLibrary::Abs(startLocation.X)) /100);
+				tempPaths.Insert(p, 0);
+
+				int32 i = 1;
+				FVector currentLocation;
+				for (currentLocation = BFuncs::GetNextGridLocation(startLocation + offsetX, FVector2Di(1, 1), 0); (startLocation.X < mouseGridLocation.X) ? (currentLocation.X <= mouseGridLocation.X) : (currentLocation.X >= mouseGridLocation.X); currentLocation = BFuncs::GetNextGridLocation(currentLocation + offsetX, FVector2Di(1, 1), 0))
+				{
+					SpawnPathPreview(currentLocation, i++, World);
+				}
+
+				startLocation = currentLocation - offsetX;
+				FVector offsetY = currentLocation.Y < mouseGridLocation.Y ? FVector(0, 100, 0) : FVector(0, -100, 0);
+
+				for (currentLocation = BFuncs::GetNextGridLocation(startLocation + offsetY, FVector2Di(1, 1), 0); (startLocation.Y < mouseGridLocation.Y) ? (currentLocation.Y <= mouseGridLocation.Y) : (currentLocation.Y >= mouseGridLocation.Y); currentLocation = BFuncs::GetNextGridLocation(currentLocation + offsetY, FVector2Di(1, 1), 0))
+				{
+					SpawnPathPreview(currentLocation, i++, World);
+				}
+			}
+		}
+	}
+}
+
+FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World)
+{
+	tempPaths.Insert(World->SpawnActor<APath>(newBuilding->GetClass(), FTransform(spawnLocation)), index);
+	tempPaths[index]->Data = newBuilding->Data;
+	tempPaths[index]->Data.bIsHeld = false;
+	tempPaths[index]->Data.bPositionIsBlocked = false;
 }
