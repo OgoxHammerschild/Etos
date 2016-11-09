@@ -4,8 +4,9 @@
 #include "Etos/Buildings/Base/Building.h"
 #include "Etos/Buildings/Path.h"
 #include "BuildingFunctionLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
-void UBuildingFunctionLibrary::CalcVectors(UPARAM(DisplayName = "X-Extend") float XExtend, UPARAM(DisplayName = "Y-Extend") float YExtend, UPARAM(DisplayName = "Z-Extend") float ZExtend, bool negateX1, bool negateY1, bool negateX2, bool negateY2, EOffsetDirections StartOffset, EOffsetDirections GoalOffset, FVector& OutStart, FVector& OutGoal, float ZHeight)
+inline void UBuildingFunctionLibrary::CalcVectors(UPARAM(DisplayName = "X-Extend") float XExtend, UPARAM(DisplayName = "Y-Extend") float YExtend, UPARAM(DisplayName = "Z-Extend") float ZExtend, bool negateX1, bool negateY1, bool negateX2, bool negateY2, EOffsetDirections StartOffset, EOffsetDirections GoalOffset, FVector& OutStart, FVector& OutGoal, float ZHeight)
 {
 	FVector2D TopLeftOffset = FVector2D(-50, -50);
 	FVector2D TopRightOffset = FVector2D(50, -50);
@@ -71,7 +72,7 @@ void UBuildingFunctionLibrary::CalcVectors(UPARAM(DisplayName = "X-Extend") floa
 	}
 }
 
-bool UBuildingFunctionLibrary::FindPath(const ABuilding* Source, const ABuilding* Target)
+inline bool UBuildingFunctionLibrary::FindPath(const ABuilding* Source, const ABuilding* Target)
 {
 	if (Target && Source)
 	{
@@ -102,6 +103,25 @@ bool UBuildingFunctionLibrary::FindPath(const ABuilding* Source, const ABuilding
 		}
 	}
 	return false;
+}
+
+FORCEINLINE FVector UBuildingFunctionLibrary::GetNextGridLocation(const FVector & location, const FVector2Di & size, const float & heightOffset)
+{
+	float X = UKismetMathLibrary::Round(location.X / 100) * 100;
+	float Y = UKismetMathLibrary::Round(location.Y / 100) * 100;
+	float Z = location.Z + heightOffset;
+
+	if (size.X % 2 == 0)
+	{
+		X += 50;
+	}
+
+	if (size.Y % 2 == 0)
+	{
+		Y += 50;
+	}
+
+	return FVector(X, Y, Z);
 }
 
 FORCEINLINE FVector UBuildingFunctionLibrary::MakeVector(float X, float Y, FVector2D offset, float Z)

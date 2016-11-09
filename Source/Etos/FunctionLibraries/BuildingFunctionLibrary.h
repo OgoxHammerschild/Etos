@@ -4,6 +4,7 @@
 
 class ABuilding;
 
+#include "Etos/FunctionLibraries/Vector2Di.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BuildingFunctionLibrary.generated.h"
 
@@ -31,6 +32,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "BuildingUtilFunctions")
 		static bool FindPath(const ABuilding* Source, const ABuilding* Target);
+
+	UFUNCTION(BlueprintPure, Category = "BuildingUtilFunctions")
+		static FVector GetNextGridLocation(const FVector& location, const FVector2Di& size, const float& heightOffset = 2);
 
 	static FVector MakeVector(float X, float Y, FVector2D offset, float Z = 25);
 };

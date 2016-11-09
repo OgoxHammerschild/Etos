@@ -5,20 +5,6 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UtilityFunctionLibrary.generated.h"
 
-
-USTRUCT(BlueprintType)
-struct FVector2Di
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 X;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 Y;
-};
-
 /**
  *
  */
@@ -54,9 +40,19 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static bool TraceSingleForFloor(UObject* WorldContextObject, const FVector& Start, const FVector& End, FHitResult& Hit);
-	
-	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
-		static bool TraceSingleAtMousePosition(UObject* WorldContextObject, FHitResult& Hit, float Range = 100000.f);
+
+	// Trace line at mouse position into the screen
+	// Call this from a blueprint
+	// @ObjectTypes = Considered ObjectTypes. Defaults to Floor.
+	// @Range = How far the trace goes into the screen
+	UFUNCTION(BlueprintCallable, DisplayName = "Trace Single At Mouse Position", Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true", AutoCreateRefTerm = "ObjectTypes", AdvancedDisplay = "ObjectTypes, Range"))
+		static bool BP_TraceSingleAtMousePosition(UObject* WorldContextObject, FHitResult& Hit, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes, float Range = 100000.f);
+
+	// Trace line at mouse position into the screen
+	// Call this from code
+	// @Range = How far the trace goes into the screen
+	// @ObjectTypes = Considered ObjectTypes. Defaults to Floor.
+	static bool TraceSingleAtMousePosition(UObject* WorldContextObject, FHitResult& Hit, float Range = 100000.f, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes = TArray<TEnumAsByte<EObjectTypeQuery>>());
 
 	UFUNCTION(BlueprintPure, Category = "Conversion")
 		static FString ConvertBoolToString(const bool& b);

@@ -1,10 +1,10 @@
 // © 2016 - 2017 Daniel Bortfeld
 
 #include "Etos.h"
+#include "UtilityFunctionLibrary.h"
 #include "Etos/Game/EtosGameMode.h"
 #include "Etos/Game/EtosHUD.h"
 #include "Etos/Game/EtosPlayerController.h"
-#include "UtilityFunctionLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::BuildingObjectType = InitBuildingObjectType();
@@ -86,7 +86,12 @@ FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForFloor(UObject* WorldCont
 	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
 }
 
-inline bool UUtilityFunctionLibrary::TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, float Range)
+FORCEINLINE bool UUtilityFunctionLibrary::BP_TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes, float Range)
+{
+	return TraceSingleAtMousePosition(WorldContextObject, Hit, Range, ObjectTypes);
+}
+
+inline bool UUtilityFunctionLibrary::TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, float Range, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes)
 {
 	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
 	{
@@ -97,7 +102,14 @@ inline bool UUtilityFunctionLibrary::TraceSingleAtMousePosition(UObject * WorldC
 			PlayerController->DeprojectMousePositionToWorld(MouseLocation, MouseDirection);
 			MouseDirection *= Range;
 
-			return TraceSingleForFloor(WorldContextObject, MouseLocation, MouseLocation + MouseDirection, Hit);
+			if (ObjectTypes.Num() > 0)
+			{
+				return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, MouseLocation, MouseLocation + MouseDirection, ObjectTypes, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
+			}
+			else
+			{
+				return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, MouseLocation, MouseLocation + MouseDirection, FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
+			}
 		}
 	}
 	return false;

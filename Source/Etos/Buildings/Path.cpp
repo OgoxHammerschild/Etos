@@ -5,7 +5,7 @@
 
 APath::APath()
 {
-	FoundationMesh->SetCanEverAffectNavigation(true);
+	FoundationMesh->SetCanEverAffectNavigation(false);
 }
 
 //void APath::OnConstruction(const FTransform& Transform)
@@ -34,6 +34,8 @@ APath::APath()
 
 void APath::OnBuild()
 {
+	FoundationMesh->SetCanEverAffectNavigation(true);
+
 	Connections = PossibleConnections;
 	PossibleConnections.Empty();
 

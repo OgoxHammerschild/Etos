@@ -11,3 +11,4 @@
 #include "Runtime/UMG/Public/Blueprint/UserWidget.h"
 
 #include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
+#include "Etos/FunctionLibraries/Vector2Di.h"
