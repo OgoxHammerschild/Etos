@@ -11,7 +11,7 @@ UInGameUI * AEtosHUD::GetInGameUI()
 		return inGameUI;
 	}
 
-	if (wInGameUI)
+	if (wInGameUI != nullptr)
 	{
 		inGameUI = CreateWidget<UInGameUI>(GetOwningPlayerController(), wInGameUI);
 	}
@@ -21,4 +21,12 @@ UInGameUI * AEtosHUD::GetInGameUI()
 		return inGameUI;
 	}
 	return nullptr;
+}
+
+void AEtosHUD::BeginDestroy()
+{
+	wInGameUI = nullptr;
+	inGameUI = nullptr;
+
+	Super::BeginDestroy();
 }

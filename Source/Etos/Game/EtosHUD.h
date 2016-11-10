@@ -26,4 +26,6 @@ private:
 public:
 
 	UInGameUI* GetInGameUI();
+
+	virtual void BeginDestroy() override;
 };

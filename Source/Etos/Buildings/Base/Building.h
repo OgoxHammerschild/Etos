@@ -6,7 +6,8 @@
 #include "Building.generated.h"
 class ABuilding;
 class APath;
-class UWidgetComponent;
+class AResourcePopup;
+class UBoxCollider;
 
 DECLARE_DYNAMIC_DELEGATE(FDelayedActionDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBuildingDelegate, ABuilding*, sender);
@@ -29,6 +30,16 @@ struct FResource
 	GENERATED_BODY()
 
 public:
+
+	FResource(EResource Type = EResource::None, int32 Amount = 0, UTexture2D* Icon = nullptr)
+	{
+		if (Type != EResource::None)
+		{
+			this->Type = Type;
+			this->Amount = Amount;
+			this->Icon = Icon;
+		}
+	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Resource)
 		EResource Type = EResource::None;
@@ -109,7 +120,7 @@ public:
 		UStaticMeshComponent* FoundationMesh;
 
 	UPROPERTY()
-		UBoxComponent* OccupiedBuildSpace;
+		UBoxCollider* OccupiedBuildSpace;
 
 	UPROPERTY()
 		TArray<USceneComponent*> TracePoints;
@@ -120,7 +131,7 @@ public:
 public:
 
 	UPROPERTY()
-		TSubclassOf<AActor> ResourcePopup;
+		TSubclassOf<AResourcePopup> ResourcePopup;
 
 	UPROPERTY(EditAnywhere)
 		FBuildingData Data;
@@ -149,8 +160,9 @@ private:
 	UPROPERTY()
 		bool bMovedOnce = false;
 
+	// amount of current collisions
 	UPROPERTY()
-		TArray<AActor*> collisions = TArray<AActor*>();
+		int32 collisions = 0;
 
 public:
 	// Sets default values for this actor's properties
@@ -202,15 +214,17 @@ protected:
 
 	void CallDelayAction(float pastTime, float delayDuration = 1);
 
-	void SpawnResourcePopup(FVector offset = FVector(0,0,200));
+	void SpawnResourcePopup(FVector offset = FVector(0, 0, 200));
 
 private:
 
 	UFUNCTION()
-		void BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+		//void BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+		void BuildSpace_OnBeginOverlap(UBoxCollider* other);
 
 	UFUNCTION()
-		void BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+		//void BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+		void BuildSpace_OnEndOverlap(UBoxCollider* other);
 
 	UFUNCTION()
 		void BuildingEnteredRadius(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);

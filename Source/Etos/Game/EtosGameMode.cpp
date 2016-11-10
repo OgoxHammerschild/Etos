@@ -12,6 +12,26 @@ AEtosGameMode::AEtosGameMode()
 	}
 }
 
+void AEtosGameMode::StartPlay()
+{
+	if (UWorld* const World = GetWorld())
+	{
+		FActorSpawnParameters params = FActorSpawnParameters();
+		params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		CollisionManager = World->SpawnActor<ASimpleCollisionManager>(params);
+	}
+
+	Super::StartPlay();
+}
+
+void AEtosGameMode::BeginDestroy()
+{
+	PredefinedBuildingData = nullptr;
+	CollisionManager = nullptr;
+
+	Super::BeginDestroy();
+}
+
 FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(int32 buildingID)
 {
 	check(PredefinedBuildingData);

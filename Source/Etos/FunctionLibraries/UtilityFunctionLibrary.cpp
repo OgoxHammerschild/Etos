@@ -14,12 +14,7 @@ FORCEINLINE AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* Wor
 {
 	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
 	{
-		static AEtosGameMode* gm;
-
-		if (!gm)
-		{
-			gm = dynamic_cast<AEtosGameMode*, AGameMode>(World->GetAuthGameMode());
-		}
+		AEtosGameMode* gm = dynamic_cast<AEtosGameMode*, AGameMode>(World->GetAuthGameMode());
 		return gm;
 	}
 	return nullptr;
@@ -27,13 +22,7 @@ FORCEINLINE AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* Wor
 
 FORCEINLINE AEtosHUD * UUtilityFunctionLibrary::GetEtosHUD(UObject* WorldContextObject, int32 PlayerIndex)
 {
-	static AEtosHUD* hud;
-
-	if (!hud)
-	{
-		hud = dynamic_cast<AEtosHUD*, AHUD>(GetEtosPlayerController(WorldContextObject, PlayerIndex)->GetHUD());
-	}
-
+	AEtosHUD* hud = dynamic_cast<AEtosHUD*, AHUD>(GetEtosPlayerController(WorldContextObject, PlayerIndex)->GetHUD());
 	return hud;
 }
 
@@ -41,13 +30,7 @@ FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerC
 {
 	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
 	{
-		static AEtosPlayerController* pc;
-
-		if (!pc)
-		{
-			pc = dynamic_cast<AEtosPlayerController*, APlayerController>(World->GetFirstPlayerController());
-		}
-
+		AEtosPlayerController* pc = dynamic_cast<AEtosPlayerController*, APlayerController>(World->GetFirstPlayerController());
 		return pc;
 	}
 	return nullptr;
@@ -69,6 +52,11 @@ FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerContro
 		}
 	}
 	return nullptr;
+}
+
+FORCEINLINE ASimpleCollisionManager * UUtilityFunctionLibrary::GetEtosCollisionManager(UObject * WorldContextObject)
+{
+	return GetEtosGameMode(WorldContextObject)->CollisionManager;
 }
 
 FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & HitResult)

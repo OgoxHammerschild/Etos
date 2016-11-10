@@ -5,6 +5,7 @@
 #include "GameFramework/GameMode.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "Runtime/Engine/Classes/Engine/DataTable.h"
+#include "Etos/Collision/SimpleCollisionManager.h"
 #include "EtosGameMode.generated.h"
 
 USTRUCT(BlueprintType)
@@ -49,15 +50,22 @@ class ETOS_API AEtosGameMode : public AGameMode
 
 public:
 
-	AEtosGameMode();
-
 	UPROPERTY()
 		UDataTable* PredefinedBuildingData;
 
 	UPROPERTY()
 		TArray<FPredefinedBuildingData> Buildings;
 
+	UPROPERTY()
+		ASimpleCollisionManager* CollisionManager;
+
 public:
+
+	AEtosGameMode();
+
+	virtual void StartPlay() override;
+
+	virtual void BeginDestroy() override;
 
 	FPredefinedBuildingData* GetPredefinedBuildingData(int32 buildingID);
 };

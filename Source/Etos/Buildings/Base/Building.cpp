@@ -7,6 +7,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Etos/Buildings/Path.h"
 #include "Etos/Game/EtosPlayerController.h"
+#include "Etos/UI/ResourcePopup.h"
+#include "Etos/Collision/BoxCollider.h"
 
 // Sets default values
 ABuilding::ABuilding()
@@ -154,7 +156,7 @@ void ABuilding::SetFoundationSize(int32 width, int32 height)
 	Width = width;
 	Height = height;
 	FoundationMesh->SetWorldScale3D(FVector(width, height, 1));
-	OccupiedBuildSpace->SetBoxExtent(FVector(halfTileSize * width - 1, halfTileSize * height - 1, halfTileSize - 1));
+	OccupiedBuildSpace->Collider->SetBoxExtent(FVector(halfTileSize * width - 1, halfTileSize * height - 1, halfTileSize - 1));
 }
 
 FORCEINLINE bool ABuilding::operator<(ABuilding & B) const
@@ -169,18 +171,19 @@ FORCEINLINE bool ABuilding::operator<(const ABuilding & B) const
 
 void ABuilding::InitOccupiedBuildSpace()
 {
-	OccupiedBuildSpace = CreateDefaultSubobject<UBoxComponent>(TEXT("Occupied Build Space"));
+	OccupiedBuildSpace = CreateDefaultSubobject<UBoxCollider>(TEXT("Occupied Build Space"));
 	OccupiedBuildSpace->SetupAttachment(RootComponent);
-	OccupiedBuildSpace->SetRelativeLocation(FVector(0, 0, 50));
-	OccupiedBuildSpace->SetBoxExtent(FVector(49));
-	OccupiedBuildSpace->SetVisibility(true);
-	OccupiedBuildSpace->bHiddenInGame = true;
-	OccupiedBuildSpace->SetEnableGravity(false);
-	OccupiedBuildSpace->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	OccupiedBuildSpace->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
-	OccupiedBuildSpace->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
-	OccupiedBuildSpace->OnComponentBeginOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnBeginOverlap);
-	OccupiedBuildSpace->OnComponentEndOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap);
+	OccupiedBuildSpace->Collider->SetRelativeLocation(FVector(0, 0, 50));
+	OccupiedBuildSpace->Collider->SetBoxExtent(FVector(49));
+	OccupiedBuildSpace->Collider->SetVisibility(true);
+	OccupiedBuildSpace->Collider->bHiddenInGame = true;
+	OccupiedBuildSpace->Collider->SetEnableGravity(false);
+	OccupiedBuildSpace->Collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	OccupiedBuildSpace->Collider->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
+	OccupiedBuildSpace->Collider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+
+	OccupiedBuildSpace->OnTriggerEnter.AddDynamic(this, &ABuilding::BuildSpace_OnBeginOverlap);
+	OccupiedBuildSpace->OnTriggerExit.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap);
 }
 
 void ABuilding::CreateTracePoints()
@@ -207,7 +210,13 @@ void ABuilding::CreateTracePoints()
 
 void ABuilding::RelocateTracePoints()
 {
-	FVector BoxExtend = OccupiedBuildSpace->GetScaledBoxExtent();
+	if (!OccupiedBuildSpace || !OccupiedBuildSpace->Collider)
+	{
+		UE_LOG(LogTemp, Error, TEXT("*explodes*"));
+		return;
+	}
+
+	FVector BoxExtend = OccupiedBuildSpace->Collider->GetScaledBoxExtent();
 	FVector Start;
 	FVector End;
 	//top
@@ -255,40 +264,41 @@ void ABuilding::BindDelayAction()
 	Action.BindDynamic(this, &ABuilding::AddResource);
 }
 
-void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+//void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+void ABuilding::BuildSpace_OnBeginOverlap(UBoxCollider* other)
 {
-	if (bMovedOnce && Data.bIsHeld && !Data.bIsBuilt)
+	if (bMovedOnce)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *OtherActor->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *other->GetName());
 
-		collisions.Add(OtherActor);
 		Data.bPositionIsBlocked = true;
+
+		++collisions;
 	}
 }
 
-void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+//void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void ABuilding::BuildSpace_OnEndOverlap(UBoxCollider* other)
 {
-	if (bMovedOnce && Data.bIsHeld && !Data.bIsBuilt)
+	if (bMovedOnce)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *OtherActor->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *other->GetName());
 
-		collisions.RemoveSingle(OtherActor);
-
-		UE_LOG(LogTemp, Warning, TEXT("%s is colliding with %i actors"), *GetName(), collisions.Num());
-
-		if (collisions.Num() == 0)
+		if (--collisions == 0)
 		{
 			Data.bPositionIsBlocked = false;
 		}
+
+		UE_LOG(LogTemp, Warning, TEXT("There are %i collisions left"), collisions);
 	}
 }
 
 void ABuilding::BuildingEnteredRadius(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
-	if (APath* path = dynamic_cast<APath*, AActor>(OtherActor))
+	if (dynamic_cast<APath*, AActor>(OtherActor))
 	{
-		// don't consider paths as bulidings in range
-		// paths are stored as connections
+		// Don't consider paths as buildings in range
+		// Paths are stored as connections
 		return;
 	}
 
@@ -313,7 +323,7 @@ void ABuilding::BuildingEnteredRadius(UPrimitiveComponent * OverlappedComponent,
 
 void ABuilding::BuildingLeftRadius(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
 {
-	if (APath* path = dynamic_cast<APath*, AActor>(OtherActor))
+	if (dynamic_cast<APath*, AActor>(OtherActor))
 	{
 		// don't consider paths as bulidings in range
 		// paths are stored as connections
@@ -431,23 +441,7 @@ void ABuilding::MoveToMouseLocation()
 	FHitResult Hit;
 	if (Util::TraceSingleAtMousePosition(this, Hit))
 	{
-		float heightOffset = 2;
-
-		float X = UKismetMathLibrary::Round(Hit.ImpactPoint.X / 100) * 100;
-		float Y = UKismetMathLibrary::Round(Hit.ImpactPoint.Y / 100) * 100;
-		float Z = Hit.ImpactPoint.Z + heightOffset;
-
-		if (Width % 2 == 0)
-		{
-			X += 50;
-		}
-
-		if (Height % 2 == 0)
-		{
-			Y += 50;
-		}
-
-		SetActorLocation(FVector(X, Y, Z));
+		SetActorLocation(BFuncs::GetNextGridLocation(Hit.ImpactPoint, FVector2Di(Width, Height)));
 		bMovedOnce = true;
 	}
 }
