@@ -2,7 +2,7 @@
 
 #include "Etos.h"
 #include "Warehouse.h"
-#include "MarketBarrow.h"
+#include "Etos/Pawns/MarketBarrow.h"
 #include "Etos/Game/EtosPlayerController.h"
 #include "Etos/Buildings/Path.h"
 #include "Etos/FunctionLibraries/BuildingFunctionLibrary.h"
