@@ -63,9 +63,7 @@ public:
 
 	AEtosGameMode();
 
-	virtual void StartPlay() override;
-
-	virtual void BeginDestroy() override;
+	void OnEndPlayMap();
 
 	FPredefinedBuildingData* GetPredefinedBuildingData(int32 buildingID);
 };

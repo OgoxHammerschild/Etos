@@ -2,6 +2,7 @@
 
 #include "Etos.h"
 #include "EtosGameMode.h"
+#include "Runtime/Engine/Public/GameDelegates.h"
 
 AEtosGameMode::AEtosGameMode()
 {
@@ -10,26 +11,37 @@ AEtosGameMode::AEtosGameMode()
 		static ConstructorHelpers::FObjectFinder<UDataTable> BP_PredefinedBuildingData(TEXT("DataTable'/Game/Blueprints/GameMode/PredefinedBuildingData.PredefinedBuildingData'"));
 		PredefinedBuildingData = BP_PredefinedBuildingData.Object;
 	}
-}
 
-void AEtosGameMode::StartPlay()
-{
 	if (UWorld* const World = GetWorld())
 	{
-		FActorSpawnParameters params = FActorSpawnParameters();
-		params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		CollisionManager = World->SpawnActor<ASimpleCollisionManager>(params);
+		CollisionManager = nullptr;
+
+		for (TActorIterator<ASimpleCollisionManager> ActorItr(World); ActorItr; ++ActorItr)
+		{
+			if (*ActorItr != nullptr)
+			{
+				CollisionManager = *ActorItr;
+				break;
+			}
+		}
+
+		if (!CollisionManager)
+		{
+			UE_LOG(LogTemp, Error, TEXT("There is no Collision Manager in the level."));
+		}
 	}
 
-	Super::StartPlay();
+	FGameDelegates::Get().GetEndPlayMapDelegate().AddLambda([&]() 
+	{ 
+		PredefinedBuildingData = nullptr; 
+		CollisionManager = nullptr; 
+	});
 }
 
-void AEtosGameMode::BeginDestroy()
+void AEtosGameMode::OnEndPlayMap()
 {
 	PredefinedBuildingData = nullptr;
 	CollisionManager = nullptr;
-
-	Super::BeginDestroy();
 }
 
 FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(int32 buildingID)

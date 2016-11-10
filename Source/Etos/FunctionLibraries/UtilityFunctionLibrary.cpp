@@ -56,7 +56,11 @@ FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerContro
 
 FORCEINLINE ASimpleCollisionManager * UUtilityFunctionLibrary::GetEtosCollisionManager(UObject * WorldContextObject)
 {
-	return GetEtosGameMode(WorldContextObject)->CollisionManager;
+	if (AEtosGameMode* const gm = GetEtosGameMode(WorldContextObject))
+	{
+		return gm->CollisionManager;
+	}
+	return nullptr;
 }
 
 FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & HitResult)
