@@ -8,30 +8,6 @@ APath::APath()
 	FoundationMesh->SetCanEverAffectNavigation(false);
 }
 
-//void APath::OnConstruction(const FTransform& Transform)
-//{
-//	PossibleConnections.Empty(4);
-//	TArray<FHitResult> AllHitResults;
-//	AllHitResults.Reserve(4);
-//
-//	FHitResult HitResult;
-//
-//	for (int32 i = 1; i < 5; i++)
-//	{
-//		TraceSingleForBuildings(TracePoints[0]->GetComponentLocation(), TracePoints[i]->GetComponentLocation(), HitResult);
-//		AllHitResults.Add(HitResult);
-//	}
-//
-//	for (FHitResult hit : AllHitResults)
-//	{
-//		ABuilding* building = dynamic_cast<ABuilding*, AActor> (&*hit.Actor);
-//		if (building)
-//		{
-//			PossibleConnections.AddUnique(building);
-//		}
-//	}
-//}
-
 void APath::OnBuild()
 {
 	FoundationMesh->SetCanEverAffectNavigation(true);
@@ -68,7 +44,14 @@ void APath::CreateTracePoints()
 
 		for (USceneComponent* point : TracePoints)
 		{
-			point->SetupAttachment((USceneComponent*)OccupiedBuildSpace);
+			if (bUseCustomBoxCollider)
+			{
+				point->SetupAttachment((USceneComponent*)OccupiedBuildSpace_Custom);
+			}
+			else
+			{
+				point->SetupAttachment(OccupiedBuildSpace);
+			}
 			point->RegisterComponentWithWorld(World);
 			point->SetVisibility(false);
 		}
@@ -119,3 +102,27 @@ void APath::GetSurroundingBuildings()
 		}
 	}
 }
+
+//void APath::OnConstruction(const FTransform& Transform)
+//{
+//	PossibleConnections.Empty(4);
+//	TArray<FHitResult> AllHitResults;
+//	AllHitResults.Reserve(4);
+//
+//	FHitResult HitResult;
+//
+//	for (int32 i = 1; i < 5; i++)
+//	{
+//		TraceSingleForBuildings(TracePoints[0]->GetComponentLocation(), TracePoints[i]->GetComponentLocation(), HitResult);
+//		AllHitResults.Add(HitResult);
+//	}
+//
+//	for (FHitResult hit : AllHitResults)
+//	{
+//		ABuilding* building = dynamic_cast<ABuilding*, AActor> (&*hit.Actor);
+//		if (building)
+//		{
+//			PossibleConnections.AddUnique(building);
+//		}
+//	}
+//}

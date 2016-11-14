@@ -31,17 +31,11 @@ AEtosGameMode::AEtosGameMode()
 		}
 	}
 
-	FGameDelegates::Get().GetEndPlayMapDelegate().AddLambda([&]() 
-	{ 
-		PredefinedBuildingData = nullptr; 
-		CollisionManager = nullptr; 
+	FGameDelegates::Get().GetEndPlayMapDelegate().AddLambda([&] 
+	{
+		PredefinedBuildingData = nullptr;
+		CollisionManager = nullptr;
 	});
-}
-
-void AEtosGameMode::OnEndPlayMap()
-{
-	PredefinedBuildingData = nullptr;
-	CollisionManager = nullptr;
 }
 
 FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(int32 buildingID)

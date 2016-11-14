@@ -52,7 +52,15 @@ ABuilding::ABuilding()
 		}
 	}
 
-	InitOccupiedBuildSpace();
+	if (bUseCustomBoxCollider)
+	{
+		InitOccupiedBuildSpace_Custom();
+	}
+	else
+	{
+		InitOccupiedBuildSpace();
+	}
+
 	SetFoundationSize(1, 1);
 }
 
@@ -78,34 +86,15 @@ void ABuilding::Tick(float DeltaTime)
 	{
 		CallDelayAction(DeltaTime, Data.ProductionTime);
 	}
-	else if (Data.bIsHeld)
+	else
 	{
-		MoveToMouseLocation();
+		if (Data.bIsHeld)
+		{
+			MoveToMouseLocation();
+		}
 		GetSurroundingBuildings();
 	}
 }
-
-//void ABuilding::OnConstruction(const FTransform& Transform)
-//{
-//	Data.PossibleConnections.Empty();
-//	TArray<FHitResult> AllHitResults;
-//	TArray<FHitResult> HitResults;
-//
-//	for (int32 i = 0; i < 8; i += 2)
-//	{
-//		TraceMultiForBuildings(TracePoints[i]->GetComponentLocation(), TracePoints[1 + i]->GetComponentLocation(), HitResults);
-//		AllHitResults.Append(HitResults);
-//	}
-//
-//	for (FHitResult hit : AllHitResults)
-//	{
-//		APath* path = dynamic_cast<APath*, AActor> (&*hit.Actor);
-//		if (path)
-//		{
-//			Data.PossibleConnections.AddUnique(path);
-//		}
-//	}
-//}
 
 void ABuilding::BeginDestroy()
 {
@@ -152,11 +141,28 @@ void ABuilding::ResetStoredResources()
 
 void ABuilding::SetFoundationSize(int32 width, int32 height)
 {
+	if (bUseCustomBoxCollider)
+	{
+		checkf(OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace should not be null actually"));
+	}
+	else
+	{
+		checkf(OccupiedBuildSpace, TEXT("OccupiedBuildSpace should not be null actually"));
+	}
+
 	float halfTileSize = 50;
 	Width = width;
 	Height = height;
 	FoundationMesh->SetWorldScale3D(FVector(width, height, 1));
-	OccupiedBuildSpace->Collider->SetBoxExtent(FVector(halfTileSize * width - 1, halfTileSize * height - 1, halfTileSize - 1));
+
+	if (bUseCustomBoxCollider)
+	{
+		OccupiedBuildSpace_Custom->Collider->SetBoxExtent(FVector(halfTileSize * width - 1, halfTileSize * height - 1, halfTileSize - 1));
+	}
+	else
+	{
+		OccupiedBuildSpace->SetBoxExtent(FVector(halfTileSize * width - 1, halfTileSize * height - 1, halfTileSize - 1));
+	}
 }
 
 FORCEINLINE bool ABuilding::operator<(ABuilding & B) const
@@ -171,24 +177,62 @@ FORCEINLINE bool ABuilding::operator<(const ABuilding & B) const
 
 void ABuilding::InitOccupiedBuildSpace()
 {
-	OccupiedBuildSpace = CreateDefaultSubobject<UBoxCollider>(TEXT("Occupied Build Space"));
+	OccupiedBuildSpace = CreateDefaultSubobject<UBoxComponent>(TEXT("OccupiedBuildSpace"));
 	OccupiedBuildSpace->SetupAttachment(RootComponent);
-	OccupiedBuildSpace->Collider->SetRelativeLocation(FVector(0, 0, 50));
-	OccupiedBuildSpace->Collider->SetBoxExtent(FVector(49));
-	OccupiedBuildSpace->Collider->SetVisibility(true);
-	OccupiedBuildSpace->Collider->bHiddenInGame = true;
-	OccupiedBuildSpace->Collider->SetEnableGravity(false);
-	OccupiedBuildSpace->Collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	OccupiedBuildSpace->Collider->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
-	OccupiedBuildSpace->Collider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	OccupiedBuildSpace->SetRelativeLocation(FVector(0, 0, 50));
+	OccupiedBuildSpace->SetBoxExtent(FVector(49));
+	OccupiedBuildSpace->SetVisibility(true);
+	OccupiedBuildSpace->bHiddenInGame = true;
+	OccupiedBuildSpace->SetEnableGravity(false);
+	OccupiedBuildSpace->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	OccupiedBuildSpace->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
+	OccupiedBuildSpace->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 
-	OccupiedBuildSpace->OnTriggerEnter.AddDynamic(this, &ABuilding::BuildSpace_OnBeginOverlap);
-	OccupiedBuildSpace->OnTriggerExit.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap);
+	OccupiedBuildSpace->OnComponentBeginOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnBeginOverlap);
+	OccupiedBuildSpace->OnComponentEndOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap);
+
+	checkf(OccupiedBuildSpace, TEXT("OccupiedBuildSpace should not be null actually"));
+}
+
+void ABuilding::InitOccupiedBuildSpace_Custom()
+{
+	checkf(!OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace_Custom should be null actually"));
+
+	OccupiedBuildSpace_Custom = CreateDefaultSubobject<UBoxCollider>(TEXT("OccupiedBuildSpace"));
+
+	checkf(OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace_Custom should not be null actually"));
+
+	OccupiedBuildSpace_Custom->SetupAttachment(RootComponent);
+
+
+	OccupiedBuildSpace_Custom->Collider->SetRelativeLocation(FVector(0, 0, 50));
+	OccupiedBuildSpace_Custom->Collider->SetBoxExtent(FVector(49));
+	OccupiedBuildSpace_Custom->Collider->SetVisibility(true);
+	OccupiedBuildSpace_Custom->Collider->bHiddenInGame = true;
+	OccupiedBuildSpace_Custom->Collider->SetEnableGravity(false);
+	OccupiedBuildSpace_Custom->Collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	OccupiedBuildSpace_Custom->Collider->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
+	OccupiedBuildSpace_Custom->Collider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+
+	OccupiedBuildSpace_Custom->OnTriggerEnter.AddDynamic(this, &ABuilding::BuildSpace_OnBeginOverlap_Custom);
+	OccupiedBuildSpace_Custom->OnTriggerExit.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap_Custom);
+
+	checkf(OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace_Custom should not be null actually"));
 }
 
 void ABuilding::CreateTracePoints()
 {
-	if (UWorld* World = GetWorld())
+	checkf(this, TEXT("this should not be null actually"));
+	if (bUseCustomBoxCollider)
+	{
+		checkf(OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace should not be null actually"));
+	}
+	else
+	{
+		checkf(OccupiedBuildSpace, TEXT("OccupiedBuildSpace should not be null actually"));
+	}
+
+	if (UWorld* const World = GetWorld())
 	{
 		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace Start Top")));
 		TracePoints.Add(NewObject<USceneComponent>(this, USceneComponent::StaticClass(), TEXT("Trace End Top")));
@@ -201,7 +245,14 @@ void ABuilding::CreateTracePoints()
 
 		for (USceneComponent* point : TracePoints)
 		{
-			point->SetupAttachment(OccupiedBuildSpace);
+			if (bUseCustomBoxCollider)
+			{
+				point->SetupAttachment(OccupiedBuildSpace_Custom);
+			}
+			else
+			{
+				point->SetupAttachment(OccupiedBuildSpace);
+			}
 			point->RegisterComponentWithWorld(World);
 			point->SetVisibility(false);
 		}
@@ -210,13 +261,21 @@ void ABuilding::CreateTracePoints()
 
 void ABuilding::RelocateTracePoints()
 {
-	if (!OccupiedBuildSpace || !OccupiedBuildSpace->Collider)
+	checkf(OccupiedBuildSpace, TEXT("OccupiedBuildSpace should not be null actually"));
+
+	FVector BoxExtend;
+
+	if (bUseCustomBoxCollider)
 	{
-		UE_LOG(LogTemp, Error, TEXT("*explodes*"));
-		return;
+		checkf(OccupiedBuildSpace_Custom->Collider, TEXT("Collider should not be null actually"));
+
+		BoxExtend = OccupiedBuildSpace_Custom->Collider->GetScaledBoxExtent();
+	}
+	else
+	{
+		BoxExtend = OccupiedBuildSpace->GetScaledBoxExtent();
 	}
 
-	FVector BoxExtend = OccupiedBuildSpace->Collider->GetScaledBoxExtent();
 	FVector Start;
 	FVector End;
 	//top
@@ -264,8 +323,54 @@ void ABuilding::BindDelayAction()
 	Action.BindDynamic(this, &ABuilding::AddResource);
 }
 
-//void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
-void ABuilding::BuildSpace_OnBeginOverlap(UBoxCollider* other)
+TArray<ABuilding*> collisions;
+
+void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	if (bMovedOnce)
+	{
+		if (ABuilding* const other = dynamic_cast<ABuilding*, AActor>(OtherActor))
+		{
+			if (UBoxComponent* const box = dynamic_cast<UBoxComponent*, UPrimitiveComponent>(OtherComp))
+			{
+				if (!collisions.Contains(other))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *OtherActor->GetName());
+
+					Data.bPositionIsBlocked = true;
+
+					collisions.AddUnique(other);
+				}
+			}
+		}
+	}
+}
+
+void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (bMovedOnce)
+	{
+		if (ABuilding* const other = dynamic_cast<ABuilding*, AActor>(OtherActor))
+		{
+			if (UBoxComponent* const box = dynamic_cast<UBoxComponent*, UPrimitiveComponent>(OtherComp))
+			{
+				if (collisions.Contains(other))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *OtherActor->GetName());
+
+					Data.bPositionIsBlocked = false;
+
+					collisions.Remove(other);
+
+					UE_LOG(LogTemp, Warning, TEXT("There are %i collisions left"), collisionCount);
+				}
+			}
+		}
+
+	}
+}
+
+void ABuilding::BuildSpace_OnBeginOverlap_Custom(UBoxCollider* other)
 {
 	if (bMovedOnce)
 	{
@@ -273,23 +378,22 @@ void ABuilding::BuildSpace_OnBeginOverlap(UBoxCollider* other)
 
 		Data.bPositionIsBlocked = true;
 
-		++collisions;
+		++collisionCount;
 	}
 }
 
-//void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-void ABuilding::BuildSpace_OnEndOverlap(UBoxCollider* other)
+void ABuilding::BuildSpace_OnEndOverlap_Custom(UBoxCollider* other)
 {
 	if (bMovedOnce)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *other->GetName());
 
-		if (--collisions == 0)
+		if (--collisionCount == 0)
 		{
 			Data.bPositionIsBlocked = false;
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("There are %i collisions left"), collisions);
+		UE_LOG(LogTemp, Warning, TEXT("There are %i collisions left"), collisionCount);
 	}
 }
 
@@ -381,23 +485,11 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 	return BuildingsInRange;
 }
 
-//bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult)
-//{
-//	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
-//}
-//
-//bool ABuilding::TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults)
-//{
-//	return UKismetSystemLibrary::LineTraceMultiForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true);
-//}
-//
-//bool ABuilding::TraceSingleForFloor(FVector Start, FVector End, FHitResult & Hit)
-//{
-//	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
-//}
-
 void ABuilding::CallDelayAction(float pastTime, float delayDuration)
 {
+	if (delayDuration <= 0)
+		return;
+
 	this->pastDelayTimerTime += pastTime;
 
 	if (this->pastDelayTimerTime >= delayDuration)
@@ -445,3 +537,42 @@ void ABuilding::MoveToMouseLocation()
 		bMovedOnce = true;
 	}
 }
+
+//DEPRICATED CONTENT
+//void ABuilding::OnConstruction(const FTransform& Transform)
+//{
+//	Data.PossibleConnections.Empty();
+//	TArray<FHitResult> AllHitResults;
+//	TArray<FHitResult> HitResults;
+//
+//	for (int32 i = 0; i < 8; i += 2)
+//	{
+//		TraceMultiForBuildings(TracePoints[i]->GetComponentLocation(), TracePoints[1 + i]->GetComponentLocation(), HitResults);
+//		AllHitResults.Append(HitResults);
+//	}
+//
+//	for (FHitResult hit : AllHitResults)
+//	{
+//		APath* path = dynamic_cast<APath*, AActor> (&*hit.Actor);
+//		if (path)
+//		{
+//			Data.PossibleConnections.AddUnique(path);
+//		}
+//	}
+//}
+
+// DEPRICATED, moved to Util
+//bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult)
+//{
+//	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
+//}
+//
+//bool ABuilding::TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults)
+//{
+//	return UKismetSystemLibrary::LineTraceMultiForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true);
+//}
+//
+//bool ABuilding::TraceSingleForFloor(FVector Start, FVector End, FHitResult & Hit)
+//{
+//	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
+//}
