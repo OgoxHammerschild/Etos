@@ -242,6 +242,7 @@ FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * C
 		newBuilding->Data.bIsHeld = true;
 		newBuilding->Data.bPositionIsBlocked = false;
 		newBuilding->Radius->SetSphereRadius(data.Radius);
+		newBuilding->SetFoundationSize(newBuilding->Width, newBuilding->Height);
 		bIsHoldingObject = true;
 
 		return newBuilding;
@@ -317,4 +318,6 @@ FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLoc
 	tempPaths[index]->Data = newBuilding->Data;
 	tempPaths[index]->Data.bIsHeld = false;
 	tempPaths[index]->Data.bPositionIsBlocked = false;
+	tempPaths[index]->SetFoundationSize(tempPaths[index]->Width, tempPaths[index]->Height);
+
 }
