@@ -129,6 +129,11 @@ void ABuilding::OnBuild()
 		}
 	}
 
+	if (bUseCustomBoxCollider)
+	{
+		OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
+	}
+
 	BuildEvent.Broadcast(this);
 
 	Data.bIsBuilt = true;
@@ -204,7 +209,6 @@ void ABuilding::InitOccupiedBuildSpace_Custom()
 
 	OccupiedBuildSpace_Custom->SetupAttachment(RootComponent);
 
-
 	OccupiedBuildSpace_Custom->Collider->SetRelativeLocation(FVector(0, 0, 50));
 	OccupiedBuildSpace_Custom->Collider->SetBoxExtent(FVector(49));
 	OccupiedBuildSpace_Custom->Collider->SetVisibility(true);
@@ -261,18 +265,19 @@ void ABuilding::CreateTracePoints()
 
 void ABuilding::RelocateTracePoints()
 {
-	checkf(OccupiedBuildSpace, TEXT("OccupiedBuildSpace should not be null actually"));
-
 	FVector BoxExtend;
 
 	if (bUseCustomBoxCollider)
 	{
+		checkf(OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace should not be null actually"));
 		checkf(OccupiedBuildSpace_Custom->Collider, TEXT("Collider should not be null actually"));
 
 		BoxExtend = OccupiedBuildSpace_Custom->Collider->GetScaledBoxExtent();
 	}
 	else
 	{
+		checkf(OccupiedBuildSpace, TEXT("OccupiedBuildSpace should not be null actually"));
+
 		BoxExtend = OccupiedBuildSpace->GetScaledBoxExtent();
 	}
 

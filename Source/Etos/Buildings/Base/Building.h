@@ -175,7 +175,7 @@ public:
 
 protected:
 
-	const bool bUseCustomBoxCollider = false;
+	const bool bUseCustomBoxCollider = true;
 
 	UPROPERTY()
 		FDelayedActionDelegate Action;
