@@ -20,11 +20,11 @@ void APath::OnBuild()
 		APath* path = dynamic_cast<APath*, ABuilding>(building);
 		if (path)
 		{
-			path->Connections.Add(this);
+			path->Connections.AddUnique(this);
 		}
 		else if (building)
 		{
-			building->Data.PathConnections.Add(this);
+			building->Data.PathConnections.AddUnique(this);
 		}
 	}
 
@@ -60,22 +60,22 @@ void APath::CreateTracePoints()
 
 void APath::RelocateTracePoints()
 {
-	float hight = 0;
+	float height = 25;
 	float offset = 100;
 
-	FVector location = FVector(0, 0, hight);
+	FVector location = FVector(0, 0, height);
 	TracePoints[0]->SetRelativeLocation(location);
 
-	location = FVector(offset, 0, hight);
+	location = FVector(offset, 0, height);
 	TracePoints[1]->SetRelativeLocation(location);
 
-	location = FVector(-offset, 0, hight);
+	location = FVector(-offset, 0, height);
 	TracePoints[2]->SetRelativeLocation(location);
 
-	location = FVector(0, offset, hight);
+	location = FVector(0, offset, height);
 	TracePoints[3]->SetRelativeLocation(location);
 
-	location = FVector(0, -offset, hight);
+	location = FVector(0, -offset, height);
 	TracePoints[4]->SetRelativeLocation(location);
 }
 

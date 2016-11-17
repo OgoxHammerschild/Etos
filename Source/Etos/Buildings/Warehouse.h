@@ -8,32 +8,18 @@ class AMarketBarrow;
 #include "Warehouse.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class ETOS_API AWarehouse : public ABuilding
 {
 	GENERATED_BODY()
-	
-public:
-
-	UPROPERTY(EditDefaultsOnly)
-		TSubclassOf<AMarketBarrow> BP_MarketBarrow;
-
-private:
-
-	UPROPERTY(VisibleAnywhere)
-		int32 barrowsInUse = 0;
-	UPROPERTY(EditAnywhere)
-		int32 maxBarrows = 2;
-	UPROPERTY()
-		AEtosPlayerController* MyPlayerController;
 
 public:
 
-	void ReceiveResource(const FResource& resource);
+	virtual FResource HandOutResource(const EResource& resource = EResource::None)override;
 
-	void DecreaseBarrowsInUse();
+	virtual void ReceiveResource(const FResource& resource) override;
 
 protected:
 
@@ -41,8 +27,6 @@ protected:
 
 private:
 
-	AEtosPlayerController* GetMyPlayerController();
-
 	UFUNCTION()
-	void SendMarketBarrows();
+		void SendMarketBarrows();
 };

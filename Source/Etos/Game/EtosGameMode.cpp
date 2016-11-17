@@ -33,7 +33,7 @@ AEtosGameMode::AEtosGameMode()
 
 	FGameDelegates::Get().GetEndPlayMapDelegate().AddLambda([&] 
 	{
-		PredefinedBuildingData = nullptr;
+		//PredefinedBuildingData = nullptr;
 		CollisionManager = nullptr;
 	});
 }

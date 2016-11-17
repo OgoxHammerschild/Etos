@@ -26,20 +26,6 @@ ARTSCamera::ARTSCamera()
 	Camera->SetRelativeLocation(FVector(256, 0, 256));
 }
 
-// Called when the game starts or when spawned
-void ARTSCamera::BeginPlay()
-{
-	Super::BeginPlay();
-
-}
-
-// Called every frame
-void ARTSCamera::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 // Called to bind functionality to input
 void ARTSCamera::SetupPlayerInputComponent(class UInputComponent* InputComponent)
 {

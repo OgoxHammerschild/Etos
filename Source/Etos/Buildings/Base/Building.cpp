@@ -9,6 +9,7 @@
 #include "Etos/Game/EtosPlayerController.h"
 #include "Etos/UI/ResourcePopup.h"
 #include "Etos/Collision/BoxCollider.h"
+#include "Etos/Pawns/MarketBarrow.h"
 
 // Sets default values
 ABuilding::ABuilding()
@@ -23,11 +24,13 @@ ABuilding::ABuilding()
 	BuildingMesh->SetupAttachment(RootComponent);
 	BuildingMesh->SetCanEverAffectNavigation(false);
 	BuildingMesh->CastShadow = false;
+	BuildingMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	FoundationMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Foundation"));
 	FoundationMesh->SetupAttachment(RootComponent);
 	FoundationMesh->SetCanEverAffectNavigation(false);
 	FoundationMesh->CastShadow = false;
+	//FoundationMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	ConstructorHelpers::FObjectFinder<UStaticMesh> quadFinder = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/BasicMeshes/SM_Quad_1x1m.SM_Quad_1x1m'"));
 	if (quadFinder.Succeeded())
 	{
@@ -76,6 +79,8 @@ void ABuilding::BeginPlay()
 {
 	Super::BeginPlay();
 	RelocateTracePoints();
+	SetFoundationSize(Width, Height);
+	GetMyPlayerController();
 }
 
 // Called every frame
@@ -85,6 +90,7 @@ void ABuilding::Tick(float DeltaTime)
 	if (Data.bIsBuilt)
 	{
 		CallDelayAction(DeltaTime, Data.ProductionTime);
+		SpendUpkeep(DeltaTime);
 	}
 	else
 	{
@@ -137,6 +143,34 @@ void ABuilding::OnBuild()
 	BuildEvent.Broadcast(this);
 
 	Data.bIsBuilt = true;
+}
+
+FResource ABuilding::HandOutResource(const EResource & resource)
+{
+	if (EResource::None == resource)
+	{
+		if (Data.ProducedResource.Type != EResource::None)
+		{
+			FResource res = Data.ProducedResource;
+			ResetStoredResources();
+			return res;
+		}
+	}
+	return FResource();
+}
+
+void ABuilding::ReceiveResource(const FResource & resource)
+{
+	if (Data.NeededResource1.Type == resource.Type)
+	{
+		Data.NeededResource1.Amount += resource.Amount;
+		UKismetMathLibrary::Clamp(Data.NeededResource1.Amount, 0, Data.MaxStoredResources);
+	}
+	else if (Data.NeededResource2.Type == resource.Type)
+	{
+		Data.NeededResource2.Amount += resource.Amount;
+		UKismetMathLibrary::Clamp(Data.NeededResource2.Amount, 0, Data.MaxStoredResources);
+	}
 }
 
 void ABuilding::ResetStoredResources()
@@ -251,7 +285,7 @@ void ABuilding::CreateTracePoints()
 		{
 			if (bUseCustomBoxCollider)
 			{
-				point->SetupAttachment(OccupiedBuildSpace_Custom);
+				point->SetupAttachment(OccupiedBuildSpace_Custom->Collider);
 			}
 			else
 			{
@@ -272,31 +306,34 @@ void ABuilding::RelocateTracePoints()
 		checkf(OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace should not be null actually"));
 		checkf(OccupiedBuildSpace_Custom->Collider, TEXT("Collider should not be null actually"));
 
+		SetFoundationSize(Width, Height);
 		BoxExtend = OccupiedBuildSpace_Custom->Collider->GetScaledBoxExtent();
 	}
 	else
 	{
 		checkf(OccupiedBuildSpace, TEXT("OccupiedBuildSpace should not be null actually"));
 
+		SetFoundationSize(Width, Height);
 		BoxExtend = OccupiedBuildSpace->GetScaledBoxExtent();
 	}
 
+	float heightOffset = 25;
 	FVector Start;
 	FVector End;
 	//top
-	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, true, false, true, EOffsetDirections::TopRight, EOffsetDirections::TopLeft, Start, End);
+	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, true, false, true, EOffsetDirections::TopRight, EOffsetDirections::TopLeft, Start, End, heightOffset);
 	TracePoints[0]->SetRelativeLocation(Start);
 	TracePoints[1]->SetRelativeLocation(End);
 	//bot
-	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, false, false, false, EOffsetDirections::BotRight, EOffsetDirections::BotLeft, Start, End);
+	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, false, false, false, EOffsetDirections::BotRight, EOffsetDirections::BotLeft, Start, End, heightOffset);
 	TracePoints[2]->SetRelativeLocation(Start);
 	TracePoints[3]->SetRelativeLocation(End);
 	//left
-	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, true, true, false, EOffsetDirections::BotLeft, EOffsetDirections::TopLeft, Start, End);
+	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, true, true, true, false, EOffsetDirections::BotLeft, EOffsetDirections::TopLeft, Start, End, heightOffset);
 	TracePoints[4]->SetRelativeLocation(Start);
 	TracePoints[5]->SetRelativeLocation(End);
 	//right
-	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, false, true, false, false, EOffsetDirections::BotRight, EOffsetDirections::TopRight, Start, End);
+	UBuildingFunctionLibrary::CalcVectors(BoxExtend.X, BoxExtend.Y, BoxExtend.Z, false, true, false, false, EOffsetDirections::BotRight, EOffsetDirections::TopRight, Start, End, heightOffset);
 	TracePoints[6]->SetRelativeLocation(Start);
 	TracePoints[7]->SetRelativeLocation(End);
 }
@@ -326,6 +363,24 @@ void ABuilding::GetSurroundingBuildings()
 void ABuilding::BindDelayAction()
 {
 	Action.BindDynamic(this, &ABuilding::AddResource);
+}
+
+void ABuilding::SpendUpkeep(float DeltaTime)
+{
+	if (MyPlayerController)
+	{
+		currentUpkeepDebts += Data.Upkeep * (DeltaTime / 60); // save the fragment of the upkeep
+		int32 upkeep = currentUpkeepDebts; // floor upkeep
+		if (upkeep >= 1) // if upkeep is at least 1 full coin...
+		{
+			MyPlayerController->RemoveResource(FResource(EResource::Money, upkeep)); // ... spend it ...
+			currentUpkeepDebts -= upkeep; // ... and update the fragmented debt
+		}
+	}
+	else
+	{
+		GetMyPlayerController();
+	}
 }
 
 TArray<ABuilding*> collisions;
@@ -379,7 +434,12 @@ void ABuilding::BuildSpace_OnBeginOverlap_Custom(UBoxCollider* other)
 {
 	if (bMovedOnce)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *other->GetName());
+		if (other->IsPendingKillOrUnreachable() || other->GetAttachmentRootActor()->IsPendingKillOrUnreachable())
+		{
+			return;
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *other->GetAttachmentRootActor()->GetName());
 
 		Data.bPositionIsBlocked = true;
 
@@ -391,7 +451,12 @@ void ABuilding::BuildSpace_OnEndOverlap_Custom(UBoxCollider* other)
 {
 	if (bMovedOnce)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *other->GetName());
+		if (other->IsPendingKillOrUnreachable() || other->GetAttachmentRootActor()->IsPendingKillOrUnreachable())
+		{
+			return;
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *other->GetAttachmentRootActor()->GetName());
 
 		if (--collisionCount == 0)
 		{
@@ -415,14 +480,14 @@ void ABuilding::BuildingEnteredRadius(UPrimitiveComponent * OverlappedComponent,
 	{
 		if (building->Data.bIsBuilt)
 		{
-			if (Data.bIsHeld)
+			if (this->Data.bIsHeld)
 			{
-				Data.PossibleBuildingsInRadius.AddUnique(building);
+				this->Data.PossibleBuildingsInRadius.AddUnique(building);
 			}
 		}
 		else if (building->Data.bIsHeld)
 		{
-			if (Data.bIsBuilt)
+			if (this->Data.bIsBuilt)
 			{
 				building->BuildEvent.AddDynamic(this, &ABuilding::AddNewBuildingInRange);
 			}
@@ -443,14 +508,14 @@ void ABuilding::BuildingLeftRadius(UPrimitiveComponent * OverlappedComponent, AA
 	{
 		if (building->Data.bIsBuilt)
 		{
-			if (Data.bIsHeld)
+			if (this->Data.bIsHeld)
 			{
-				Data.PossibleBuildingsInRadius.Remove(building);
+				this->Data.PossibleBuildingsInRadius.Remove(building);
 			}
 		}
 		else if (building->Data.bIsHeld)
 		{
-			if (Data.bIsBuilt)
+			if (this->Data.bIsBuilt)
 			{
 				building->BuildEvent.RemoveDynamic(this, &ABuilding::AddNewBuildingInRange);
 			}
@@ -460,10 +525,16 @@ void ABuilding::BuildingLeftRadius(UPrimitiveComponent * OverlappedComponent, AA
 
 void ABuilding::AddResource()
 {
+	GetNeededResources();
+
 	if (Data.ProducedResource.Amount < Data.MaxStoredResources)
 	{
-		Data.ProducedResource.Amount++;
-		SpawnResourcePopup();
+		if (HasNeededResources())
+		{
+			RemoveANeededResource();
+			Data.ProducedResource.Amount++;
+			SpawnResourcePopup();
+		}
 	}
 }
 
@@ -525,11 +596,123 @@ void ABuilding::SpawnResourcePopup(FVector offset)
 	}
 }
 
+FORCEINLINE AEtosPlayerController * ABuilding::GetMyPlayerController()
+{
+	if (!MyPlayerController)
+	{
+		MyPlayerController = (AEtosPlayerController*)GetWorld()->GetFirstPlayerController();
+	}
+	return MyPlayerController;
+}
+
 void ABuilding::AddNewBuildingInRange(ABuilding * buildingInRange)
 {
 	if (buildingInRange && !buildingInRange->IsPendingKillOrUnreachable())
 	{
 		Data.BuildingsInRadius.AddUnique(buildingInRange);
+	}
+}
+
+bool ABuilding::HasNeededResources()
+{
+	if (Data.NeededResource1.Type != EResource::None)
+	{// need res1
+		if (Data.NeededResource2.Type == EResource::None)
+		{// dont need res2
+			if (Data.NeededResource1.Amount > 0)
+			{// only need res1 and have res1
+				return true;
+			}
+			else
+			{// only need res1 but don't have res1
+				return false;
+			}
+		}
+		else if (Data.NeededResource1.Amount > 0 && Data.NeededResource2.Amount > 0)
+		{// need res 1 and res2 and have both
+			return true;
+		}
+		else
+		{// need res 1 and res2 but don't have one or both of them
+			return false;
+		}
+	}
+	else if (Data.NeededResource2.Type != EResource::None)
+	{// only need res2
+		if (Data.NeededResource2.Amount > 0)
+		{// need res2 and have res2
+			return true;
+		}
+		else
+		{// need res2 but don't have res2
+			return false;
+		}
+	}
+
+	// don't need res1 and res2
+	return true;
+}
+
+void ABuilding::RemoveANeededResource()
+{
+	if (Data.NeededResource1.Type != EResource::None && Data.NeededResource1.Amount > 0)
+	{
+		--Data.NeededResource1.Amount;
+	}
+	if (Data.NeededResource2.Type != EResource::None && Data.NeededResource2.Amount > 0)
+	{
+		--Data.NeededResource2.Amount;
+	}
+}
+
+void ABuilding::GetNeededResources()
+{
+	if (Data.NeededResource1.Amount < 1 || Data.NeededResource2.Amount < 1)
+	{
+		if (BP_MarketBarrow)
+		{
+			Data.BuildingsInRadius.Sort([](const ABuilding& A, const ABuilding& B) {return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount; });
+			for (ABuilding* const building : Data.BuildingsInRadius)
+			{
+				if (BarrowsInUse < MaxBarrows)
+				{
+					if (building && HasNeededResources(building))
+					{
+						if (!building->Data.bBarrowIsOnTheWay)
+						{
+							if (BFuncs::FindPath(this, building))
+							{
+								if (UWorld* const World = GetWorld())
+								{
+									FActorSpawnParameters params = FActorSpawnParameters();
+									params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+									// TODO: find closest path tiles
+									if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
+									{
+										EResource orderedResource = EResource::None;
+										if (Data.NeededResource1.Type != orderedResource && Data.NeededResource1.Amount < 1)
+										{
+											orderedResource = Data.NeededResource1.Type;
+										}
+										else if (Data.NeededResource2.Type != orderedResource && Data.NeededResource2.Amount < 1)
+										{
+											orderedResource = Data.NeededResource1.Type;
+										}
+
+										AMarketBarrow* newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, orderedResource, FRotator(0, 0, 0), params);
+										if (newMarketBarrow != nullptr)
+										{
+											BarrowsInUse++;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -543,41 +726,27 @@ void ABuilding::MoveToMouseLocation()
 	}
 }
 
-//DEPRICATED CONTENT
-//void ABuilding::OnConstruction(const FTransform& Transform)
-//{
-//	Data.PossibleConnections.Empty();
-//	TArray<FHitResult> AllHitResults;
-//	TArray<FHitResult> HitResults;
-//
-//	for (int32 i = 0; i < 8; i += 2)
-//	{
-//		TraceMultiForBuildings(TracePoints[i]->GetComponentLocation(), TracePoints[1 + i]->GetComponentLocation(), HitResults);
-//		AllHitResults.Append(HitResults);
-//	}
-//
-//	for (FHitResult hit : AllHitResults)
-//	{
-//		APath* path = dynamic_cast<APath*, AActor> (&*hit.Actor);
-//		if (path)
-//		{
-//			Data.PossibleConnections.AddUnique(path);
-//		}
-//	}
-//}
+FORCEINLINE void ABuilding::DecreaseBarrowsInUse()
+{
+	BarrowsInUse--;
+}
 
-// DEPRICATED, moved to Util
-//bool ABuilding::TraceSingleForBuildings(FVector Start, FVector End, FHitResult& HitResult)
-//{
-//	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
-//}
-//
-//bool ABuilding::TraceMultiForBuildings(FVector Start, FVector End, TArray<FHitResult>& HitResults)
-//{
-//	return UKismetSystemLibrary::LineTraceMultiForObjects(this, Start, End, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true);
-//}
-//
-//bool ABuilding::TraceSingleForFloor(FVector Start, FVector End, FHitResult & Hit)
-//{
-//	return UKismetSystemLibrary::LineTraceSingleForObjects(this, Start, End, Util::FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
-//}
+bool ABuilding::HasNeededResources(ABuilding * other)
+{
+	if (dynamic_cast<AWarehouse*, AActor>(other))
+	{
+		if (GetMyPlayerController())
+		{
+			return (Data.NeededResource1.Amount < 1 && MyPlayerController->GetResourceAmount(Data.NeededResource1.Type) >= 5)
+				|| (Data.NeededResource2.Amount < 1 && MyPlayerController->GetResourceAmount(Data.NeededResource2.Type) >= 5);
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	return ((Data.NeededResource1.Amount < 1 && other->Data.ProducedResource.Type == Data.NeededResource1.Type)
+		|| (Data.NeededResource2.Amount < 1 && other->Data.ProducedResource.Type == Data.NeededResource2.Type))
+		&& other->Data.ProducedResource.Amount >= 5;
+}

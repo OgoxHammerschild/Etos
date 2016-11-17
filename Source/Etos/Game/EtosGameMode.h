@@ -30,6 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PredefinedBuildingData)
 		TArray<FResource> BuildCost = TArray<FResource>();
 
+	// The Money this buildings needs per minute
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		int32 Upkeep;
 	// The first resource needed for production
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = PredefinedBuildingData)
 		EResource NeededResource1 = EResource::None;

@@ -17,13 +17,13 @@ class ETOS_API AMarketBarrow : public ACharacter
 
 public:
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		FVector StartLocation;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		FVector TargetLocation;
-	UPROPERTY()
-		AWarehouse* MyWarehouse;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
+		ABuilding* MyWorkplace;
+	UPROPERTY(VisibleAnywhere)
 		ABuilding* TargetBuilding;
 	// the radius from the target location in which a completed move counts as successfull
 	UPROPERTY(EditDefaultsOnly)
@@ -32,17 +32,16 @@ private:
 
 	UPROPERTY()
 		AAIController* MyController;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		FResource Resource;
 	UPROPERTY()
 		bool bArrivedAtTarget = false;
-
 
 public:
 	// Sets default values for this character's properties
 	AMarketBarrow();
 
-	static AMarketBarrow* Construct(UObject* WorldContextObject, TSubclassOf<AMarketBarrow> ClassToSpawn, const FVector& SpawnLocation, const FVector& TargetLocation, AWarehouse* MyWarehouse, ABuilding* TargetBuilding, const FRotator& Rotation = FRotator(), const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
+	static AMarketBarrow* Construct(UObject* WorldContextObject, TSubclassOf<AMarketBarrow> ClassToSpawn, const FVector& SpawnLocation, const FVector& TargetLocation, ABuilding * MyWorkplace, ABuilding* TargetBuilding, EResource OrderedResource, const FRotator& Rotation = FRotator(), const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -68,9 +67,9 @@ private:
 
 	void GetResource();
 
-	void MoveToWarehouse();
+	void MoveBackToWorkplace();
 
-	void AddResourceToPlayer();
+	void AddResourceToWorkplace();
 
 	void HaveLunchBreak();
 

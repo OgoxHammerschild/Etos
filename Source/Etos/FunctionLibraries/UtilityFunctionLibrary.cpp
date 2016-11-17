@@ -65,12 +65,12 @@ FORCEINLINE ASimpleCollisionManager * UUtilityFunctionLibrary::GetEtosCollisionM
 
 FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & HitResult)
 {
-	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
+	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::ForOneFrame, HitResult, true, FLinearColor(98, 147, 238));
 }
 
 FORCEINLINE bool UUtilityFunctionLibrary::TraceMultiForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, TArray<FHitResult>& HitResults)
 {
-	return UKismetSystemLibrary::LineTraceMultiForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true);
+	return UKismetSystemLibrary::LineTraceMultiForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::ForOneFrame, HitResults, true, FLinearColor::Blue);
 }
 
 FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForFloor(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & Hit)
@@ -118,7 +118,7 @@ FORCEINLINE FString UUtilityFunctionLibrary::ConvertEnumValueToString(const FStr
 	const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, *EnumName, true);
 	if (!enumPtr)
 	{
-		return FString("Invalid");
+		return FString("Invalid Name");
 	}
 
 	return enumPtr->GetEnumName((int32)Value);

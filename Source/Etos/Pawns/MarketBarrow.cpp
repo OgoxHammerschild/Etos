@@ -18,14 +18,14 @@ AMarketBarrow::AMarketBarrow()
 	CapsuleComponent->AreaClass = nullptr;
 }
 
-AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassOf<AMarketBarrow> ClassToSpawn, const FVector & SpawnLocation, const FVector & TargetLocation, AWarehouse * MyWarehouse, ABuilding * TargetBuilding, const FRotator & Rotation, const FActorSpawnParameters & SpawnParameters)
+AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassOf<AMarketBarrow> ClassToSpawn, const FVector & SpawnLocation, const FVector & TargetLocation, ABuilding * MyWorkplace, ABuilding * TargetBuilding, EResource OrderedResource, const FRotator & Rotation, const FActorSpawnParameters & SpawnParameters)
 {
 	check(WorldContextObject);
 	check(ClassToSpawn);
-	check(MyWarehouse);
+	check(MyWorkplace);
 	check(TargetBuilding);
 
-	if (UWorld* World = WorldContextObject->GetWorld())
+	if (UWorld* const World = WorldContextObject->GetWorld())
 	{
 		AMarketBarrow * barrow = World->SpawnActor<AMarketBarrow>(ClassToSpawn, SpawnLocation, Rotation, SpawnParameters);
 		if (barrow)
@@ -40,10 +40,11 @@ AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassO
 			}
 
 			barrow->TargetBuilding = TargetBuilding;
-			barrow->MyWarehouse = MyWarehouse;
+			barrow->MyWorkplace = MyWorkplace;
 			barrow->StartLocation = SpawnLocation;
 			barrow->TargetLocation = TargetLocation;
 			barrow->TargetBuilding->Data.bBarrowIsOnTheWay = true;
+			barrow->Resource.Type = OrderedResource;
 			barrow->SetCanEverAffectNavigationOnComponents(false);
 
 			//TODO: fade in
@@ -117,17 +118,17 @@ void AMarketBarrow::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult
 	case EPathFollowingResult::Success:
 		if (bArrivedAtTarget)
 		{
-			if (AcceptanceRadius < FVector::Dist(TargetLocation, GetActorLocation()))
+			if (AcceptanceRadius >= FVector::Dist(StartLocation, GetActorLocation()))
 			{
-				AddResourceToPlayer();
+				AddResourceToWorkplace();
 				HaveLunchBreak();
 			}
 		}
-		else if (AcceptanceRadius < FVector::Dist(StartLocation, GetActorLocation()))
+		else if (AcceptanceRadius >= FVector::Dist(TargetLocation, GetActorLocation()))
 		{
 			bArrivedAtTarget = true;
 			GetResource();
-			MoveToWarehouse();
+			MoveBackToWorkplace();
 		}
 		break;
 	default:
@@ -169,12 +170,11 @@ FORCEINLINE void AMarketBarrow::GetResource()
 
 	if (TargetBuilding)
 	{
-		Resource = TargetBuilding->Data.ProducedResource;
-		TargetBuilding->ResetStoredResources();
+		Resource = TargetBuilding->HandOutResource(Resource.Type);
 	}
 }
 
-FORCEINLINE void AMarketBarrow::MoveToWarehouse()
+FORCEINLINE void AMarketBarrow::MoveBackToWorkplace()
 {
 	if (GetAIController())
 	{
@@ -182,13 +182,13 @@ FORCEINLINE void AMarketBarrow::MoveToWarehouse()
 	}
 }
 
-FORCEINLINE void AMarketBarrow::AddResourceToPlayer()
+FORCEINLINE void AMarketBarrow::AddResourceToWorkplace()
 {
 	//TODO: take-wares-from-barrow animation
 
-	if (MyWarehouse)
+	if (MyWorkplace)
 	{
-		MyWarehouse->ReceiveResource(Resource);
+		MyWorkplace->ReceiveResource(Resource);
 	}
 }
 
@@ -202,9 +202,9 @@ FORCEINLINE void AMarketBarrow::HaveLunchBreak()
 	}
 	else UE_LOG(LogTemp, Warning, TEXT("%s's TargetBuilding was null."), *GetName());
 
-	if (MyWarehouse)
+	if (MyWorkplace)
 	{
-		MyWarehouse->DecreaseBarrowsInUse();
+		MyWorkplace->DecreaseBarrowsInUse();
 	}
 	else UE_LOG(LogTemp, Warning, TEXT("%s's Warehouse was null."), *GetName());
 
