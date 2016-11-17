@@ -50,6 +50,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Update")
 		void UpdateResourceAmounts();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Building-Info", meta = (DisplayName = "Show Building-Info"))
+		void BPEvent_ShowBuildingInfo(const FBuildingData& buildingData);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Building-Info", meta = (DisplayName = "Hide Building-Info"))
+		void BPEvent_HideBuildingInfo();
+
 private:
 
 	AEtosPlayerController* GetPlayerController();

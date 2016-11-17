@@ -4,6 +4,8 @@
 #include "InGameUI.h"
 #include "Etos/UI/BuildMenuButton.h"
 #include "Etos/Game/EtosGameMode.h"
+#include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
+#include "Etos/Buildings/Base/Building.h"
 
 void UInGameUI::NativeConstruct()
 {
@@ -34,7 +36,18 @@ void UInGameUI::UpdateResourceAmounts()
 			FFormatNamedArguments args;
 			args.Add(TEXT("amount"), amount);
 
-			elem.Value->SetText(FText::Format(LOCTEXT("", "{amount}"), args));
+			const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EResource"), true);
+			if (enumPtr)
+			{
+				FString resourceName = enumPtr->GetEnumName((int32)elem.Key);
+				args.Add(TEXT("resourceName"), FText::FromString(resourceName));
+
+				elem.Value->SetText(FText::Format(LOCTEXT("", "{resourceName}: {amount}"), args));
+			}
+			else
+			{
+				elem.Value->SetText(FText::Format(LOCTEXT("", "{amount}"), args));
+			}
 		}
 	}
 }
@@ -82,6 +95,7 @@ void UInGameUI::CreateButtons()
 						data.ProducedResource.Amount = 0;
 						data.ProductionTime = preDefData->ProductionTime;
 						data.Radius = preDefData->Radius;
+						data.Upkeep = preDefData->Upkeep;
 
 						button->Data = data;
 

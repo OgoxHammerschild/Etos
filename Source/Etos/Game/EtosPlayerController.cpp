@@ -24,6 +24,7 @@ void AEtosPlayerController::BeginPlay()
 	AddResource(FResource(EResource::Money, 10000));
 	AddResource(FResource(EResource::Wood, 50));
 	AddResource(FResource(EResource::Tool, 50));
+	AddResource(FResource(EResource::Iron, 50));
 	//#########################
 }
 
@@ -43,6 +44,7 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu);
 	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly);
 	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding);
+	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding);
 }
 
 FORCEINLINE void AEtosPlayerController::AddResource(const FResource& resource)
@@ -143,6 +145,29 @@ FORCEINLINE void AEtosPlayerController::ClickRepeatedly(FKey key)
 		FBuildingData data = FBuildingData(newBuilding->Data);
 		BuildNewBuilding(key);
 		SpawnBuilding(newBuilding, data);
+	}
+}
+
+void AEtosPlayerController::SelectBuilding(FKey key)
+{
+	FHitResult Hit = FHitResult();
+	if (Util::TraceSingleAtMousePosition(this, Hit, 100000, Util::BuildingObjectType))
+	{
+		if (UInGameUI* const GUI = GetInGameUI())
+		{
+			if (dynamic_cast<APath*, AActor>(&*Hit.Actor) == nullptr)
+			{
+				if (ABuilding* const building = dynamic_cast<ABuilding*, AActor> (&*Hit.Actor))
+				{
+					GUI->BPEvent_ShowBuildingInfo(building->Data);
+				}
+			}
+		}
+		return;
+	}
+	else if (UInGameUI* const GUI = GetInGameUI())
+	{
+		GUI->BPEvent_HideBuildingInfo();
 	}
 }
 
@@ -290,7 +315,7 @@ inline void AEtosPlayerController::UpdatePathPreview()
 				FVector offsetX = startLocation.X < mouseGridLocation.X ? FVector(100, 0, 0) : FVector(-100, 0, 0);
 
 				APath* p = tempPaths[0];
-				tempPaths.Empty(UKismetMathLibrary::Abs(UKismetMathLibrary::Abs(mouseGridLocation.X) - UKismetMathLibrary::Abs(startLocation.X)) /100);
+				tempPaths.Empty(UKismetMathLibrary::Abs(UKismetMathLibrary::Abs(mouseGridLocation.X) - UKismetMathLibrary::Abs(startLocation.X)) / 100);
 				tempPaths.Insert(p, 0);
 
 				int32 i = 1;

@@ -73,6 +73,9 @@ private:
 	UFUNCTION()
 		void CancelPlacementOfBuilding(FKey key);
 
+	UFUNCTION()
+		void SelectBuilding(FKey key);
+
 	bool HasEnoughResources(const TArray<FResource>& buildCost);
 
 	//ABuilding* GetBuildingUnderCursor();
