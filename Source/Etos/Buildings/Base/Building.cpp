@@ -81,6 +81,8 @@ void ABuilding::BeginPlay()
 	RelocateTracePoints();
 	SetFoundationSize(Width, Height);
 	GetMyPlayerController();
+
+	MarketBarrowPool.SetMaxPooledObjectsAmount(MaxBarrows);
 }
 
 // Called every frame
@@ -156,6 +158,10 @@ FResource ABuilding::HandOutResource(const EResource & resource)
 			return res;
 		}
 	}
+	else if (resource == Data.ProducedResource.Type)
+	{
+		return HandOutResource();
+	}
 	return FResource();
 }
 
@@ -204,28 +210,17 @@ void ABuilding::SetFoundationSize(int32 width, int32 height)
 	}
 }
 
-FORCEINLINE bool ABuilding::operator<(ABuilding & B) const
-{
-	return Data.ProducedResource.Amount < B.Data.ProducedResource.Amount;
-}
-
 FORCEINLINE bool ABuilding::operator<(const ABuilding & B) const
 {
 	return Data.ProducedResource.Amount < B.Data.ProducedResource.Amount;
 }
 
-void ABuilding::InitOccupiedBuildSpace()
+inline void ABuilding::InitOccupiedBuildSpace()
 {
 	OccupiedBuildSpace = CreateDefaultSubobject<UBoxComponent>(TEXT("OccupiedBuildSpace"));
 	OccupiedBuildSpace->SetupAttachment(RootComponent);
-	OccupiedBuildSpace->SetRelativeLocation(FVector(0, 0, 50));
-	OccupiedBuildSpace->SetBoxExtent(FVector(49));
-	OccupiedBuildSpace->SetVisibility(true);
-	OccupiedBuildSpace->bHiddenInGame = true;
-	OccupiedBuildSpace->SetEnableGravity(false);
-	OccupiedBuildSpace->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	OccupiedBuildSpace->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
-	OccupiedBuildSpace->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+
+	InitOccupiedBuildSpace_Internal(OccupiedBuildSpace);
 
 	OccupiedBuildSpace->OnComponentBeginOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnBeginOverlap);
 	OccupiedBuildSpace->OnComponentEndOverlap.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap);
@@ -233,7 +228,7 @@ void ABuilding::InitOccupiedBuildSpace()
 	checkf(OccupiedBuildSpace, TEXT("OccupiedBuildSpace should not be null actually"));
 }
 
-void ABuilding::InitOccupiedBuildSpace_Custom()
+inline void ABuilding::InitOccupiedBuildSpace_Custom()
 {
 	checkf(!OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace_Custom should be null actually"));
 
@@ -243,19 +238,26 @@ void ABuilding::InitOccupiedBuildSpace_Custom()
 
 	OccupiedBuildSpace_Custom->SetupAttachment(RootComponent);
 
-	OccupiedBuildSpace_Custom->Collider->SetRelativeLocation(FVector(0, 0, 50));
-	OccupiedBuildSpace_Custom->Collider->SetBoxExtent(FVector(49));
-	OccupiedBuildSpace_Custom->Collider->SetVisibility(true);
-	OccupiedBuildSpace_Custom->Collider->bHiddenInGame = true;
-	OccupiedBuildSpace_Custom->Collider->SetEnableGravity(false);
-	OccupiedBuildSpace_Custom->Collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	OccupiedBuildSpace_Custom->Collider->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
-	OccupiedBuildSpace_Custom->Collider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	InitOccupiedBuildSpace_Internal(OccupiedBuildSpace_Custom->Collider);
 
 	OccupiedBuildSpace_Custom->OnTriggerEnter.AddDynamic(this, &ABuilding::BuildSpace_OnBeginOverlap_Custom);
 	OccupiedBuildSpace_Custom->OnTriggerExit.AddDynamic(this, &ABuilding::BuildSpace_OnEndOverlap_Custom);
 
 	checkf(OccupiedBuildSpace_Custom, TEXT("OccupiedBuildSpace_Custom should not be null actually"));
+}
+
+inline void ABuilding::InitOccupiedBuildSpace_Internal(UBoxComponent * collider)
+{
+	checkf(collider, TEXT("@param Collider should not be null"));
+
+	collider->SetRelativeLocation(FVector(0, 0, 50));
+	collider->SetBoxExtent(FVector(49));
+	collider->SetVisibility(true);
+	collider->bHiddenInGame = true;
+	collider->SetEnableGravity(false);
+	collider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	collider->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1 /*Buliding*/);
+	collider->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 }
 
 void ABuilding::CreateTracePoints()
@@ -362,6 +364,11 @@ void ABuilding::GetSurroundingBuildings()
 
 void ABuilding::BindDelayAction()
 {
+	if (Action.IsBound())
+	{
+		Action.Unbind();
+	}
+
 	Action.BindDynamic(this, &ABuilding::AddResource);
 }
 
@@ -370,7 +377,7 @@ void ABuilding::SpendUpkeep(float DeltaTime)
 	if (MyPlayerController)
 	{
 		currentUpkeepDebts += Data.Upkeep * (DeltaTime / 60); // save the fragment of the upkeep
-		int32 upkeep = currentUpkeepDebts; // floor upkeep
+		int32 upkeep = currentUpkeepDebts; // floor the upkeep
 		if (upkeep >= 1) // if upkeep is at least 1 full coin...
 		{
 			MyPlayerController->RemoveResource(FResource(EResource::Money, upkeep)); // ... spend it ...
@@ -444,6 +451,9 @@ void ABuilding::BuildSpace_OnBeginOverlap_Custom(UBoxCollider* other)
 		Data.bPositionIsBlocked = true;
 
 		++collisionCount;
+
+		UE_LOG(LogTemp, Warning, TEXT("There are %i collisions"), collisionCount);
+
 	}
 }
 
@@ -697,10 +707,22 @@ void ABuilding::GetNeededResources()
 										}
 										else if (Data.NeededResource2.Type != orderedResource && Data.NeededResource2.Amount < 1)
 										{
-											orderedResource = Data.NeededResource1.Type;
+											orderedResource = Data.NeededResource2.Type;
 										}
 
-										AMarketBarrow* newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, orderedResource, FRotator(0, 0, 0), params);
+										bool isValid;
+										AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
+
+										if (isValid)
+										{
+											newMarketBarrow->ResetBarrow(Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, orderedResource, FRotator(0, 0, 0));
+											newMarketBarrow->StartWork();
+										}
+										else
+										{
+											newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, orderedResource, FRotator(0, 0, 0), params);
+										}
+
 										if (newMarketBarrow != nullptr)
 										{
 											BarrowsInUse++;
@@ -749,4 +771,37 @@ bool ABuilding::HasNeededResources(ABuilding * other)
 	return ((Data.NeededResource1.Amount < 1 && other->Data.ProducedResource.Type == Data.NeededResource1.Type)
 		|| (Data.NeededResource2.Amount < 1 && other->Data.ProducedResource.Type == Data.NeededResource2.Type))
 		&& other->Data.ProducedResource.Amount >= 5;
+}
+
+bool ABuilding::IsActive()
+{
+	return bIsActive;
+}
+
+void ABuilding::SetActive(bool isActive)
+{
+	bIsActive = isActive;
+	SetActorHiddenInGame(!bIsActive);
+	SetActorEnableCollision(bIsActive);
+	SetActorTickEnabled(bIsActive);
+
+	if (bUseCustomBoxCollider)
+	{
+		if (OccupiedBuildSpace_Custom)
+		{
+			OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(bIsActive);
+		}
+	}
+
+	TInlineComponentArray<UActorComponent*> Components;
+	GetComponents(Components);
+	for (int32 CompIdx = 0; CompIdx < Components.Num(); CompIdx++)
+	{
+		Components[CompIdx]->SetComponentTickEnabled(bIsActive);
+	}
+}
+
+bool ABuilding::TryReturningToPool(AMarketBarrow * barrow)
+{
+	return MarketBarrowPool.AddObjectToPool<AMarketBarrow>(barrow);;
 }

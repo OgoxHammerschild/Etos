@@ -17,7 +17,7 @@ class ETOS_API AWarehouse : public ABuilding
 
 public:
 
-	virtual FResource HandOutResource(const EResource& resource = EResource::None)override;
+	virtual FResource HandOutResource(const EResource& resource = EResource::None) override;
 
 	virtual void ReceiveResource(const FResource& resource) override;
 

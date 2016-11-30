@@ -52,3 +52,8 @@ FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(int32 building
 	return preDefData;
 	//}
 }
+
+int32 AEtosGameMode::GetBuildingAmount()
+{
+	return PredefinedBuildingData ? PredefinedBuildingData->GetRowNames().Num() : 0;
+}

@@ -10,6 +10,7 @@ class APath;
 class AResourcePopup;
 class UBoxCollider;
 class AMarketBarrow;
+#include "Etos/ObjectPool/ObjectPool.h"
 #include "GameFramework/Actor.h"
 #include "Building.generated.h"
 
@@ -27,9 +28,6 @@ enum class EResource : uint8
 	Food,
 	Coal,
 	Iron,
-
-	// Villager needs
-	Company,
 
 	EResource_MAX
 };
@@ -205,6 +203,9 @@ protected:
 	UPROPERTY(EditAnywhere)
 		int32 MaxBarrows = 1;
 
+	UPROPERTY(VisibleAnywhere)
+		FObjectPool MarketBarrowPool = FObjectPool();
+
 private:
 
 	UPROPERTY()
@@ -219,6 +220,9 @@ private:
 
 	UPROPERTY()
 		float currentUpkeepDebts = 0;
+
+	UPROPERTY()
+		bool bIsActive;
 
 public:
 	// Sets default values for this actor's properties
@@ -252,7 +256,11 @@ public:
 	// Whether the other building has the resources this building needs
 	bool HasNeededResources(ABuilding* other);
 
-	bool operator<(ABuilding& B)const;
+	bool IsActive();
+
+	void SetActive(bool isActive);
+
+	bool TryReturningToPool(AMarketBarrow* barrow);
 
 	bool operator<(const ABuilding& B) const;
 
@@ -271,6 +279,8 @@ protected:
 	void InitOccupiedBuildSpace();
 
 	void InitOccupiedBuildSpace_Custom();
+
+	void InitOccupiedBuildSpace_Internal(UBoxComponent* collider);
 
 	TArray<ABuilding*> GetBuildingsInRange();
 

@@ -81,4 +81,6 @@ public:
 	AEtosGameMode();
 
 	FPredefinedBuildingData* GetPredefinedBuildingData(int32 buildingID);
+	
+	int32 GetBuildingAmount();
 };
