@@ -2,7 +2,6 @@
 
 #pragma once
 
-class UAIAsyncTaskBlueprintProxy;
 #include "GameFramework/Character.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "Etos/Buildings/Warehouse.h"
@@ -36,6 +35,8 @@ private:
 		FResource Resource;
 	UPROPERTY()
 		bool bArrivedAtTarget = false;
+	UPROPERTY()
+		bool bIsActive;
 
 public:
 	// Sets default values for this character's properties
@@ -53,6 +54,17 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 	virtual void BeginDestroy() override;
+
+	void ResetBarrow(const FVector & SpawnLocation, const FVector & TargetLocation, ABuilding * MyWorkplace, ABuilding * TargetBuilding, EResource OrderedResource, const FRotator & Rotation = FRotator());
+
+	void StartWork();
+
+	bool IsActive() { return bIsActive; }
+
+	void SetActive(bool isActive);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Resources", meta = (DisplayName = "OnGetResource"))
+		void BPEvent_OnGetResource(const FResource& TransportedResource);
 
 private:
 
