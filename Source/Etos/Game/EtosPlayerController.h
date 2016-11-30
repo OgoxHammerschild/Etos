@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Etos/ObjectPool/ObjectPool.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "GameFramework/PlayerController.h"
 #include "EtosPlayerController.generated.h"
@@ -36,6 +37,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 		float mouseMoveThreshold = 20.f;
+
+	UPROPERTY()
+		FObjectPool pathPool = FObjectPool();
 
 public:
 
@@ -97,4 +101,6 @@ private:
 	void UpdatePathPreview();
 
 	void SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World);
+
+	void DestroyPathPreview(APath* tempPath);
 };

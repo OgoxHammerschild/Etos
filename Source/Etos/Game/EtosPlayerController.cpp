@@ -9,6 +9,8 @@
 #include "Etos/UI/InGameUI.h"
 #include "Etos/Game/EtosHUD.h"
 #include "Etos/Buildings/Path.h"
+#include "Etos/Collision/BoxCollider.h"
+#include "Etos/Buildings/Warehouse.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -19,6 +21,9 @@ void AEtosPlayerController::BeginPlay()
 
 	AddHUDToViewport();
 	InitResourceMapping();
+
+	pathPool.SetMinPooledObjectsAmount(8);
+	pathPool.SetMaxPooledObjectsAmount(256);
 
 	// for testing ############
 	AddResource(FResource(EResource::Money, 10000));
@@ -160,6 +165,17 @@ void AEtosPlayerController::SelectBuilding(FKey key)
 				if (ABuilding* const building = dynamic_cast<ABuilding*, AActor> (&*Hit.Actor))
 				{
 					GUI->BPEvent_ShowBuildingInfo(building->Data);
+
+					if (AWarehouse* const warehouse = dynamic_cast<AWarehouse*, ABuilding> (building))
+					{
+						GUI->HideBuildButtons();
+						GUI->ShowResourceInfo(resourceAmounts);
+					}
+					else
+					{
+						GUI->ShowBuildButtons();
+						GUI->HideResourceInfo();
+					}
 				}
 			}
 		}
@@ -168,6 +184,8 @@ void AEtosPlayerController::SelectBuilding(FKey key)
 	else if (UInGameUI* const GUI = GetInGameUI())
 	{
 		GUI->BPEvent_HideBuildingInfo();
+		GUI->HideResourceInfo();
+		GUI->ShowBuildButtons();
 	}
 }
 
@@ -226,7 +244,7 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 		{
 			for (int32 i = tempPaths.Num() - 1; i >= 0; --i)
 			{
-				tempPaths[i]->Destroy();
+				DestroyPathPreview(tempPaths[i]);
 			}
 			tempPaths.Empty(1);
 			bIsHoldingObject = false;
@@ -306,7 +324,7 @@ inline void AEtosPlayerController::UpdatePathPreview()
 			{
 				for (int32 i = tempPaths.Num() - 1; i > 0; --i)
 				{
-					tempPaths[i]->Destroy();
+					DestroyPathPreview(tempPaths[i]);
 				}
 
 				FVector mouseGridLocation = BFuncs::GetNextGridLocation(Hit.ImpactPoint, FVector2Di(1, 1));
@@ -339,10 +357,35 @@ inline void AEtosPlayerController::UpdatePathPreview()
 
 FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World)
 {
-	tempPaths.Insert(World->SpawnActor<APath>(newBuilding->GetClass(), FTransform(spawnLocation)), index);
+	bool bGotPathFromPool;
+	APath* newPath = pathPool.GetPooledObject<APath>(bGotPathFromPool);
+
+	if (bGotPathFromPool)
+	{
+		newPath->SetActive(true);
+		newPath->SetActorLocation(spawnLocation);
+	}
+	else
+	{
+		newPath = World->SpawnActor<APath>(newBuilding->GetClass(), FTransform(spawnLocation));
+	}
+
+	tempPaths.Insert(newPath, index);
 	tempPaths[index]->Data = newBuilding->Data;
 	tempPaths[index]->Data.bIsHeld = false;
 	tempPaths[index]->Data.bPositionIsBlocked = false;
 	tempPaths[index]->SetFoundationSize(tempPaths[index]->Width, tempPaths[index]->Height);
-
 }
+
+void AEtosPlayerController::DestroyPathPreview(APath * tempPath)
+{
+	if (pathPool.AddObjectToPool<APath>(tempPath))
+	{
+		tempPath->SetActive(false);
+	}
+	else
+	{
+		tempPath->Destroy();
+	}
+}
+
