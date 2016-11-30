@@ -2,6 +2,8 @@
 
 #pragma once
 
+class UResourceLayout;
+class UBuildMenuButton;
 #include "Blueprint/UserWidget.h"
 #include "Etos/Game/EtosPlayerController.h"
 #include "Etos/Buildings/Base/Building.h"
@@ -17,12 +19,14 @@ class ETOS_API UInGameUI : public UUserWidget
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "Build Button")
-		TSubclassOf<class UBuildMenuButton> BuildMenuButtonBlueprint;
+	UPROPERTY(EditDefaultsOnly, Category = "Info|Resource")
+		TSubclassOf<UResourceLayout> ResourceLayoutBlueprint;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build Button")
+	UPROPERTY(EditDefaultsOnly, Category = "Build Buttons")
+		TSubclassOf<UBuildMenuButton> BuildMenuButtonBlueprint;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build Buttons")
 		int32 ButtonsPerRow = 4;
-
 
 private:
 
@@ -34,6 +38,12 @@ private:
 
 	UPROPERTY()
 		UUniformGridPanel* gridPanel;
+
+	UPROPERTY()
+		TArray<UBuildMenuButton*> buttons;
+
+	UPROPERTY()
+		TMap<EResource, UResourceLayout*> resources;
 
 public:
 
@@ -50,15 +60,34 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Update")
 		void UpdateResourceAmounts();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Building-Info", meta = (DisplayName = "Show Building-Info"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Building", meta = (DisplayName = "Show Building-Info"))
 		void BPEvent_ShowBuildingInfo(const FBuildingData& buildingData);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Building-Info", meta = (DisplayName = "Hide Building-Info"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Building", meta = (DisplayName = "Hide Building-Info"))
 		void BPEvent_HideBuildingInfo();
+
+	//Note: Make to FResource-array ?
+	UFUNCTION(BlueprintCallable, Category = "Info|Resource", meta = (DisplayName = "Show Resource-Info"))
+		void ShowResourceInfo(const TArray<TEnumAsByte<EResource>>& playerResources, const  TArray<int32>& playerResourceAmounts);
+
+	void ShowResourceInfo(const TMap<EResource, int32>& playerResourceAmounts);
+
+	UFUNCTION(BlueprintCallable, Category = "Info|Resource", meta = (DisplayName = "Hide Resource-Info"))
+		void HideResourceInfo();
+
+	UFUNCTION(BlueprintCallable, Category = "Build Buttons", meta = (DisplayName = "Show Build Buttons"))
+		void ShowBuildButtons();
+
+	UFUNCTION(BlueprintCallable, Category = "Build Buttons", meta = (DisplayName = "Hide Build Buttons"))
+		void HideBuildButtons();
 
 private:
 
 	AEtosPlayerController* GetPlayerController();
 
 	void CreateButtons();
+
+	void UpdateResourceLayouts(const TMap<EResource, int32>& playerResourceAmounts);
+
+	UUniformGridSlot* AddChildToGridPanel(UWidget* Content, int32 Column, int32 Row);
 };

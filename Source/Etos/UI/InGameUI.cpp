@@ -3,6 +3,7 @@
 #include "Etos.h"
 #include "InGameUI.h"
 #include "Etos/UI/BuildMenuButton.h"
+#include "Etos/UI/ResourceLayout.h"
 #include "Etos/Game/EtosGameMode.h"
 #include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
 #include "Etos/Buildings/Base/Building.h"
@@ -40,6 +41,7 @@ void UInGameUI::UpdateResourceAmounts()
 			if (enumPtr)
 			{
 				FString resourceName = enumPtr->GetEnumName((int32)elem.Key);
+				resourceName.Replace(TEXT("EResource::"), TEXT(""));
 				args.Add(TEXT("resourceName"), FText::FromString(resourceName));
 
 				elem.Value->SetText(FText::Format(LOCTEXT("", "{resourceName}: {amount}"), args));
@@ -52,6 +54,67 @@ void UInGameUI::UpdateResourceAmounts()
 	}
 }
 #undef LOCTEXT_NAMESPACE 
+
+void UInGameUI::ShowResourceInfo(const TArray<TEnumAsByte<EResource>>& playerResources, const TArray<int32>& playerResourceAmounts)
+{
+	if (playerResources.Num() != playerResourceAmounts.Num())
+		return;
+
+	TMap<EResource, int32> resourceAmountMap = TMap<EResource, int32>();
+
+	for (int32 i = 0; i < playerResources.Num(); i++)
+	{
+		resourceAmountMap.Add(playerResources[i], playerResourceAmounts[i]);
+	}
+
+	ShowResourceInfo(resourceAmountMap);
+}
+
+void UInGameUI::ShowResourceInfo(const TMap<EResource, int32>& playerResourceAmounts)
+{
+	checkf(ResourceLayoutBlueprint, TEXT("Please specify the ResourceLayout-Blueprint in the InGameUI-Blueprint first"));
+
+	UpdateResourceLayouts(playerResourceAmounts);
+
+	for (auto layout : resources)
+	{
+		layout.Value->SetVisibility(ESlateVisibility::Visible);
+	}
+
+	//TArray<EResource> resources = TArray<EResource>();
+	//TArray<int32> amounts = TArray<int32>();
+
+	//playerResourceAmounts.GenerateKeyArray(resources);
+	//playerResourceAmounts.GenerateValueArray(amounts);
+
+	//TArray<TEnumAsByte<EResource>> resourcesAsBytes = TArray<TEnumAsByte<EResource>>(resources);
+
+	//BPEvent_OnShowResourceInfo(resourcesAsBytes, amounts);
+}
+
+void UInGameUI::HideResourceInfo()
+{
+	for (auto layout : resources)
+	{
+		layout.Value->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void UInGameUI::ShowBuildButtons()
+{
+	for (auto button : buttons)
+	{
+		button->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void UInGameUI::HideBuildButtons()
+{
+	for (auto button : buttons)
+	{
+		button->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
 
 AEtosPlayerController * UInGameUI::GetPlayerController()
 {
@@ -72,15 +135,18 @@ AEtosPlayerController * UInGameUI::GetPlayerController()
 
 void UInGameUI::CreateButtons()
 {
-	if (AEtosPlayerController * PlayerController = UUtilityFunctionLibrary::GetFirstEtosPlayerController(this))
+	if (!BuildMenuButtonBlueprint)
+		return;
+
+	if (AEtosPlayerController * const PlayerController = UUtilityFunctionLibrary::GetFirstEtosPlayerController(this))
 	{
-		if (AEtosGameMode * GameMode = UUtilityFunctionLibrary::GetEtosGameMode(this))
+		if (AEtosGameMode * const GameMode = UUtilityFunctionLibrary::GetEtosGameMode(this))
 		{
-			for (int32 buildingID = 1; buildingID < 7/* amount of buildings*/; buildingID++)
+			for (int32 buildingID = 1; buildingID < GameMode->GetBuildingAmount(); buildingID++)
 			{
-				if (FPredefinedBuildingData* preDefData = GameMode->GetPredefinedBuildingData(buildingID))
+				if (FPredefinedBuildingData* const preDefData = GameMode->GetPredefinedBuildingData(buildingID))
 				{
-					if (UBuildMenuButton* button = CreateWidget<UBuildMenuButton>(PlayerController, BuildMenuButtonBlueprint))
+					if (UBuildMenuButton* const button = CreateWidget<UBuildMenuButton>(PlayerController, BuildMenuButtonBlueprint))
 					{
 						FBuildingData data = FBuildingData();
 						data.BuildCost = preDefData->BuildCost;
@@ -103,16 +169,58 @@ void UInGameUI::CreateButtons()
 						button->BuildingIcon->SetBrushFromTexture(preDefData->BuildingIcon);
 						button->Building = preDefData->BuildingBlueprint;
 
-						check(gridPanel);
+						AddChildToGridPanel(button, (buildingID -1) % ButtonsPerRow, (buildingID -1) / ButtonsPerRow);
 
-						UUniformGridSlot* buttonSlot = gridPanel->AddChildToUniformGrid(button);
-						buttonSlot->SetColumn(buildingID % ButtonsPerRow);
-						buttonSlot->SetRow(buildingID / ButtonsPerRow);
-						buttonSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);
-						buttonSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Top);
+						buttons.Add(button);
 					}
 				}
 			}
 		}
 	}
+}
+
+void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResourceAmounts)
+{
+	int32 i = 0;
+	for (auto resource : playerResourceAmounts)
+	{
+		if (resource.Key == EResource::None)
+			continue;
+
+		if (auto layout = resources.FindOrAdd(resource.Key))
+		{
+			layout->Resource = FResource(resource.Key, resource.Value);
+		}
+		else if (ResourceLayoutBlueprint)
+		{
+			if (AEtosPlayerController *const PlayerController = Util::GetFirstEtosPlayerController(this))
+			{
+				if (UResourceLayout* const layout = CreateWidget<UResourceLayout>(PlayerController, ResourceLayoutBlueprint))
+				{
+					layout->Resource = FResource(resource.Key, resource.Value);
+					layout->MaxStoredResources = 100;
+					layout->SetDesiredSizeInViewport(FVector2D(100, 100));
+
+					AddChildToGridPanel(layout, i % ButtonsPerRow, i / ButtonsPerRow);
+
+					resources.FindOrAdd(resource.Key) = layout;
+				}
+			}
+		}
+		++i;
+	}
+}
+
+UUniformGridSlot * UInGameUI::AddChildToGridPanel(UWidget * Content, int32 Column, int32 Row)
+{
+	check(gridPanel);
+	check(Content);
+
+	UUniformGridSlot* buttonSlot = gridPanel->AddChildToUniformGrid(Content);
+	buttonSlot->SetColumn(Column);
+	buttonSlot->SetRow(Row);
+	buttonSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);
+	buttonSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Top);
+
+	return buttonSlot;
 }
