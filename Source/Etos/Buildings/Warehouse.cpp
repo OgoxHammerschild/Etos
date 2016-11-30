@@ -69,7 +69,19 @@ inline void AWarehouse::SendMarketBarrows()
 								// TODO: find closest path tiles
 								if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
 								{
-									AMarketBarrow* newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, building->Data.ProducedResource.Type, FRotator(0, 0, 0), params);
+									bool isValid;
+									AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
+
+									if (newMarketBarrow)
+									{
+										newMarketBarrow->ResetBarrow(Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, building->Data.ProducedResource.Type, FRotator(0, 0, 0));
+										newMarketBarrow->StartWork();
+									}
+									else
+									{
+										newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, building->Data.ProducedResource.Type, FRotator(0, 0, 0), params);
+									}
+
 									if (newMarketBarrow != nullptr)
 									{
 										BarrowsInUse++;

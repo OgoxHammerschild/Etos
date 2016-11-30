@@ -711,7 +711,7 @@ void ABuilding::GetNeededResources()
 										}
 
 										bool isValid;
-										AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
+ 										AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
 
 										if (isValid)
 										{

@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build Buttons")
 		int32 ButtonsPerRow = 4;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info|Resource")
+		int32 ResourcesPerRow = 3;
+
 private:
 
 	UPROPERTY()
@@ -37,7 +40,7 @@ private:
 		TMap<EResource, UTextBlock* > texts;
 
 	UPROPERTY()
-		UUniformGridPanel* gridPanel;
+		UGridPanel* gridPanel;
 
 	UPROPERTY()
 		TArray<UBuildMenuButton*> buttons;
@@ -51,7 +54,7 @@ public:
 
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
-		void SetGridPanel(UPARAM(DisplayName = "Button Grid Panel") UUniformGridPanel* panel);
+		void SetGridPanel(UPARAM(DisplayName = "Button Grid Panel") UGridPanel* panel);
 
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
@@ -89,5 +92,5 @@ private:
 
 	void UpdateResourceLayouts(const TMap<EResource, int32>& playerResourceAmounts);
 
-	UUniformGridSlot* AddChildToGridPanel(UWidget* Content, int32 Column, int32 Row);
+	UGridSlot* AddChildToGridPanel(UWidget* Content, int32 Column, int32 Row);
 };

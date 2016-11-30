@@ -66,6 +66,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Resources", meta = (DisplayName = "OnGetResource"))
 		void BPEvent_OnGetResource(const FResource& TransportedResource);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Reset", meta = (DisplayName = "OnReset"))
+		void BPEvent_OnReset();
+
 private:
 
 	UFUNCTION()

@@ -100,6 +100,7 @@ void AMarketBarrow::ResetBarrow(const FVector & SpawnLocation, const FVector & T
 	this->Resource.Amount = 0;
 	this->SetCanEverAffectNavigationOnComponents(false);
 	this->SetActive(true);
+	this->BPEvent_OnReset();
 }
 
 void AMarketBarrow::StartWork()

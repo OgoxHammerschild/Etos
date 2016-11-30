@@ -15,7 +15,7 @@ void UInGameUI::NativeConstruct()
 	CreateButtons();
 }
 
-void UInGameUI::SetGridPanel(UUniformGridPanel* panel)
+void UInGameUI::SetGridPanel(UGridPanel* panel)
 {
 	gridPanel = panel;
 }
@@ -168,6 +168,7 @@ void UInGameUI::CreateButtons()
 						check(button->BuildingIcon);
 						button->BuildingIcon->SetBrushFromTexture(preDefData->BuildingIcon);
 						button->Building = preDefData->BuildingBlueprint;
+						button->SetPadding(FMargin(5));
 
 						AddChildToGridPanel(button, (buildingID -1) % ButtonsPerRow, (buildingID -1) / ButtonsPerRow);
 
@@ -184,7 +185,7 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 	int32 i = 0;
 	for (auto resource : playerResourceAmounts)
 	{
-		if (resource.Key == EResource::None)
+		if (resource.Key == EResource::None || resource.Key == EResource::Money)
 			continue;
 
 		if (auto layout = resources.FindOrAdd(resource.Key))
@@ -193,15 +194,15 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 		}
 		else if (ResourceLayoutBlueprint)
 		{
-			if (AEtosPlayerController *const PlayerController = Util::GetFirstEtosPlayerController(this))
+			if (AEtosPlayerController * const PlayerController = Util::GetFirstEtosPlayerController(this))
 			{
-				if (UResourceLayout* const layout = CreateWidget<UResourceLayout>(PlayerController, ResourceLayoutBlueprint))
+				if (UResourceLayout * const layout = CreateWidget<UResourceLayout>(PlayerController, ResourceLayoutBlueprint))
 				{
 					layout->Resource = FResource(resource.Key, resource.Value);
 					layout->MaxStoredResources = 100;
-					layout->SetDesiredSizeInViewport(FVector2D(100, 100));
+					layout->SetPadding(FMargin(10));
 
-					AddChildToGridPanel(layout, i % ButtonsPerRow, i / ButtonsPerRow);
+					AddChildToGridPanel(layout, i % ResourcesPerRow, i / ResourcesPerRow);
 
 					resources.FindOrAdd(resource.Key) = layout;
 				}
@@ -211,16 +212,16 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 	}
 }
 
-UUniformGridSlot * UInGameUI::AddChildToGridPanel(UWidget * Content, int32 Column, int32 Row)
+UGridSlot * UInGameUI::AddChildToGridPanel(UWidget * Content, int32 Column, int32 Row)
 {
 	check(gridPanel);
 	check(Content);
 
-	UUniformGridSlot* buttonSlot = gridPanel->AddChildToUniformGrid(Content);
-	buttonSlot->SetColumn(Column);
-	buttonSlot->SetRow(Row);
-	buttonSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);
-	buttonSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Top);
+	UGridSlot* gridSlot = gridPanel->AddChildToGrid(Content);
+	gridSlot->SetColumn(Column);
+	gridSlot->SetRow(Row);
+	gridSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);
+	gridSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Top);
 
-	return buttonSlot;
+	return gridSlot;
 }
