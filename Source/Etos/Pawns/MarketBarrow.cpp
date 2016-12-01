@@ -230,19 +230,17 @@ FORCEINLINE void AMarketBarrow::HaveLunchBreak()
 {
 	//TODO: fade out
 
-	if (TargetBuilding)
+	checkf(TargetBuilding, TEXT("%s's TargetBuilding was null."), *GetName())
 	{
 		TargetBuilding->Data.bBarrowIsOnTheWay = false;
 	}
-	else UE_LOG(LogTemp, Warning, TEXT("%s's TargetBuilding was null."), *GetName());
 
 	// on fade out finished:
 	{
-		if (MyWorkplace)
+		checkf(MyWorkplace, TEXT("%s's Warehouse was null."), *GetName())
 		{
 			MyWorkplace->DecreaseBarrowsInUse();
 		}
-		else UE_LOG(LogTemp, Warning, TEXT("%s's Warehouse was null."), *GetName());
 
 		if (MyWorkplace->TryReturningToPool(this))
 		{

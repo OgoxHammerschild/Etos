@@ -390,7 +390,80 @@ void ABuilding::SpendUpkeep(float DeltaTime)
 	}
 }
 
-TArray<ABuilding*> collisions;
+void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding, const EResource& orderedResource, const FVector& spawnLocation, const FVector& targetLocation)
+{
+	bool isValid;
+	AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
+
+	if (newMarketBarrow && isValid)
+	{
+		newMarketBarrow->ResetBarrow(
+			spawnLocation, // spawn location
+			targetLocation, // target location
+			this, // workplace
+			targetBuilding, // target
+			orderedResource);
+		// ich hasse euch alle - neele
+		newMarketBarrow->StartWork();
+	}
+	else
+	{
+		FActorSpawnParameters params = FActorSpawnParameters();
+		params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		newMarketBarrow = AMarketBarrow::Construct(
+			this, // world context 
+			BP_MarketBarrow, // class to spawn
+			spawnLocation, // spawn location
+			targetLocation, // target location
+			this, // workplace
+			targetBuilding, // target
+			orderedResource,
+			FRotator(0, 0, 0),
+			params);
+	}
+
+	if (newMarketBarrow && newMarketBarrow->IsValidLowLevelFast())
+	{
+		++BarrowsInUse;
+	}
+
+	//bool isValid;
+	//AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
+
+	//if (newMarketBarrow && isValid)
+	//{
+	//	newMarketBarrow->ResetBarrow(
+	//		Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
+	//		building->Data.PathConnections[0]->GetActorLocation(), // target location
+	//		this, // workplace
+	//		building, // target
+	//		orderedResource);
+
+	//	newMarketBarrow->StartWork();
+	//}
+	//else
+	//{
+	//	FActorSpawnParameters params = FActorSpawnParameters();
+	//	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	//	newMarketBarrow = AMarketBarrow::Construct(
+	//		this, // world context 
+	//		BP_MarketBarrow, // class to spawn
+	//		Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
+	//		building->Data.PathConnections[0]->GetActorLocation(), // target location
+	//		this, // workplace
+	//		building, // target
+	//		orderedResource,
+	//		FRotator(0, 0, 0),
+	//		params);
+	//}
+
+	//if (newMarketBarrow && newMarketBarrow->IsValidLowLevelFast())
+	//{
+	//	++BarrowsInUse;
+	//}
+}
 
 void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
 {
@@ -554,16 +627,19 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 
 	TArray<FHitResult> HitResults;
 
-	TArray<ABuilding*> BuildingsInRange;
+	TArray<ABuilding*> BuildingsInRange = TArray<ABuilding*>();
 
 	if (UKismetSystemLibrary::SphereTraceMultiForObjects(this, Location, Location, Data.Radius, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true))
 	{
 		for (FHitResult hit : HitResults)
 		{
-			ABuilding * building = dynamic_cast<ABuilding*, AActor>(&*hit.Actor);
+			if (dynamic_cast<APath*, AActor>(&*hit.Actor))
+				continue;
+
+			ABuilding * const building = dynamic_cast<ABuilding*, AActor>(&*hit.Actor);
 			if (building)
 			{
-				BuildingsInRange.Emplace(building);
+				BuildingsInRange.Add(building);
 			}
 		}
 	}
@@ -613,6 +689,17 @@ FORCEINLINE AEtosPlayerController * ABuilding::GetMyPlayerController()
 		MyPlayerController = (AEtosPlayerController*)GetWorld()->GetFirstPlayerController();
 	}
 	return MyPlayerController;
+}
+
+void ABuilding::RefreshBuildingsInRadius()
+{
+	TArray<ABuilding*> OverlappingBulidings;
+	GetOverlappingBulidings(OverlappingBulidings);
+
+	if (Data.BuildingsInRadius.Num() != OverlappingBulidings.Num())
+	{
+		Data.BuildingsInRadius = OverlappingBulidings;
+	}
 }
 
 void ABuilding::AddNewBuildingInRange(ABuilding * buildingInRange)
@@ -681,7 +768,13 @@ void ABuilding::GetNeededResources()
 	{
 		if (BP_MarketBarrow)
 		{
-			Data.BuildingsInRadius.Sort([](const ABuilding& A, const ABuilding& B) {return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount; });
+			RefreshBuildingsInRadius();
+
+			Data.BuildingsInRadius.Sort([](const ABuilding& A, const ABuilding& B)
+			{
+				return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount;
+			});
+
 			for (ABuilding* const building : Data.BuildingsInRadius)
 			{
 				if (BarrowsInUse < MaxBarrows)
@@ -692,46 +785,26 @@ void ABuilding::GetNeededResources()
 						{
 							if (BFuncs::FindPath(this, building))
 							{
-								if (UWorld* const World = GetWorld())
+								// TODO: find closest path tiles
+								if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
 								{
-									FActorSpawnParameters params = FActorSpawnParameters();
-									params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+									EResource orderedResource = EResource::None;
 
-									// TODO: find closest path tiles
-									if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
-									{
-										EResource orderedResource = EResource::None;
-										if (Data.NeededResource1.Type != orderedResource && Data.NeededResource1.Amount < 1)
-										{
-											orderedResource = Data.NeededResource1.Type;
-										}
-										else if (Data.NeededResource2.Type != orderedResource && Data.NeededResource2.Amount < 1)
-										{
-											orderedResource = Data.NeededResource2.Type;
-										}
+									DetermineOrderedResource(orderedResource, building);
 
-										bool isValid;
- 										AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
-
-										if (isValid)
-										{
-											newMarketBarrow->ResetBarrow(Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, orderedResource, FRotator(0, 0, 0));
-											newMarketBarrow->StartWork();
-										}
-										else
-										{
-											newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, orderedResource, FRotator(0, 0, 0), params);
-										}
-
-										if (newMarketBarrow != nullptr)
-										{
-											BarrowsInUse++;
-										}
-									}
+									SendMarketBarrow_Internal(
+										building, // target
+										orderedResource, 
+										Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
+										building->Data.PathConnections[0]->GetActorLocation()); // target location
 								}
 							}
 						}
 					}
+				} // (BarrowsInUse < MaxBarrows)
+				else
+				{
+					break;
 				}
 			}
 		}
@@ -748,9 +821,37 @@ void ABuilding::MoveToMouseLocation()
 	}
 }
 
+void ABuilding::DetermineOrderedResource(EResource & OrderedResource, ABuilding* TargetBuilding)
+{
+	OrderedResource = EResource::None;
+	FResource res1 = Data.NeededResource1;
+	FResource res2 = Data.NeededResource2;
+
+	if (res1.Type != EResource::None && res1.Amount < 1 && TargetBuilding->HasResource(res1.Type))
+	{
+		OrderedResource = res1.Type;
+	}
+	else if (res2.Type != EResource::None && res2.Amount < 1 && TargetBuilding->HasResource(res2.Type))
+	{
+		OrderedResource = res2.Type;
+	}
+
+	/*	FResource res1 = Data.NeededResource1;
+	FResource res2 = Data.NeededResource2;
+
+	if (res1.Type != orderedResource && res1.Amount < 1 && building->HasResource(res1.Type))
+	{
+	orderedResource = res1.Type;
+	}
+	else if (res2.Type != orderedResource && res2.Amount < 1 && building->HasResource(res2.Type))
+	{
+	orderedResource = res2.Type;
+	}*/
+}
+
 FORCEINLINE void ABuilding::DecreaseBarrowsInUse()
 {
-	BarrowsInUse--;
+	--BarrowsInUse;
 }
 
 bool ABuilding::HasNeededResources(ABuilding * other)
@@ -771,6 +872,16 @@ bool ABuilding::HasNeededResources(ABuilding * other)
 	return ((Data.NeededResource1.Amount < 1 && other->Data.ProducedResource.Type == Data.NeededResource1.Type)
 		|| (Data.NeededResource2.Amount < 1 && other->Data.ProducedResource.Type == Data.NeededResource2.Type))
 		&& other->Data.ProducedResource.Amount >= 5;
+}
+
+bool ABuilding::HasResource(ABuilding * other, EResource resource)
+{
+	return other->Data.ProducedResource.Type == resource && other->Data.ProducedResource.Amount > 0;
+}
+
+bool ABuilding::HasResource(EResource resource)
+{
+	return HasResource(this, resource);
 }
 
 bool ABuilding::IsActive()
@@ -804,4 +915,21 @@ void ABuilding::SetActive(bool isActive)
 bool ABuilding::TryReturningToPool(AMarketBarrow * barrow)
 {
 	return MarketBarrowPool.AddObjectToPool<AMarketBarrow>(barrow);;
+}
+
+void ABuilding::GetOverlappingBulidings(TArray<ABuilding*>& OverlappingBuildings)
+{
+	TArray<AActor*> actors;
+	Radius->GetOverlappingActors(actors, TSubclassOf<ABuilding>());
+
+	for (AActor* building : actors)
+	{
+		if (this == building)
+			continue;
+
+		if (dynamic_cast<APath*, AActor>(building))
+			continue;
+
+		OverlappingBuildings.Add((ABuilding*)building);
+	}
 }

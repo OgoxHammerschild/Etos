@@ -224,6 +224,9 @@ private:
 	UPROPERTY()
 		bool bIsActive;
 
+	UPROPERTY()
+		TArray<ABuilding*> collisions;
+
 public:
 	// Sets default values for this actor's properties
 	ABuilding();
@@ -256,11 +259,19 @@ public:
 	// Whether the other building has the resources this building needs
 	bool HasNeededResources(ABuilding* other);
 
+	// Whether the other building offers the specified resource 
+	bool HasResource(ABuilding* other, EResource resource);
+
+	// Whether this building offers the specified resource 
+	bool HasResource(EResource resource);
+
 	bool IsActive();
 
 	void SetActive(bool isActive);
 
 	bool TryReturningToPool(AMarketBarrow* barrow);
+
+	void GetOverlappingBulidings(TArray<ABuilding*>& OverlappingBuildings);
 
 	bool operator<(const ABuilding& B) const;
 
@@ -276,6 +287,8 @@ protected:
 
 	virtual void SpendUpkeep(float DeltaTime);
 
+	virtual void SendMarketBarrow_Internal(ABuilding* targetBuilding, const EResource& orderedResource, const FVector& spawnLocation, const FVector& targetLocation);
+
 	void InitOccupiedBuildSpace();
 
 	void InitOccupiedBuildSpace_Custom();
@@ -289,6 +302,8 @@ protected:
 	void SpawnResourcePopup(FVector offset = FVector(0, 0, 200));
 
 	AEtosPlayerController * GetMyPlayerController();
+
+	void RefreshBuildingsInRadius();
 
 private:
 
@@ -324,4 +339,6 @@ private:
 	void RemoveANeededResource();
 
 	void MoveToMouseLocation();
+
+	void DetermineOrderedResource(EResource& OrderedResource, ABuilding* TargetBuilding);
 };

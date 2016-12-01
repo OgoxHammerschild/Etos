@@ -50,6 +50,8 @@ inline void AWarehouse::SendMarketBarrows()
 {
 	if (BP_MarketBarrow)
 	{
+		RefreshBuildingsInRadius();
+
 		Data.BuildingsInRadius.Sort([](const ABuilding& A, const ABuilding& B) {return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount; });
 		for (ABuilding* building : Data.BuildingsInRadius)
 		{
@@ -61,31 +63,44 @@ inline void AWarehouse::SendMarketBarrows()
 					{
 						if (BFuncs::FindPath(this, building))
 						{
-							if (UWorld* World = GetWorld())
+							// TODO: find closest path tiles
+							if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
 							{
-								FActorSpawnParameters params = FActorSpawnParameters();
-								params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+								bool isValid;
+								AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
 
-								// TODO: find closest path tiles
-								if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
+								if (isValid && newMarketBarrow)
 								{
-									bool isValid;
-									AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
+									newMarketBarrow->ResetBarrow(
+										Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100),
+										building->Data.PathConnections[0]->GetActorLocation(),
+										this,
+										building,
+										building->Data.ProducedResource.Type,
+										FRotator(0, 0, 0));
 
-									if (newMarketBarrow)
-									{
-										newMarketBarrow->ResetBarrow(Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, building->Data.ProducedResource.Type, FRotator(0, 0, 0));
-										newMarketBarrow->StartWork();
-									}
-									else
-									{
-										newMarketBarrow = AMarketBarrow::Construct(this, BP_MarketBarrow, Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), building->Data.PathConnections[0]->GetActorLocation(), this, building, building->Data.ProducedResource.Type, FRotator(0, 0, 0), params);
-									}
+									newMarketBarrow->StartWork();
+								}
+								else
+								{
+									FActorSpawnParameters params = FActorSpawnParameters();
+									params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-									if (newMarketBarrow != nullptr)
-									{
-										BarrowsInUse++;
-									}
+									newMarketBarrow = AMarketBarrow::Construct(
+										this,
+										BP_MarketBarrow,
+										Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100),
+										building->Data.PathConnections[0]->GetActorLocation(),
+										this,
+										building,
+										building->Data.ProducedResource.Type,
+										FRotator(0, 0, 0),
+										params);
+								}
+
+								if (newMarketBarrow && newMarketBarrow->IsValidLowLevelFast())
+								{
+									BarrowsInUse++;
 								}
 							}
 						}
