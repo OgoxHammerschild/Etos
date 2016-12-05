@@ -27,6 +27,7 @@ AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassO
 	if (UWorld* const World = WorldContextObject->GetWorld())
 	{
 		AMarketBarrow * barrow = World->SpawnActor<AMarketBarrow>(ClassToSpawn, SpawnLocation, Rotation, SpawnParameters);
+
 		if (barrow)
 		{
 			barrow->ResetBarrow(SpawnLocation, TargetLocation, MyWorkplace, TargetBuilding, OrderedResource, Rotation);
@@ -40,38 +41,14 @@ AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassO
 	return nullptr;
 }
 
-// Called when the game starts or when spawned
-void AMarketBarrow::BeginPlay()
-{
-	Super::BeginPlay();
-
-	//UE_LOG(LogTemp, Warning, TEXT("%s: I live!"), *GetName());
-}
-
-// Called every frame
-void AMarketBarrow::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
-// Called to bind functionality to input
-void AMarketBarrow::SetupPlayerInputComponent(class UInputComponent* InputComponent)
-{
-	Super::SetupPlayerInputComponent(InputComponent);
-
-}
-
 // called by garbage collection (default 60sec interval)
 void AMarketBarrow::BeginDestroy()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("%s: Goodbye cruel world. D:"), *GetName());
-	Super::BeginDestroy();
+	UE_LOG(LogTemp, Warning, TEXT("%s: Fuck this shit I'm out"), *GetName());
 
-	//if (!this)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s's was null."), *GetName());
-	//}
+	CheckOut_Checked();
+
+	Super::BeginDestroy();
 }
 
 void AMarketBarrow::ResetBarrow(const FVector & SpawnLocation, const FVector & TargetLocation, ABuilding * MyWorkplace, ABuilding * TargetBuilding, EResource OrderedResource, const FRotator & Rotation)
@@ -96,6 +73,7 @@ void AMarketBarrow::ResetBarrow(const FVector & SpawnLocation, const FVector & T
 	this->StartLocation = SpawnLocation;
 	this->TargetLocation = TargetLocation;
 	this->TargetBuilding->Data.bBarrowIsOnTheWay = true;
+	this->bCheckedOut = false;
 	this->Resource.Type = OrderedResource;
 	this->Resource.Amount = 0;
 	this->SetCanEverAffectNavigationOnComponents(false);
@@ -115,7 +93,6 @@ void AMarketBarrow::SetActive(bool isActive)
 {
 	bIsActive = isActive;
 	SetActorHiddenInGame(!bIsActive);
-	SetActorTickEnabled(bIsActive);
 
 	TInlineComponentArray<UActorComponent*> Components;
 	GetComponents(Components);
@@ -146,6 +123,7 @@ void AMarketBarrow::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult
 	switch (MovementResult)
 	{
 	case EPathFollowingResult::Success:
+	case EPathFollowingResult::Aborted:
 		if (bArrivedAtTarget)
 		{
 			if (AcceptanceRadius >= FVector::Dist(StartLocation, GetActorLocation()))
@@ -226,21 +204,13 @@ FORCEINLINE void AMarketBarrow::AddResourceToWorkplace()
 	}
 }
 
-FORCEINLINE void AMarketBarrow::HaveLunchBreak()
+void AMarketBarrow::HaveLunchBreak()
 {
 	//TODO: fade out
 
-	checkf(TargetBuilding, TEXT("%s's TargetBuilding was null."), *GetName())
-	{
-		TargetBuilding->Data.bBarrowIsOnTheWay = false;
-	}
-
 	// on fade out finished:
 	{
-		checkf(MyWorkplace, TEXT("%s's Warehouse was null."), *GetName())
-		{
-			MyWorkplace->DecreaseBarrowsInUse();
-		}
+		CheckOut_Checked();
 
 		if (MyWorkplace->TryReturningToPool(this))
 		{
@@ -260,5 +230,22 @@ FORCEINLINE void AMarketBarrow::SetCanEverAffectNavigationOnComponents(bool bRel
 	for (auto comp : Components)
 	{
 		comp->SetCanEverAffectNavigation(bRelevance);
+	}
+}
+
+void AMarketBarrow::CheckOut_Checked()
+{
+	if (!bCheckedOut)
+	{
+		if (TargetBuilding/*, TEXT("%s's TargetBuilding was null."), *GetName()*/)
+		{
+			TargetBuilding->Data.bBarrowIsOnTheWay = false;
+		}
+
+		if (MyWorkplace/*, TEXT("%s's Warehouse was null."), *GetName()*/)
+		{
+			MyWorkplace->DecreaseBarrowsInUse();
+		}
+		bCheckedOut = true;
 	}
 }
