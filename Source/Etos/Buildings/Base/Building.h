@@ -28,6 +28,7 @@ enum class EResource : uint8
 	Food,
 	Coal,
 	Iron,
+	IronOre, 
 
 	EResource_MAX
 };
@@ -263,7 +264,7 @@ public:
 	bool HasResource(ABuilding* other, EResource resource);
 
 	// Whether this building offers the specified resource 
-	bool HasResource(EResource resource);
+	virtual	bool HasResource(EResource resource);
 
 	bool IsActive();
 

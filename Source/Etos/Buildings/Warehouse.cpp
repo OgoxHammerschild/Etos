@@ -35,9 +35,26 @@ FResource AWarehouse::HandOutResource(const EResource & resource)
 
 FORCEINLINE void AWarehouse::ReceiveResource(const FResource& resource)
 {
-	if (GetMyPlayerController())
+	if (MyPlayerController)
 	{
 		MyPlayerController->AddResource(resource);
+	}
+	else
+	{
+		GetMyPlayerController();
+	}
+}
+
+bool AWarehouse::HasResource(EResource resource)
+{
+	if (MyPlayerController)
+	{
+		return MyPlayerController->GetResourceAmount(resource) > 0;
+	}
+	else
+	{
+		GetMyPlayerController();
+		return false;
 	}
 }
 
@@ -52,7 +69,11 @@ inline void AWarehouse::SendMarketBarrows()
 	{
 		RefreshBuildingsInRadius();
 
-		Data.BuildingsInRadius.Sort([](const ABuilding& A, const ABuilding& B) {return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount; });
+		Data.BuildingsInRadius.Sort([](const ABuilding& A, const ABuilding& B)
+		{
+			return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount; 
+		});
+
 		for (ABuilding* building : Data.BuildingsInRadius)
 		{
 			if (BarrowsInUse < MaxBarrows)
@@ -67,7 +88,7 @@ inline void AWarehouse::SendMarketBarrows()
 							if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
 							{
 								bool isValid;
-								AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
+								AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow*>(isValid);
 
 								if (isValid && newMarketBarrow)
 								{
@@ -98,9 +119,9 @@ inline void AWarehouse::SendMarketBarrows()
 										params);
 								}
 
-								if (newMarketBarrow && newMarketBarrow->IsValidLowLevelFast())
+								if (newMarketBarrow && newMarketBarrow->IsValidLowLevel())
 								{
-									BarrowsInUse++;
+									++BarrowsInUse;
 								}
 							}
 						}

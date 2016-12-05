@@ -374,6 +374,9 @@ void ABuilding::BindDelayAction()
 
 void ABuilding::SpendUpkeep(float DeltaTime)
 {
+	if (Data.Upkeep <= 0)
+		return;
+
 	if (MyPlayerController)
 	{
 		currentUpkeepDebts += Data.Upkeep * (DeltaTime / 60); // save the fragment of the upkeep
@@ -393,7 +396,7 @@ void ABuilding::SpendUpkeep(float DeltaTime)
 void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding, const EResource& orderedResource, const FVector& spawnLocation, const FVector& targetLocation)
 {
 	bool isValid;
-	AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
+	AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow*>(isValid);
 
 	if (newMarketBarrow && isValid)
 	{
@@ -403,7 +406,7 @@ void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding, const EReso
 			this, // workplace
 			targetBuilding, // target
 			orderedResource);
-		// ich hasse euch alle - neele
+
 		newMarketBarrow->StartWork();
 	}
 	else
@@ -789,14 +792,16 @@ void ABuilding::GetNeededResources()
 								if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
 								{
 									EResource orderedResource = EResource::None;
-
 									DetermineOrderedResource(orderedResource, building);
 
-									SendMarketBarrow_Internal(
-										building, // target
-										orderedResource, 
-										Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
-										building->Data.PathConnections[0]->GetActorLocation()); // target location
+									if (orderedResource != EResource::None)
+									{
+										SendMarketBarrow_Internal(
+											building, // target
+											orderedResource,
+											Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
+											building->Data.PathConnections[0]->GetActorLocation()); // target location
+									}
 								}
 							}
 						}
@@ -914,7 +919,7 @@ void ABuilding::SetActive(bool isActive)
 
 bool ABuilding::TryReturningToPool(AMarketBarrow * barrow)
 {
-	return MarketBarrowPool.AddObjectToPool<AMarketBarrow>(barrow);;
+	return MarketBarrowPool.AddObjectToPool(barrow);;
 }
 
 void ABuilding::GetOverlappingBulidings(TArray<ABuilding*>& OverlappingBuildings)

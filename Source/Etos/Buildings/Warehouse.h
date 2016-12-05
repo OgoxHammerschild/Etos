@@ -21,6 +21,8 @@ public:
 
 	virtual void ReceiveResource(const FResource& resource) override;
 
+	virtual	bool HasResource(EResource resource) override;
+
 protected:
 
 	virtual void BindDelayAction() override;
