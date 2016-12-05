@@ -30,6 +30,8 @@ void AEtosPlayerController::BeginPlay()
 	AddResource(FResource(EResource::Wood, 50));
 	AddResource(FResource(EResource::Tool, 50));
 	AddResource(FResource(EResource::Iron, 50));
+	AddResource(FResource(EResource::Stone, 50));
+	AddResource(FResource(EResource::Food, 50));
 	//#########################
 }
 
@@ -73,6 +75,17 @@ FORCEINLINE void AEtosPlayerController::RemoveResource(const FResource& resource
 FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(const EResource& resource)
 {
 	return resourceAmounts.FindOrAdd(resource);
+}
+
+void AEtosPlayerController::UpdateCitizens(int32 deltaCitizens)
+{
+	totalCitizenAmount += deltaCitizens;
+	GetInGameUI()->UpdateCitizenAmount();
+}
+
+int32 AEtosPlayerController::GetCitizenAmount()
+{
+	return totalCitizenAmount;
 }
 
 FORCEINLINE UInGameUI * AEtosPlayerController::GetInGameUI()
@@ -358,7 +371,7 @@ inline void AEtosPlayerController::UpdatePathPreview()
 FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World)
 {
 	bool bGotPathFromPool;
-	APath* newPath = pathPool.GetPooledObject<APath>(bGotPathFromPool);
+	APath* newPath = pathPool.GetPooledObject<APath*>(bGotPathFromPool);
 
 	if (bGotPathFromPool)
 	{
@@ -379,7 +392,7 @@ FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLoc
 
 void AEtosPlayerController::DestroyPathPreview(APath * tempPath)
 {
-	if (pathPool.AddObjectToPool<APath>(tempPath))
+	if (pathPool.AddObjectToPool(tempPath))
 	{
 		tempPath->SetActive(false);
 	}

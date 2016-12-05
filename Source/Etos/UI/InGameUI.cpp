@@ -22,7 +22,12 @@ void UInGameUI::SetGridPanel(UGridPanel* panel)
 
 void UInGameUI::LinkTextToResource(UTextBlock* text, EResource resource)
 {
-	texts.Emplace(resource, text);
+	resourceTexts.Emplace(resource, text);
+}
+
+void UInGameUI::SetCitizensText(UTextBlock* text)
+{
+	citizensText = text;
 }
 
 #define LOCTEXT_NAMESPACE "InGameGUI" 
@@ -30,7 +35,7 @@ void UInGameUI::UpdateResourceAmounts()
 {
 	if (GetPlayerController())
 	{
-		for (auto& elem : texts)
+		for (auto& elem : resourceTexts)
 		{
 			int32 amount = playerController->GetResourceAmount(elem.Key);
 
@@ -44,13 +49,26 @@ void UInGameUI::UpdateResourceAmounts()
 				resourceName.Replace(TEXT("EResource::"), TEXT(""));
 				args.Add(TEXT("resourceName"), FText::FromString(resourceName));
 
-				elem.Value->SetText(FText::Format(LOCTEXT("", "{resourceName}: {amount}"), args));
+				elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", "{resourceName}: {amount}"), args));
 			}
 			else
 			{
-				elem.Value->SetText(FText::Format(LOCTEXT("", "{amount}"), args));
+				elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", "{amount}"), args));
 			}
 		}
+	}
+}
+
+void UInGameUI::UpdateCitizenAmount()
+{
+	if (GetPlayerController())
+	{
+		int32 amount = playerController->GetCitizenAmount();
+
+		FFormatNamedArguments args;
+		args.Add(TEXT("amount"), amount);
+
+		citizensText->SetText(FText::Format(LOCTEXT("CITIZEN_AMOUNT", "Citizens: {amount}"), args));
 	}
 }
 #undef LOCTEXT_NAMESPACE 
@@ -170,7 +188,7 @@ void UInGameUI::CreateButtons()
 						button->Building = preDefData->BuildingBlueprint;
 						button->SetPadding(FMargin(5));
 
-						AddChildToGridPanel(button, (buildingID -1) % ButtonsPerRow, (buildingID -1) / ButtonsPerRow);
+						AddChildToGridPanel(button, (buildingID - 1) % ButtonsPerRow, (buildingID - 1) / ButtonsPerRow);
 
 						buttons.Add(button);
 					}

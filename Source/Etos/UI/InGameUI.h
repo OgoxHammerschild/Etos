@@ -37,7 +37,10 @@ private:
 		AEtosPlayerController* playerController;
 
 	UPROPERTY()
-		TMap<EResource, UTextBlock* > texts;
+		TMap<EResource, UTextBlock* > resourceTexts;
+
+	UPROPERTY()
+		UTextBlock* citizensText;
 
 	UPROPERTY()
 		UGridPanel* gridPanel;
@@ -60,8 +63,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
 		void LinkTextToResource(UTextBlock* text, EResource resource);
 
+	// Create a reference between the elements in the designer and the elements in C++
+	UFUNCTION(BlueprintCallable, Category = "Referencing")
+		void SetCitizensText(UPARAM(DisplayName = "CitizensText") UTextBlock* text);
+
 	UFUNCTION(BlueprintCallable, Category = "Update")
 		void UpdateResourceAmounts();
+
+	UFUNCTION(BlueprintCallable, Category = "Update")
+		void UpdateCitizenAmount();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Building", meta = (DisplayName = "Show Building-Info"))
 		void BPEvent_ShowBuildingInfo(const FBuildingData& buildingData);
