@@ -12,3 +12,5 @@
 
 #include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
 #include "Etos/FunctionLibraries/Vector2Di.h"
+#include "Etos/FunctionLibraries/StructLibrary.h"
+#include "Etos/FunctionLibraries/EnumLibrary.h"
