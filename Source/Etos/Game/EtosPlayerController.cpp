@@ -20,19 +20,23 @@ void AEtosPlayerController::BeginPlay()
 	bEnableMouseOverEvents = true;
 
 	AddHUDToViewport();
+	UpdatePolulation(0);
 	InitResourceMapping();
 
 	pathPool.SetMinPooledObjectsAmount(8);
 	pathPool.SetMaxPooledObjectsAmount(256);
 
-	// for testing ############
+	// ### start resources - difficulty: easy ###
 	AddResource(FResource(EResource::Money, 10000));
-	AddResource(FResource(EResource::Wood, 50));
-	AddResource(FResource(EResource::Tool, 50));
+	AddResource(FResource(EResource::Wood, 40));
+	AddResource(FResource(EResource::Tool, 40));
+	AddResource(FResource(EResource::Fish, 30));
+	// ##########################################
+
+	// ############## for testing ###############
 	AddResource(FResource(EResource::Iron, 50));
 	AddResource(FResource(EResource::Stone, 50));
-	AddResource(FResource(EResource::Food, 50));
-	//#########################
+	//###########################################
 }
 
 void AEtosPlayerController::Tick(float DeltaTime)
@@ -56,7 +60,7 @@ void AEtosPlayerController::SetupInputComponent()
 
 FORCEINLINE void AEtosPlayerController::AddResource(const FResource& resource)
 {
-	if (resource.Type != EResource::None)
+	if (Enum::IsValid(resource.Type))
 	{
 		resourceAmounts[resource.Type] += resource.Amount;
 		GetInGameUI()->UpdateResourceAmounts();
@@ -65,11 +69,32 @@ FORCEINLINE void AEtosPlayerController::AddResource(const FResource& resource)
 
 FORCEINLINE void AEtosPlayerController::RemoveResource(const FResource& resource)
 {
-	if (resource.Type != EResource::None)
+	RemoveResource(resource.Type, resource.Amount);
+}
+
+void AEtosPlayerController::RemoveResource(const EResource & resource, const int32 & amount)
+{
+	if (Enum::IsValid(resource))
 	{
-		resourceAmounts[resource.Type] -= resource.Amount;
+		resourceAmounts[resource] -= amount;
 		GetInGameUI()->UpdateResourceAmounts();
 	}
+}
+
+bool AEtosPlayerController::TryRemovingResource(const FResource & resource)
+{
+	return TryRemovingResource(resource.Type, resource.Amount);
+}
+
+bool AEtosPlayerController::TryRemovingResource(const EResource & resource, const int32 & amount)
+{
+	if (GetResourceAmount(resource) > 0)
+	{
+		RemoveResource(resource, amount);
+		return true;
+	}
+
+	return false;
 }
 
 FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(const EResource& resource)
@@ -77,15 +102,15 @@ FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(const EResource& reso
 	return resourceAmounts.FindOrAdd(resource);
 }
 
-void AEtosPlayerController::UpdateCitizens(int32 deltaCitizens)
+void AEtosPlayerController::UpdatePolulation(int32 deltaPolulation)
 {
-	totalCitizenAmount += deltaCitizens;
-	GetInGameUI()->UpdateCitizenAmount();
+	totalPopulation += deltaPolulation;
+	GetInGameUI()->UpdatePopulation();
 }
 
-int32 AEtosPlayerController::GetCitizenAmount()
+int32 AEtosPlayerController::GetPopulationAmount()
 {
-	return totalCitizenAmount;
+	return totalPopulation;
 }
 
 FORCEINLINE UInGameUI * AEtosPlayerController::GetInGameUI()

@@ -71,7 +71,7 @@ public:
 		void UpdateResourceAmounts();
 
 	UFUNCTION(BlueprintCallable, Category = "Update")
-		void UpdateCitizenAmount();
+		void UpdatePopulation();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Building", meta = (DisplayName = "Show Building-Info"))
 		void BPEvent_ShowBuildingInfo(const FBuildingData& buildingData);

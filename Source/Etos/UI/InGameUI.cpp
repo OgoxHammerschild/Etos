@@ -59,16 +59,16 @@ void UInGameUI::UpdateResourceAmounts()
 	}
 }
 
-void UInGameUI::UpdateCitizenAmount()
+void UInGameUI::UpdatePopulation()
 {
 	if (GetPlayerController())
 	{
-		int32 amount = playerController->GetCitizenAmount();
+		int32 amount = playerController->GetPopulationAmount();
 
 		FFormatNamedArguments args;
 		args.Add(TEXT("amount"), amount);
 
-		citizensText->SetText(FText::Format(LOCTEXT("CITIZEN_AMOUNT", "Citizens: {amount}"), args));
+		citizensText->SetText(FText::Format(LOCTEXT("POPULATION_AMOUNT", "Population: {amount}"), args));
 	}
 }
 #undef LOCTEXT_NAMESPACE 
@@ -97,6 +97,7 @@ void UInGameUI::ShowResourceInfo(const TMap<EResource, int32>& playerResourceAmo
 	for (auto layout : resources)
 	{
 		layout.Value->SetVisibility(ESlateVisibility::Visible);
+		layout.Value->SetPadding(FMargin(10));
 	}
 
 	//TArray<EResource> resources = TArray<EResource>();
@@ -123,6 +124,7 @@ void UInGameUI::ShowBuildButtons()
 	for (auto button : buttons)
 	{
 		button->SetVisibility(ESlateVisibility::Visible);
+		button->SetPadding(FMargin(5));
 	}
 }
 
@@ -203,7 +205,7 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 	int32 i = 0;
 	for (auto resource : playerResourceAmounts)
 	{
-		if (resource.Key == EResource::None || resource.Key == EResource::Money)
+		if (!Enum::IsValid(resource.Key) || resource.Key == EResource::Money)
 			continue;
 
 		if (auto layout = resources.FindOrAdd(resource.Key))

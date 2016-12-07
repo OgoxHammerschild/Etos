@@ -24,7 +24,7 @@ private:
 		TMap<EResource, int32> resourceAmounts;
 
 	UPROPERTY(VisibleAnywhere)
-		int32 totalCitizenAmount;
+		int32 totalPopulation = 0;
 
 	UPROPERTY(VisibleAnywhere)
 		ABuilding* newBuilding;
@@ -56,11 +56,17 @@ public:
 
 	void RemoveResource(const FResource& resource);
 
+	void RemoveResource(const EResource& resource, const int32& amount);
+
+	bool TryRemovingResource(const FResource& resource);
+
+	bool TryRemovingResource(const EResource& resource, const int32& amount);
+
 	int32 GetResourceAmount(const EResource& resource);
 
-	void UpdateCitizens(int32 deltaCitizens);
+	void UpdatePolulation(int32 deltaPolulation);
 
-	int32 GetCitizenAmount();
+	int32 GetPopulationAmount();
 
 	class UInGameUI* GetInGameUI();
 

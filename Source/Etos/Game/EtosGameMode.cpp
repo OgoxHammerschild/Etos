@@ -57,3 +57,16 @@ int32 AEtosGameMode::GetBuildingAmount()
 {
 	return PredefinedBuildingData ? PredefinedBuildingData->GetRowNames().Num() : 0;
 }
+
+FResidentNeeds AEtosGameMode::GetPeasantNeeds()
+{
+	FResidentNeeds needs = FResidentNeeds(EResidentLevel::Peasant);
+	
+	needs.ResidentNeeds.Add(EResidentNeed::TownCenter);
+	//needs.ResidentNeeds.Add(EResidentNeed::Chapel);
+
+	needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Fish, 200, 2));
+	//needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Most, 340, 1.5));
+
+	return needs;
+}
