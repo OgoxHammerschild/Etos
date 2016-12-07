@@ -26,6 +26,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 		int32 totalPopulation = 0;
 
+	UPROPERTY()
+		TMap<EResidentLevel, int32> populationPerLevel;
+
 	UPROPERTY(VisibleAnywhere)
 		ABuilding* newBuilding;
 
@@ -44,6 +47,21 @@ private:
 	UPROPERTY()
 		FObjectPool pathPool = FObjectPool();
 
+	UPROPERTY(VisibleAnywhere)
+		int32 totalUpkeep = 0;
+
+	UPROPERTY(VisibleAnywhere)
+		int32 totalIncome = 0;
+
+	UPROPERTY()
+		int32 incomeTimerTotal = 3;
+
+	UPROPERTY()
+		float incomeTimerPassed = 0;
+
+	UPROPERTY(VisibleAnywhere)
+		float payedIncome = 0;
+
 public:
 
 	virtual void BeginPlay() override;
@@ -53,6 +71,8 @@ public:
 	virtual void SetupInputComponent() override;
 
 	void AddResource(const FResource& resource);
+
+	void AddResource(const EResource& resource, const int32& amount);
 
 	void RemoveResource(const FResource& resource);
 
@@ -67,6 +87,10 @@ public:
 	void UpdatePolulation(int32 deltaPolulation);
 
 	int32 GetPopulationAmount();
+
+	void UpdateUpkeep(int32 deltaUpkeep);
+
+	int32 GetTotalUpkeep();
 
 	class UInGameUI* GetInGameUI();
 
@@ -93,6 +117,8 @@ private:
 	UFUNCTION()
 		void SelectBuilding(FKey key);
 
+	void AddIncome(float DeltaTime);
+
 	bool HasEnoughResources(const TArray<FResource>& buildCost);
 
 	//ABuilding* GetBuildingUnderCursor();
@@ -116,4 +142,8 @@ private:
 	void SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World);
 
 	void DestroyPathPreview(APath* tempPath);
+
+	void UpdatePopulationUI(const int32& peasants, const int32& citizens);
+
+	void UpdateBalanceUI(const int32& income, const int32& upkeep);
 };

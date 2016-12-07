@@ -25,9 +25,18 @@ void UInGameUI::LinkTextToResource(UTextBlock* text, EResource resource)
 	resourceTexts.Emplace(resource, text);
 }
 
-void UInGameUI::SetCitizensText(UTextBlock* text)
+void UInGameUI::SetPopulationTexts(UTextBlock* population, UTextBlock* peasants, UTextBlock* citizens)
 {
-	citizensText = text;
+	populationText = population;
+	peasantText = peasants;
+	citizenText = citizens;
+}
+
+void UInGameUI::SetBalanceTexts(UTextBlock * balance, UTextBlock * income, UTextBlock * upkeep)
+{
+	balanceText = balance;
+	incomeText = income;
+	upkeepText = upkeep;
 }
 
 #define LOCTEXT_NAMESPACE "InGameGUI" 
@@ -59,17 +68,33 @@ void UInGameUI::UpdateResourceAmounts()
 	}
 }
 
-void UInGameUI::UpdatePopulation()
+void UInGameUI::UpdatePopulation(const int32& peasants, const int32& citizens)
 {
 	if (GetPlayerController())
 	{
 		int32 amount = playerController->GetPopulationAmount();
 
 		FFormatNamedArguments args;
-		args.Add(TEXT("amount"), amount);
+		args.Add(TEXT("population"), amount);
+		args.Add(TEXT("peasants"), peasants);
+		args.Add(TEXT("citizens"), citizens);
 
-		citizensText->SetText(FText::Format(LOCTEXT("POPULATION_AMOUNT", "Population: {amount}"), args));
+		populationText->SetText(FText::Format(LOCTEXT("POPULATION_AMOUNT", "Population: {population}"), args));
+		peasantText->SetText(FText::Format(LOCTEXT("PEASANT_AMOUNT", "Peasants: {peasants}"), args));
+		citizenText->SetText(FText::Format(LOCTEXT("CITIZEN_AMOUNT", "Citizens: {citizens}"), args));
 	}
+}
+
+void UInGameUI::UpdateBalance(const int32& income, const int32& upkeep)
+{
+	FFormatNamedArguments args;
+	args.Add(TEXT("income"), income);
+	args.Add(TEXT("upkeep"), upkeep);
+	args.Add(TEXT("balance"), income - upkeep);
+
+	incomeText->SetText(FText::Format(LOCTEXT("INCOME_AMOUNT", "Income: {income}"), args));
+	upkeepText->SetText(FText::Format(LOCTEXT("UPKEEP_AMOUNT", "Upkeep: {upkeep}"), args));
+	balanceText->SetText(FText::Format(LOCTEXT("BALANCE_AMOUNT", "Balance: {balance}"), args));
 }
 #undef LOCTEXT_NAMESPACE 
 

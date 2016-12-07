@@ -3,9 +3,9 @@
 #pragma once
 
 #include "GameFramework/GameMode.h"
-#include "Etos/Buildings/Base/Building.h"
 #include "Runtime/Engine/Classes/Engine/DataTable.h"
 #include "Etos/Collision/SimpleCollisionManager.h"
+#include "Etos/FunctionLibraries/EnumLibrary.h"
 #include "EtosGameMode.generated.h"
 
 /**
@@ -27,13 +27,21 @@ public:
 	UPROPERTY()
 		ASimpleCollisionManager* CollisionManager;
 
+private:
+
+	UPROPERTY()
+		TMap<EResidentLevel, float> taxPerResidentPerMinute;
+
 public:
 
 	AEtosGameMode();
 
-	FPredefinedBuildingData* GetPredefinedBuildingData(int32 buildingID);
+	FPredefinedBuildingData* GetPredefinedBuildingData(const int32& buildingID);
 
 	int32 GetBuildingAmount();
 
 	FResidentNeeds GetPeasantNeeds();
+
+	// Returns the payed Tax per Resident per Minute for the specified ResidentLevel
+	float GetTaxForResident(const EResidentLevel& level);
 };

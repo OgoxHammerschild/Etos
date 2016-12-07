@@ -40,7 +40,22 @@ private:
 		TMap<EResource, UTextBlock* > resourceTexts;
 
 	UPROPERTY()
-		UTextBlock* citizensText;
+		UTextBlock* populationText;
+
+	UPROPERTY()
+		UTextBlock* peasantText;
+
+	UPROPERTY()
+		UTextBlock* citizenText;
+
+	UPROPERTY()
+		UTextBlock* balanceText;
+
+	UPROPERTY()
+		UTextBlock* incomeText;
+
+	UPROPERTY()
+		UTextBlock* upkeepText;
 
 	UPROPERTY()
 		UGridPanel* gridPanel;
@@ -65,13 +80,20 @@ public:
 
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
-		void SetCitizensText(UPARAM(DisplayName = "CitizensText") UTextBlock* text);
+		void SetPopulationTexts(UPARAM(DisplayName = "Total Population") UTextBlock* population, UTextBlock* peasants, UTextBlock* citizens);
+
+	// Create a reference between the elements in the designer and the elements in C++
+	UFUNCTION(BlueprintCallable, Category = "Referencing")
+		void SetBalanceTexts(UTextBlock* balance, UTextBlock* income, UTextBlock* upkeep);
 
 	UFUNCTION(BlueprintCallable, Category = "Update")
 		void UpdateResourceAmounts();
 
 	UFUNCTION(BlueprintCallable, Category = "Update")
-		void UpdatePopulation();
+		void UpdatePopulation(const int32& peasants, const int32& citizens);
+
+	UFUNCTION(BlueprintCallable, Category = "Update")
+		void UpdateBalance(const int32& income, const int32& upkeep);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Building", meta = (DisplayName = "Show Building-Info"))
 		void BPEvent_ShowBuildingInfo(const FBuildingData& buildingData);

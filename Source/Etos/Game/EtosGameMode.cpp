@@ -31,6 +31,8 @@ AEtosGameMode::AEtosGameMode()
 		}
 	}
 
+	taxPerResidentPerMinute.Add(EResidentLevel::Peasant, 1.17f);
+
 	FGameDelegates::Get().GetEndPlayMapDelegate().AddLambda([&] 
 	{
 		//PredefinedBuildingData = nullptr;
@@ -38,7 +40,7 @@ AEtosGameMode::AEtosGameMode()
 	});
 }
 
-FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(int32 buildingID)
+FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(const int32& buildingID)
 {
 	check(PredefinedBuildingData);
 
@@ -69,4 +71,16 @@ FResidentNeeds AEtosGameMode::GetPeasantNeeds()
 	//needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Most, 340, 1.5));
 
 	return needs;
+}
+
+float AEtosGameMode::GetTaxForResident(const EResidentLevel& level)
+{
+	float tax = 0;
+
+	if (Enum::IsValid(level))
+	{
+		tax = taxPerResidentPerMinute.FindOrAdd(level);
+	}
+
+	return tax;
 }

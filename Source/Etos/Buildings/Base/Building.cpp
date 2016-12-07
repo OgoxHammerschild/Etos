@@ -92,7 +92,7 @@ void ABuilding::Tick(float DeltaTime)
 	if (Data.bIsBuilt)
 	{
 		CallDelayAction(DeltaTime, Data.ProductionTime);
-		SpendUpkeep(DeltaTime);
+		//SpendUpkeep(DeltaTime);
 	}
 	else
 	{
@@ -140,6 +140,11 @@ void ABuilding::OnBuild()
 	if (bUseCustomBoxCollider)
 	{
 		OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
+	}
+
+	if (auto PC = Util::GetFirstEtosPlayerController(this))
+	{
+		PC->UpdateUpkeep(Data.Upkeep);
 	}
 
 	BuildEvent.Broadcast(this);

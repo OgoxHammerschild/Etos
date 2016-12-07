@@ -11,6 +11,7 @@
 #include "Etos/Buildings/Path.h"
 #include "Etos/Collision/BoxCollider.h"
 #include "Etos/Buildings/Warehouse.h"
+#include "EtosGameMode.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -21,6 +22,7 @@ void AEtosPlayerController::BeginPlay()
 
 	AddHUDToViewport();
 	UpdatePolulation(0);
+	UpdateBalanceUI(totalIncome, totalUpkeep);
 	InitResourceMapping();
 
 	pathPool.SetMinPooledObjectsAmount(8);
@@ -45,6 +47,7 @@ void AEtosPlayerController::Tick(float DeltaTime)
 	{
 		UpdatePathPreview();
 	}
+	AddIncome(DeltaTime);
 }
 
 void AEtosPlayerController::SetupInputComponent()
@@ -60,9 +63,14 @@ void AEtosPlayerController::SetupInputComponent()
 
 FORCEINLINE void AEtosPlayerController::AddResource(const FResource& resource)
 {
-	if (Enum::IsValid(resource.Type))
+	AddResource(resource.Type, resource.Amount);
+}
+
+void AEtosPlayerController::AddResource(const EResource & resource, const int32 & amount)
+{
+	if (Enum::IsValid(resource))
 	{
-		resourceAmounts[resource.Type] += resource.Amount;
+		resourceAmounts[resource] += amount;
 		GetInGameUI()->UpdateResourceAmounts();
 	}
 }
@@ -105,12 +113,23 @@ FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(const EResource& reso
 void AEtosPlayerController::UpdatePolulation(int32 deltaPolulation)
 {
 	totalPopulation += deltaPolulation;
-	GetInGameUI()->UpdatePopulation();
+	GetInGameUI()->UpdatePopulation(totalPopulation, 0); //###
 }
 
 int32 AEtosPlayerController::GetPopulationAmount()
 {
 	return totalPopulation;
+}
+
+void AEtosPlayerController::UpdateUpkeep(int32 deltaUpkeep)
+{
+	totalUpkeep += deltaUpkeep;
+	UpdateBalanceUI(totalIncome, totalUpkeep);
+}
+
+int32 AEtosPlayerController::GetTotalUpkeep()
+{
+	return totalUpkeep;
 }
 
 FORCEINLINE UInGameUI * AEtosPlayerController::GetInGameUI()
@@ -224,6 +243,44 @@ void AEtosPlayerController::SelectBuilding(FKey key)
 		GUI->BPEvent_HideBuildingInfo();
 		GUI->HideResourceInfo();
 		GUI->ShowBuildButtons();
+	}
+}
+
+void AEtosPlayerController::AddIncome(float DeltaTime)
+{
+	incomeTimerPassed += DeltaTime;
+	if (incomeTimerPassed >= incomeTimerTotal)
+	{
+		incomeTimerPassed = 0;
+
+		if (auto GM = Util::GetEtosGameMode(this))
+		{
+			float taxPerResident = 0;
+			int32 population = 0;
+			float currentTaxIncome = 0;
+			totalIncome = 0;
+			// for each EResidentLevel ..
+			// if level is valid
+
+			taxPerResident = GM->GetTaxForResident(EResidentLevel::Peasant /*level*/);
+			//population = populationPerLevel.FindOrAdd(level);
+
+			currentTaxIncome += (float)totalPopulation /*population*/ * taxPerResident;
+
+			// ..
+
+			totalIncome = currentTaxIncome;
+
+			payedIncome += currentTaxIncome * ((float)incomeTimerTotal / 60.f);
+			payedIncome -= (float)totalUpkeep * ((float)incomeTimerTotal / 60.f);
+
+			int32 income = payedIncome;
+			payedIncome -= income;
+
+			AddResource(EResource::Money, income);
+
+			UpdateBalanceUI(totalIncome, totalUpkeep);
+		}
 	}
 }
 
@@ -424,6 +481,22 @@ void AEtosPlayerController::DestroyPathPreview(APath * tempPath)
 	else
 	{
 		tempPath->Destroy();
+	}
+}
+
+void AEtosPlayerController::UpdatePopulationUI(const int32 & peasants, const int32 & citizens)
+{
+	if (auto* const GUI = GetInGameUI())
+	{
+		GUI->UpdatePopulation(peasants, citizens);
+	}
+}
+
+void AEtosPlayerController::UpdateBalanceUI(const int32 & income, const int32 & upkeep)
+{
+	if (auto* const GUI = GetInGameUI())
+	{
+		GUI->UpdateBalance(income, upkeep);
 	}
 }
 
