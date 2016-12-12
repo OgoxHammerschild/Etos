@@ -36,7 +36,7 @@ void ARTSCamera::SetupPlayerInputComponent(class UInputComponent* InputComponent
 	InputComponent->BindAction("RotateCamera", IE_Pressed, this, &ARTSCamera::Rotate);
 	InputComponent->BindAction("RotateCamera", IE_Released, this, &ARTSCamera::StopRotation);
 	InputComponent->BindAxis("Turn", this, &ARTSCamera::Turn);
-	InputComponent->BindAxis("LookUp", this, &ARTSCamera::LookUp);
+	//InputComponent->BindAxis("LookUp", this, &ARTSCamera::LookUp);
 	InputComponent->BindAxis("MoveForward", this, &ARTSCamera::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ARTSCamera::MoveRight);
 }

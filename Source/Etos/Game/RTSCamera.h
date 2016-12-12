@@ -30,7 +30,7 @@ private:
 		float cameraZAngle = 0.f;
 
 	UPROPERTY()
-		float cameraHeightAngle = 45.f;
+		float cameraHeightAngle = 27.5f;
 
 	UPROPERTY()
 		float cameraHeightAngleMin = 10;
