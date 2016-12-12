@@ -93,13 +93,6 @@ void AMarketBarrow::SetActive(bool isActive)
 {
 	bIsActive = isActive;
 	SetActorHiddenInGame(!bIsActive);
-
-	TInlineComponentArray<UActorComponent*> Components;
-	GetComponents(Components);
-	for (int32 CompIdx = 0; CompIdx < Components.Num(); CompIdx++)
-	{
-		Components[CompIdx]->SetComponentTickEnabled(bIsActive);
-	}
 }
 
 #if WITH_EDITOR

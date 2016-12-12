@@ -65,6 +65,13 @@ ABuilding::ABuilding()
 	}
 
 	SetFoundationSize(1, 1);
+
+	//MarketBarrowPool = NewObject<UObjectPool>();
+
+	//if (MarketBarrowPool)
+	//{
+	//	MarketBarrowPool->SetMaxPooledObjectsAmount(MaxBarrows);
+	//}
 }
 
 void ABuilding::PostInitProperties()
@@ -81,8 +88,6 @@ void ABuilding::BeginPlay()
 	RelocateTracePoints();
 	SetFoundationSize(Width, Height);
 	GetMyPlayerController();
-
-	MarketBarrowPool.SetMaxPooledObjectsAmount(MaxBarrows);
 }
 
 // Called every frame
@@ -400,8 +405,14 @@ void ABuilding::SpendUpkeep(float DeltaTime)
 
 void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding, const EResource& orderedResource, const FVector& spawnLocation, const FVector& targetLocation)
 {
-	bool isValid;
-	AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow*>(isValid);
+	bool isValid = false;
+	UPROPERTY()
+		AMarketBarrow* newMarketBarrow = nullptr;
+
+	//if (MarketBarrowPool)
+	//{
+	//	newMarketBarrow = MarketBarrowPool->GetPooledObject<AMarketBarrow*>(isValid);
+	//}
 
 	if (newMarketBarrow && isValid)
 	{
@@ -431,46 +442,10 @@ void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding, const EReso
 			params);
 	}
 
-	if (newMarketBarrow && newMarketBarrow->IsValidLowLevelFast())
+	if (newMarketBarrow && newMarketBarrow->IsValidLowLevel())
 	{
 		++BarrowsInUse;
 	}
-
-	//bool isValid;
-	//AMarketBarrow* newMarketBarrow = MarketBarrowPool.GetPooledObject<AMarketBarrow>(isValid);
-
-	//if (newMarketBarrow && isValid)
-	//{
-	//	newMarketBarrow->ResetBarrow(
-	//		Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
-	//		building->Data.PathConnections[0]->GetActorLocation(), // target location
-	//		this, // workplace
-	//		building, // target
-	//		orderedResource);
-
-	//	newMarketBarrow->StartWork();
-	//}
-	//else
-	//{
-	//	FActorSpawnParameters params = FActorSpawnParameters();
-	//	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-	//	newMarketBarrow = AMarketBarrow::Construct(
-	//		this, // world context 
-	//		BP_MarketBarrow, // class to spawn
-	//		Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
-	//		building->Data.PathConnections[0]->GetActorLocation(), // target location
-	//		this, // workplace
-	//		building, // target
-	//		orderedResource,
-	//		FRotator(0, 0, 0),
-	//		params);
-	//}
-
-	//if (newMarketBarrow && newMarketBarrow->IsValidLowLevelFast())
-	//{
-	//	++BarrowsInUse;
-	//}
 }
 
 void ABuilding::BuildSpace_OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
@@ -904,7 +879,7 @@ void ABuilding::SetActive(bool isActive)
 	bIsActive = isActive;
 	SetActorHiddenInGame(!bIsActive);
 	SetActorEnableCollision(bIsActive);
-	SetActorTickEnabled(bIsActive);
+	Data.bIsBuilt = bIsActive;
 
 	if (bUseCustomBoxCollider)
 	{
@@ -913,18 +888,15 @@ void ABuilding::SetActive(bool isActive)
 			OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(bIsActive);
 		}
 	}
-
-	TInlineComponentArray<UActorComponent*> Components;
-	GetComponents(Components);
-	for (int32 CompIdx = 0; CompIdx < Components.Num(); CompIdx++)
-	{
-		Components[CompIdx]->SetComponentTickEnabled(bIsActive);
-	}
 }
 
 bool ABuilding::TryReturningToPool(AMarketBarrow * barrow)
 {
-	return MarketBarrowPool.AddObjectToPool(barrow);;
+	//if (MarketBarrowPool)
+	//{
+	//	return MarketBarrowPool->AddObjectToPool(barrow);;
+	//}
+	return false;
 }
 
 void ABuilding::GetOverlappingBulidings(TArray<ABuilding*>& OverlappingBuildings)

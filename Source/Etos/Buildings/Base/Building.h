@@ -81,8 +81,8 @@ protected:
 	UPROPERTY(EditAnywhere)
 		int32 MaxBarrows = 1;
 
-	UPROPERTY(VisibleAnywhere)
-		FObjectPool MarketBarrowPool = FObjectPool();
+	//UPROPERTY(VisibleAnywhere)
+	//	UObjectPool* MarketBarrowPool;
 
 private:
 
