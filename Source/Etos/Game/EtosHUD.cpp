@@ -6,21 +6,39 @@
 
 UInGameUI * AEtosHUD::GetInGameUI()
 {
-	if (inGameUI)
+	if (inGameUI == nullptr)
 	{
-		return inGameUI;
+		if (wInGameUI != nullptr)
+		{
+			inGameUI = CreateWidget<UInGameUI>(GetOwningPlayerController(), wInGameUI);
+		}
 	}
 
-	if (wInGameUI != nullptr)
-	{
-		inGameUI = CreateWidget<UInGameUI>(GetOwningPlayerController(), wInGameUI);
-	}
+	return inGameUI;
+}
 
-	if (inGameUI)
+UUserWidget * AEtosHUD::GetWinScreen()
+{
+	if (winScreen == nullptr)
 	{
-		return inGameUI;
+		if (wWinScreen != nullptr)
+		{
+			winScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wWinScreen);
+		}
 	}
-	return nullptr;
+	return winScreen;
+}
+
+UUserWidget * AEtosHUD::GetLoseScreen()
+{
+	if (loseScreen == nullptr)
+	{
+		if (wLoseScreen != nullptr)
+		{
+			loseScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wLoseScreen);
+		}
+	}
+	return loseScreen;
 }
 
 void AEtosHUD::BeginDestroy()

@@ -15,6 +15,10 @@ class ETOS_API AWarehouse : public ABuilding
 {
 	GENERATED_BODY()
 
+private:
+
+	int32 storageSpace = 40;
+
 public:
 
 	virtual FResource HandOutResource(const EResource& resource = EResource::None) override;
@@ -26,6 +30,8 @@ public:
 protected:
 
 	virtual void BindDelayAction() override;
+
+	virtual void OnBuild() override;
 
 private:
 

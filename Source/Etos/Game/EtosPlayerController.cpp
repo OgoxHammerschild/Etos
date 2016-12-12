@@ -25,8 +25,13 @@ void AEtosPlayerController::BeginPlay()
 	UpdateBalanceUI(totalIncome, totalUpkeep);
 	InitResourceMapping();
 
-	pathPool.SetMinPooledObjectsAmount(8);
-	pathPool.SetMaxPooledObjectsAmount(256);
+	pathPool = NewObject<UObjectPool>();
+
+	if (pathPool)
+	{
+		pathPool->SetMinPooledObjectsAmount(8);
+		pathPool->SetMaxPooledObjectsAmount(256);
+	}
 
 	// ### start resources - difficulty: easy ###
 	AddResource(FResource(EResource::Money, 10000));
@@ -113,12 +118,34 @@ FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(const EResource& reso
 void AEtosPlayerController::UpdatePolulation(int32 deltaPolulation)
 {
 	totalPopulation += deltaPolulation;
-	GetInGameUI()->UpdatePopulation(totalPopulation, 0); //###
+
+	GetInGameUI()->UpdatePopulation(totalPopulation, 0); //### TODO: setup for multiple resident levels
+}
+
+void AEtosPlayerController::UpdatePolulation(EResidentLevel level, int32 deltaPolulation)
+{
+	totalPopulation += deltaPolulation;
+	populationPerLevel.FindOrAdd(level) += deltaPolulation;
+
+	GetInGameUI()->UpdatePopulation(totalPopulation, 0); //### TODO: setup for multiple resident levels
+}
+
+void AEtosPlayerController::UpdatePolulation(EResidentLevel from, EResidentLevel to, int32 residents)
+{
+	populationPerLevel.FindOrAdd(from) -= residents;
+	populationPerLevel.FindOrAdd(to) += residents;
+
+	GetInGameUI()->UpdatePopulation(totalPopulation, 0); //### TODO: setup for multiple resident levels
 }
 
 int32 AEtosPlayerController::GetPopulationAmount()
 {
 	return totalPopulation;
+}
+
+int32 AEtosPlayerController::GetPopulationAmount(EResidentLevel level)
+{
+	return populationPerLevel.FindOrAdd(level);
 }
 
 void AEtosPlayerController::UpdateUpkeep(int32 deltaUpkeep)
@@ -130,6 +157,16 @@ void AEtosPlayerController::UpdateUpkeep(int32 deltaUpkeep)
 int32 AEtosPlayerController::GetTotalUpkeep()
 {
 	return totalUpkeep;
+}
+
+void AEtosPlayerController::UpdateStorage(int32 deltaStorage)
+{
+	totalStorage += deltaStorage;
+}
+
+int32 AEtosPlayerController::GetTotalStorage()
+{
+	return totalStorage;
 }
 
 FORCEINLINE UInGameUI * AEtosPlayerController::GetInGameUI()
@@ -149,6 +186,34 @@ FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, co
 FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, const FBuildingData& Data)
 {
 	return SpawnBuilding_Internal(Subclass, Data);
+}
+
+void AEtosPlayerController::Win()
+{
+	ServerPause();
+
+	if (auto* HUD =Util::GetEtosHUD(this))
+	{
+		auto WinScreen = HUD->GetWinScreen();
+
+		if (WinScreen)
+		{
+			WinScreen->AddToViewport();
+		}
+	}
+}
+
+void AEtosPlayerController::Lose()
+{
+	if (auto* HUD = Util::GetEtosHUD(this))
+	{
+		auto LoseScreen = HUD->GetLoseScreen();
+
+		if (LoseScreen)
+		{
+			LoseScreen->AddToViewport();
+		}
+	}
 }
 
 inline void AEtosPlayerController::BuildNewBuilding(FKey key)
@@ -212,6 +277,9 @@ FORCEINLINE void AEtosPlayerController::ClickRepeatedly(FKey key)
 
 void AEtosPlayerController::SelectBuilding(FKey key)
 {
+	if (bIsHoldingObject)
+		return;
+
 	FHitResult Hit = FHitResult();
 	if (Util::TraceSingleAtMousePosition(this, Hit, 100000, Util::BuildingObjectType))
 	{
@@ -348,6 +416,10 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 		}
 		else if (newBuilding)
 		{
+			if (newBuilding->OccupiedBuildSpace_Custom)
+			{
+				newBuilding->OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
+			}
 			newBuilding->Destroy();
 			bIsHoldingObject = false;
 			UE_LOG(LogTemp, Warning, TEXT("building canceled"));
@@ -452,8 +524,8 @@ inline void AEtosPlayerController::UpdatePathPreview()
 
 FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World)
 {
-	bool bGotPathFromPool;
-	APath* newPath = pathPool.GetPooledObject<APath*>(bGotPathFromPool);
+	bool bGotPathFromPool = false;
+	APath* newPath = pathPool->GetPooledObject<APath*>(bGotPathFromPool);
 
 	if (bGotPathFromPool)
 	{
@@ -474,12 +546,16 @@ FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLoc
 
 void AEtosPlayerController::DestroyPathPreview(APath * tempPath)
 {
-	if (pathPool.AddObjectToPool(tempPath))
+	if (pathPool->AddObjectToPool(tempPath))
 	{
 		tempPath->SetActive(false);
 	}
 	else
 	{
+		if (tempPath->OccupiedBuildSpace_Custom)
+		{
+			tempPath->OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
+		}
 		tempPath->Destroy();
 	}
 }
@@ -499,4 +575,3 @@ void AEtosPlayerController::UpdateBalanceUI(const int32 & income, const int32 & 
 		GUI->UpdateBalance(income, upkeep);
 	}
 }
-

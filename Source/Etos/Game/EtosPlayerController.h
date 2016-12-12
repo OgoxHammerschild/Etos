@@ -26,6 +26,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 		int32 totalPopulation = 0;
 
+	UPROPERTY(VisibleAnywhere)
+		int32 totalStorage = 0;
+
 	UPROPERTY()
 		TMap<EResidentLevel, int32> populationPerLevel;
 
@@ -45,7 +48,7 @@ private:
 		float mouseMoveThreshold = 20.f;
 
 	UPROPERTY()
-		FObjectPool pathPool = FObjectPool();
+		UObjectPool* pathPool;
 
 	UPROPERTY(VisibleAnywhere)
 		int32 totalUpkeep = 0;
@@ -86,16 +89,31 @@ public:
 
 	void UpdatePolulation(int32 deltaPolulation);
 
+	void UpdatePolulation(EResidentLevel level, int32 deltaPolulation);
+
+	void UpdatePolulation(EResidentLevel from, EResidentLevel to, int32 deltaPolulation);
+
 	int32 GetPopulationAmount();
+
+	int32 GetPopulationAmount(EResidentLevel level);
 
 	void UpdateUpkeep(int32 deltaUpkeep);
 
 	int32 GetTotalUpkeep();
 
+	void UpdateStorage(int32 deltaStorage);
+
+	int32 GetTotalStorage();
+
 	class UInGameUI* GetInGameUI();
 
 	ABuilding* SpawnBuilding(ABuilding* Class, const FBuildingData& Data);
+	
 	ABuilding* SpawnBuilding(TSubclassOf<ABuilding> Subclass, const FBuildingData& Data);
+
+	void Win();
+
+	void Lose();
 
 private:
 

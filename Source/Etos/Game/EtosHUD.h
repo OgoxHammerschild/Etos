@@ -18,14 +18,30 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 		TSubclassOf<class UInGameUI> wInGameUI;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<UUserWidget> wWinScreen;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+		TSubclassOf<UUserWidget> wLoseScreen;
+
 private:
 
 	UPROPERTY()
 		UInGameUI* inGameUI;
 
+	UPROPERTY()
+		UUserWidget* winScreen;
+
+	UPROPERTY()
+		UUserWidget* loseScreen;
+
 public:
 
 	UInGameUI* GetInGameUI();
+
+	UUserWidget* GetWinScreen();
+
+	UUserWidget* GetLoseScreen();
 
 	virtual void BeginDestroy() override;
 };
