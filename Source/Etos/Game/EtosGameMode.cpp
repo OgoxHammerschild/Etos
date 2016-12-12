@@ -3,9 +3,12 @@
 #include "Etos.h"
 #include "EtosGameMode.h"
 #include "Runtime/Engine/Public/GameDelegates.h"
+#include "EtosPlayerController.h"
 
 AEtosGameMode::AEtosGameMode()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	if (!PredefinedBuildingData)
 	{
 		static ConstructorHelpers::FObjectFinder<UDataTable> BP_PredefinedBuildingData(TEXT("DataTable'/Game/Blueprints/GameMode/PredefinedBuildingData.PredefinedBuildingData'"));
@@ -33,11 +36,49 @@ AEtosGameMode::AEtosGameMode()
 
 	taxPerResidentPerMinute.Add(EResidentLevel::Peasant, 1.17f);
 
-	FGameDelegates::Get().GetEndPlayMapDelegate().AddLambda([&] 
+	FGameDelegates::Get().GetEndPlayMapDelegate().AddLambda([&]
 	{
 		//PredefinedBuildingData = nullptr;
 		CollisionManager = nullptr;
 	});
+}
+
+void AEtosGameMode::Tick(float DeltaTime)
+{
+	checkWinTimerPassed += DeltaTime;
+
+	if (checkWinTimerPassed >= checkWinTimerTotal)
+	{
+		checkWinTimerPassed = 0;
+
+		if (UWorld* const World = GetWorld())
+		{
+			AEtosPlayerController* winner = nullptr;
+
+			for (TActorIterator<AEtosPlayerController> ActorItr(World); ActorItr; ++ActorItr)
+			{
+				int32 population = ActorItr->GetPopulationAmount();
+
+				if (population >= populationWinAmount)
+				{
+					winner = *ActorItr;
+					winner->Win();
+					break;
+				}
+			}
+
+			if (winner)
+			{
+				for (TActorIterator<AEtosPlayerController> ActorItr(World); ActorItr; ++ActorItr)
+				{
+					if (winner != *ActorItr)
+					{
+						ActorItr->Lose();
+					}
+				}
+			}
+		}
+	}
 }
 
 FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(const int32& buildingID)
@@ -63,7 +104,7 @@ int32 AEtosGameMode::GetBuildingAmount()
 FResidentNeeds AEtosGameMode::GetPeasantNeeds()
 {
 	FResidentNeeds needs = FResidentNeeds(EResidentLevel::Peasant);
-	
+
 	needs.ResidentNeeds.Add(EResidentNeed::TownCenter);
 	//needs.ResidentNeeds.Add(EResidentNeed::Chapel);
 

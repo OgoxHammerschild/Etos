@@ -32,9 +32,20 @@ private:
 	UPROPERTY()
 		TMap<EResidentLevel, float> taxPerResidentPerMinute;
 
+	UPROPERTY()
+		float checkWinTimerTotal;
+
+	UPROPERTY()
+		float checkWinTimerPassed;
+
+	UPROPERTY()
+		int32 populationWinAmount = 200;
+
 public:
 
 	AEtosGameMode();
+
+	virtual void Tick(float DeltaTime) override;
 
 	FPredefinedBuildingData* GetPredefinedBuildingData(const int32& buildingID);
 
