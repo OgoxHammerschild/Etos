@@ -4,13 +4,13 @@
 #include "EtosPlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
-#include "Etos/FunctionLibraries/BuildingFunctionLibrary.h"
+#include "Etos/Utility/FunctionLibraries/BuildingFunctionLibrary.h"
 #include "Etos/UI/InGameUI.h"
 #include "Etos/Game/EtosHUD.h"
 #include "Etos/Buildings/Path.h"
 #include "Etos/Collision/BoxCollider.h"
 #include "Etos/Buildings/Warehouse.h"
+#include "Etos/Buildings/Residence.h"
 #include "EtosGameMode.h"
 
 void AEtosPlayerController::BeginPlay()
@@ -21,7 +21,7 @@ void AEtosPlayerController::BeginPlay()
 	bEnableMouseOverEvents = true;
 
 	AddHUDToViewport();
-	UpdatePolulation(0);
+	UpdatePopulation(EResidentLevel::Peasant, 0); // updates UI
 	UpdateBalanceUI(totalIncome, totalUpkeep);
 	InitResourceMapping();
 
@@ -41,8 +41,8 @@ void AEtosPlayerController::BeginPlay()
 	// ##########################################
 
 	// ############## for testing ###############
-	AddResource(FResource(EResource::Iron, 50));
-	AddResource(FResource(EResource::Stone, 50));
+	AddResource(FResource(EResource::Iron, 20));
+	AddResource(FResource(EResource::Stone, 20));
 	//###########################################
 }
 
@@ -115,35 +115,40 @@ FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(const EResource& reso
 	return resourceAmounts.FindOrAdd(resource);
 }
 
-void AEtosPlayerController::UpdatePolulation(int32 deltaPolulation)
+void AEtosPlayerController::UpdatePopulation(const EResidentLevel& level, const int32& deltaPolulation)
 {
-	totalPopulation += deltaPolulation;
+	if (!Enum::IsValid(level))
+		return;
 
-	GetInGameUI()->UpdatePopulation(totalPopulation, 0); //### TODO: setup for multiple resident levels
-}
-
-void AEtosPlayerController::UpdatePolulation(EResidentLevel level, int32 deltaPolulation)
-{
 	totalPopulation += deltaPolulation;
 	populationPerLevel.FindOrAdd(level) += deltaPolulation;
 
-	GetInGameUI()->UpdatePopulation(totalPopulation, 0); //### TODO: setup for multiple resident levels
+	if (auto* const GUI = GetInGameUI())
+	{
+		GUI->UpdatePopulation(populationPerLevel.FindOrAdd(EResidentLevel::Peasant), populationPerLevel.FindOrAdd(EResidentLevel::Citizen));
+	}
 }
 
-void AEtosPlayerController::UpdatePolulation(EResidentLevel from, EResidentLevel to, int32 residents)
+void AEtosPlayerController::UpdatePopulation(const EResidentLevel& from, const EResidentLevel& to, const int32& residents)
 {
+	if (!Enum::IsValid(from) || !Enum::IsValid(to))
+		return;
+
 	populationPerLevel.FindOrAdd(from) -= residents;
 	populationPerLevel.FindOrAdd(to) += residents;
 
-	GetInGameUI()->UpdatePopulation(totalPopulation, 0); //### TODO: setup for multiple resident levels
+	if (auto* const GUI = GetInGameUI())
+	{
+		GUI->UpdatePopulation(populationPerLevel.FindOrAdd(EResidentLevel::Peasant), populationPerLevel.FindOrAdd(EResidentLevel::Citizen));
+	}
 }
 
-int32 AEtosPlayerController::GetPopulationAmount()
+int32 AEtosPlayerController::GetTotalPopulation() const
 {
 	return totalPopulation;
 }
 
-int32 AEtosPlayerController::GetPopulationAmount(EResidentLevel level)
+int32 AEtosPlayerController::GetPopulationAmount(const EResidentLevel& level)
 {
 	return populationPerLevel.FindOrAdd(level);
 }
@@ -183,7 +188,7 @@ FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, co
 	return SpawnBuilding_Internal(Class->GetClass(), Data);
 }
 
-FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> Subclass, const FBuildingData& Data)
+FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(const TSubclassOf<ABuilding>& Subclass, const FBuildingData& Data)
 {
 	return SpawnBuilding_Internal(Subclass, Data);
 }
@@ -192,7 +197,7 @@ void AEtosPlayerController::Win()
 {
 	ServerPause();
 
-	if (auto* HUD =Util::GetEtosHUD(this))
+	if (auto* HUD = Util::GetEtosHUD(this))
 	{
 		auto WinScreen = HUD->GetWinScreen();
 
@@ -314,6 +319,14 @@ void AEtosPlayerController::SelectBuilding(FKey key)
 	}
 }
 
+void AEtosPlayerController::OnBuildingDestroyed(AActor * DestroyedActor)
+{
+	if (ABuilding* const building = dynamic_cast<ABuilding*, AActor>(DestroyedActor))
+	{
+		ReportDestroyedBuilding(building);
+	}
+}
+
 void AEtosPlayerController::AddIncome(float DeltaTime)
 {
 	incomeTimerPassed += DeltaTime;
@@ -324,18 +337,44 @@ void AEtosPlayerController::AddIncome(float DeltaTime)
 		if (auto GM = Util::GetEtosGameMode(this))
 		{
 			float taxPerResident = 0;
-			int32 population = 0;
+			float population = 0;
 			float currentTaxIncome = 0;
 			totalIncome = 0;
-			// for each EResidentLevel ..
-			// if level is valid
 
-			taxPerResident = GM->GetTaxForResident(EResidentLevel::Peasant /*level*/);
-			//population = populationPerLevel.FindOrAdd(level);
+			for (uint8 i = 1; i < (uint8)EResidentLevel::EResidentLevel_MAX; ++i)
+			{
+				EResidentLevel level = (EResidentLevel)i;
 
-			currentTaxIncome += (float)totalPopulation /*population*/ * taxPerResident;
+				auto taxData = GM->GetTaxData(level);
 
-			// ..
+				taxPerResident = 0;
+
+				for (AResidence* residence : builtResidences)
+				{
+					if (residence->MyLevel == level)
+					{
+						for (auto& pair : taxData->taxPerResource)
+						{
+							taxPerResident += residence->GetSatisfaction(pair.Resource) * pair.Tax;
+						}
+					}
+				}
+				taxPerResident /= builtResidences.Num();
+				taxPerResident += taxData->BaseTax;
+
+				population = populationPerLevel.FindOrAdd(level);
+				currentTaxIncome += population * taxPerResident;
+			}
+
+			//// for each EResidentLevel ..
+			//// if level is valid
+
+			//taxPerResident = GM->GetBaseTaxForResident(EResidentLevel::Peasant /*level*/);
+			////population = populationPerLevel.FindOrAdd(level);
+
+			//currentTaxIncome += (float)totalPopulation /*population*/ * taxPerResident;
+
+			//// ..
 
 			totalIncome = currentTaxIncome;
 
@@ -352,9 +391,9 @@ void AEtosPlayerController::AddIncome(float DeltaTime)
 	}
 }
 
-FORCEINLINE bool AEtosPlayerController::HasEnoughResources(const TArray<FResource>& buildCost)
+FORCEINLINE bool AEtosPlayerController::HasEnoughResources(const TArray<FResource>& buildCost) const
 {
-	for (FResource cost : buildCost)
+	for (const FResource& cost : buildCost)
 	{
 		if (cost.Amount > resourceAmounts[cost.Type])
 		{
@@ -362,6 +401,22 @@ FORCEINLINE bool AEtosPlayerController::HasEnoughResources(const TArray<FResourc
 		}
 	}
 	return true;
+}
+
+void AEtosPlayerController::ReportDestroyedBuilding(ABuilding * destroyedBuilding)
+{
+	if (destroyedBuilding)
+	{
+		if (builtBuildings.Contains(destroyedBuilding))
+		{
+			builtBuildings.Remove(destroyedBuilding);
+		}
+
+		if (builtResidences.Contains(destroyedBuilding))
+		{
+			builtResidences.Remove(destroyedBuilding);
+		}
+	}
 }
 
 FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
@@ -467,7 +522,17 @@ FORCEINLINE void AEtosPlayerController::BuildNewBuilding_Internal()
 
 	PayCostsOfBuilding(newBuilding->Data.BuildCost);
 
-	newBuilding->OnBuild();
+	if (builtBuildings.AddUnique(newBuilding) != INDEX_NONE)
+	{
+		if (AResidence* residence = dynamic_cast<AResidence*, ABuilding>(newBuilding))
+		{
+			builtResidences.AddUnique(residence);
+		}
+
+		newBuilding->OnDestroyed.AddDynamic(this, &AEtosPlayerController::OnBuildingDestroyed);
+
+		newBuilding->OnBuild();
+	}
 }
 
 FORCEINLINE void AEtosPlayerController::StartBuildingPath(APath* newPath)
@@ -554,7 +619,7 @@ void AEtosPlayerController::DestroyPathPreview(APath * tempPath)
 	{
 		if (tempPath->OccupiedBuildSpace_Custom)
 		{
-			tempPath->OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
+			tempPath->OccupiedBuildSpace_Custom->UnregisterCollider();
 		}
 		tempPath->Destroy();
 	}

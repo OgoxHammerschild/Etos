@@ -5,7 +5,10 @@
 #include "GameFramework/GameMode.h"
 #include "Runtime/Engine/Classes/Engine/DataTable.h"
 #include "Etos/Collision/SimpleCollisionManager.h"
-#include "Etos/FunctionLibraries/EnumLibrary.h"
+#include "Etos/Utility/EnumLibrary.h"
+#include "Etos/Utility/Structs/PredefinedBuildingData.h"
+#include "Etos/Utility/Structs/UpgradeData.h"
+#include "Etos/Utility/Structs/TaxData.h"
 #include "EtosGameMode.generated.h"
 
 /**
@@ -20,6 +23,12 @@ public:
 
 	UPROPERTY()
 		UDataTable* PredefinedBuildingData;
+
+	UPROPERTY()
+		UDataTable* UpgradeData;
+
+	UPROPERTY()
+		UDataTable* TaxData;
 
 	UPROPERTY()
 		TArray<FPredefinedBuildingData> Buildings;
@@ -49,10 +58,16 @@ public:
 
 	FPredefinedBuildingData* GetPredefinedBuildingData(const int32& buildingID);
 
+	FUpgradeData* GetUpgradeData(const FName& upgrade /*row name*/);
+
+	FTaxData* GetTaxData(const EResidentLevel& level);
+
 	int32 GetBuildingAmount();
 
 	FResidentNeeds GetPeasantNeeds();
 
+	FResidentNeeds GetCitizenNeeds();
+
 	// Returns the payed Tax per Resident per Minute for the specified ResidentLevel
-	float GetTaxForResident(const EResidentLevel& level);
+	float GetBaseTaxForResident(const EResidentLevel& level);
 };

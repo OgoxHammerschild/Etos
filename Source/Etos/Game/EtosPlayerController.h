@@ -32,6 +32,15 @@ private:
 	UPROPERTY()
 		TMap<EResidentLevel, int32> populationPerLevel;
 
+	UPROPERTY()
+		TMap<EResidentLevel, int32> availablePromotions;
+
+	UPROPERTY()
+		TArray<ABuilding*> builtBuildings;
+
+	UPROPERTY()
+		TArray<AResidence*> builtResidences;
+
 	UPROPERTY(VisibleAnywhere)
 		ABuilding* newBuilding;
 
@@ -87,15 +96,13 @@ public:
 
 	int32 GetResourceAmount(const EResource& resource);
 
-	void UpdatePolulation(int32 deltaPolulation);
+	void UpdatePopulation(const EResidentLevel& level, const int32& deltaPolulation);
 
-	void UpdatePolulation(EResidentLevel level, int32 deltaPolulation);
+	void UpdatePopulation(const EResidentLevel& from, const EResidentLevel& to, const int32& residents);
 
-	void UpdatePolulation(EResidentLevel from, EResidentLevel to, int32 deltaPolulation);
+	int32 GetTotalPopulation() const;
 
-	int32 GetPopulationAmount();
-
-	int32 GetPopulationAmount(EResidentLevel level);
+	int32 GetPopulationAmount(const EResidentLevel& level);
 
 	void UpdateUpkeep(int32 deltaUpkeep);
 
@@ -108,12 +115,16 @@ public:
 	class UInGameUI* GetInGameUI();
 
 	ABuilding* SpawnBuilding(ABuilding* Class, const FBuildingData& Data);
-	
-	ABuilding* SpawnBuilding(TSubclassOf<ABuilding> Subclass, const FBuildingData& Data);
+
+	ABuilding* SpawnBuilding(const TSubclassOf<ABuilding>& Subclass, const FBuildingData& Data);
 
 	void Win();
 
 	void Lose();
+
+	bool HasEnoughResources(const TArray<FResource>& buildCost) const;
+
+	void ReportDestroyedBuilding(ABuilding* destroyedBuilding);
 
 private:
 
@@ -135,9 +146,10 @@ private:
 	UFUNCTION()
 		void SelectBuilding(FKey key);
 
-	void AddIncome(float DeltaTime);
+	UFUNCTION()
+		void OnBuildingDestroyed(AActor* DestroyedActor);
 
-	bool HasEnoughResources(const TArray<FResource>& buildCost);
+	void AddIncome(float DeltaTime);
 
 	//ABuilding* GetBuildingUnderCursor();
 
