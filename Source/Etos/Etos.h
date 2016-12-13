@@ -10,7 +10,7 @@
 #include "Runtime/UMG/Public/IUMGModule.h"
 #include "Runtime/UMG/Public/Blueprint/UserWidget.h"
 
-#include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
-#include "Etos/FunctionLibraries/Vector2Di.h"
-#include "Etos/FunctionLibraries/StructLibrary.h"
-#include "Etos/FunctionLibraries/EnumLibrary.h"
+#include "Etos/Utility/FunctionLibraries/UtilityFunctionLibrary.h"
+#include "Etos/Utility/Vector2Di.h"
+#include "Etos/Utility/StructLibrary.h"
+#include "Etos/Utility/EnumLibrary.h"

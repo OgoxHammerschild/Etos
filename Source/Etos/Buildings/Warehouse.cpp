@@ -5,7 +5,7 @@
 #include "Etos/Pawns/MarketBarrow.h"
 #include "Etos/Game/EtosPlayerController.h"
 #include "Etos/Buildings/Path.h"
-#include "Etos/FunctionLibraries/BuildingFunctionLibrary.h"
+#include "Etos/Utility/FunctionLibraries/BuildingFunctionLibrary.h"
 
 FResource AWarehouse::HandOutResource(const EResource & resource)
 {

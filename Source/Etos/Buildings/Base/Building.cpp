@@ -2,7 +2,7 @@
 
 #include "Etos.h"
 #include "Building.h"
-#include "Etos/FunctionLibraries/BuildingFunctionLibrary.h"
+#include "Etos/Utility/FunctionLibraries/BuildingFunctionLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Etos/Buildings/Path.h"
@@ -65,6 +65,8 @@ ABuilding::ABuilding()
 	}
 
 	SetFoundationSize(1, 1);
+
+	//OnDestroyed.AddDynamic(this, &ABuilding::OnBuildingDestroyed);
 
 	//MarketBarrowPool = NewObject<UObjectPool>();
 
@@ -685,6 +687,17 @@ void ABuilding::RefreshBuildingsInRadius()
 	}
 }
 
+void ABuilding::OnBuildingDestroyed(AActor * DestroyedActor)
+{
+	if (this == DestroyedActor)
+	{
+		if (GetMyPlayerController())
+		{
+			MyPlayerController->ReportDestroyedBuilding(this);
+		}
+	}
+}
+
 void ABuilding::AddNewBuildingInRange(ABuilding * buildingInRange)
 {
 	if (buildingInRange && !buildingInRange->IsPendingKillOrUnreachable())
@@ -886,6 +899,9 @@ void ABuilding::SetActive(bool isActive)
 		if (OccupiedBuildSpace_Custom)
 		{
 			OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(bIsActive);
+			bIsActive ?
+				OccupiedBuildSpace_Custom->RegisterCollider() :
+				OccupiedBuildSpace_Custom->UnregisterCollider();
 		}
 	}
 }

@@ -10,7 +10,8 @@ class APath;
 class AResourcePopup;
 class UBoxCollider;
 class AMarketBarrow;
-#include "Etos/FunctionLibraries/StructLibrary.h"
+//#include "Etos/Utility/StructLibrary.h"
+#include "Etos/Utility/Structs/BuildingData.h"
 #include "Etos/ObjectPool/ObjectPool.h"
 #include "GameFramework/Actor.h"
 #include "Building.generated.h"
@@ -182,6 +183,9 @@ protected:
 	AEtosPlayerController * GetMyPlayerController();
 
 	void RefreshBuildingsInRadius();
+
+	UFUNCTION()
+		void OnBuildingDestroyed(AActor* DestroyedActor);
 
 private:
 

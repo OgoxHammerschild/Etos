@@ -11,8 +11,25 @@ AEtosGameMode::AEtosGameMode()
 
 	if (!PredefinedBuildingData)
 	{
-		static ConstructorHelpers::FObjectFinder<UDataTable> BP_PredefinedBuildingData(TEXT("DataTable'/Game/Blueprints/GameMode/PredefinedBuildingData.PredefinedBuildingData'"));
-		PredefinedBuildingData = BP_PredefinedBuildingData.Object;
+		typedef ConstructorHelpers::FObjectFinder<UDataTable> FDataTableFinder;
+
+		static FDataTableFinder DataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/PredefinedBuildingData.PredefinedBuildingData'"));
+		if (DataTableFinder.Succeeded())
+		{
+			PredefinedBuildingData = DataTableFinder.Object;
+		}
+
+		DataTableFinder = FDataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/UpgradeData.UpgradeData'"));
+		if (DataTableFinder.Succeeded())
+		{
+			UpgradeData = DataTableFinder.Object;
+		}
+
+		DataTableFinder = FDataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/TaxData.TaxData'"));
+		if (DataTableFinder.Succeeded())
+		{
+			TaxData = DataTableFinder.Object;
+		}
 	}
 
 	if (UWorld* const World = GetWorld())
@@ -57,7 +74,7 @@ void AEtosGameMode::Tick(float DeltaTime)
 
 			for (TActorIterator<AEtosPlayerController> ActorItr(World); ActorItr; ++ActorItr)
 			{
-				int32 population = ActorItr->GetPopulationAmount();
+				int32 population = ActorItr->GetTotalPopulation();
 
 				if (population >= populationWinAmount)
 				{
@@ -96,6 +113,36 @@ FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(const int32& b
 	//}
 }
 
+FUpgradeData * AEtosGameMode::GetUpgradeData(const FName & upgrade)
+{
+	check(UpgradeData);
+
+	FUpgradeData* data = UpgradeData->FindRow<FUpgradeData>(upgrade, FString(TEXT("GameMode")));
+
+	return data;
+}
+
+FTaxData * AEtosGameMode::GetTaxData(const EResidentLevel & level)
+{
+	check(TaxData);
+
+	FTaxData* data;
+
+	switch (level)
+	{
+	case EResidentLevel::Peasant:
+		data = TaxData->FindRow<FTaxData>("Peasant", FString(TEXT("GameMode")));
+		break;
+	case EResidentLevel::Citizen:
+		data = TaxData->FindRow<FTaxData>("Citizen", FString(TEXT("GameMode")));
+		break;
+	default:
+		break;
+	}
+
+	return data;
+}
+
 int32 AEtosGameMode::GetBuildingAmount()
 {
 	return PredefinedBuildingData ? PredefinedBuildingData->GetRowNames().Num() : 0;
@@ -114,13 +161,27 @@ FResidentNeeds AEtosGameMode::GetPeasantNeeds()
 	return needs;
 }
 
-float AEtosGameMode::GetTaxForResident(const EResidentLevel& level)
+FResidentNeeds AEtosGameMode::GetCitizenNeeds()
+{
+	FResidentNeeds needs = FResidentNeeds(EResidentLevel::Citizen);
+
+	needs.ResidentNeeds.Add(EResidentNeed::TownCenter);
+	//needs.ResidentNeeds.Add(EResidentNeed::Chapel);
+	//needs.ResidentNeeds.Add(EResidentNeed::Tavern);
+
+	needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Fish, 500, 2));
+	//needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Most, 340, 1.5));
+
+	return FResidentNeeds();
+}
+
+float AEtosGameMode::GetBaseTaxForResident(const EResidentLevel& level)
 {
 	float tax = 0;
 
-	if (Enum::IsValid(level))
+	if (auto const taxData = GetTaxData(level))
 	{
-		tax = taxPerResidentPerMinute.FindOrAdd(level);
+		tax = taxData->BaseTax;
 	}
 
 	return tax;

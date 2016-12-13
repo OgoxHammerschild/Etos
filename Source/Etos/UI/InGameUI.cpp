@@ -5,7 +5,6 @@
 #include "Etos/UI/BuildMenuButton.h"
 #include "Etos/UI/ResourceLayout.h"
 #include "Etos/Game/EtosGameMode.h"
-#include "Etos/FunctionLibraries/UtilityFunctionLibrary.h"
 #include "Etos/Buildings/Base/Building.h"
 
 void UInGameUI::NativeConstruct()
@@ -72,7 +71,7 @@ void UInGameUI::UpdatePopulation(const int32& peasants, const int32& citizens)
 {
 	if (GetPlayerController())
 	{
-		int32 amount = playerController->GetPopulationAmount();
+		int32 amount = playerController->GetTotalPopulation();
 
 		FFormatNamedArguments args;
 		args.Add(TEXT("population"), amount);
