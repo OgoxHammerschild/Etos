@@ -4,7 +4,7 @@
 
 class ABuilding;
 
-#include "Etos/FunctionLibraries/Vector2Di.h"
+#include "Etos/Utility/Vector2Di.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "BuildingFunctionLibrary.generated.h"
 
