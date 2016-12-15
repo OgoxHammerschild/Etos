@@ -32,6 +32,12 @@ void APath::OnBuild()
 	Data.bIsBuilt = true;
 }
 
+void APath::ReconnectToSurroundings()
+{
+	GetSurroundingBuildings();
+	OnBuild();
+}
+
 void APath::CreateTracePoints()
 {
 	if (UWorld* World = GetWorld())

@@ -21,6 +21,8 @@ public:
 
 	virtual void OnBuild() override;
 
+	void ReconnectToSurroundings();
+
 protected:
 
 	virtual void CreateTracePoints() override;

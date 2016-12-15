@@ -95,6 +95,11 @@ void AMarketBarrow::SetActive(bool isActive)
 	SetActorHiddenInGame(!bIsActive);
 }
 
+FResource AMarketBarrow::GetTransportedResource()
+{
+	return Resource;
+}
+
 #if WITH_EDITOR
 namespace EPathFollowingResult
 {

@@ -222,6 +222,11 @@ void ABuilding::SetFoundationSize(int32 width, int32 height)
 	}
 }
 
+int32 ABuilding::GetBarrowsInUse()
+{
+	return BarrowsInUse;
+}
+
 FORCEINLINE bool ABuilding::operator<(const ABuilding & B) const
 {
 	return Data.ProducedResource.Amount < B.Data.ProducedResource.Amount;
@@ -845,6 +850,11 @@ void ABuilding::DetermineOrderedResource(EResource & OrderedResource, ABuilding*
 	{
 	orderedResource = res2.Type;
 	}*/
+}
+
+void ABuilding::SetBarrowsInUse(int32 amount)
+{
+	BarrowsInUse = amount;
 }
 
 FORCEINLINE void ABuilding::DecreaseBarrowsInUse()

@@ -12,6 +12,7 @@
 #include "Etos/Buildings/Warehouse.h"
 #include "Etos/Buildings/Residence.h"
 #include "EtosGameMode.h"
+#include "Etos/Pawns/MarketBarrow.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -64,6 +65,12 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly);
 	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding);
 	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding);
+
+#if WITH_EDITOR
+	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::Save);
+	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::Load);
+#endif
+
 }
 
 FORCEINLINE void AEtosPlayerController::AddResource(const FResource& resource)
@@ -143,6 +150,16 @@ void AEtosPlayerController::UpdatePopulation(const EResidentLevel& from, const E
 	}
 }
 
+void AEtosPlayerController::ReportUpgrade(AResidence * upgradedResidence, const EResidentLevel & levelBeforeUpgrade, const EResidentLevel & levelAfterUpgrade)
+{
+	if (Enum::IsValid(levelBeforeUpgrade) && Enum::IsValid(levelAfterUpgrade))
+	{
+		++usedPromotions.FindOrAdd(levelAfterUpgrade);
+		builtResidences.FindOrAdd(levelAfterUpgrade).Residences.AddUnique(upgradedResidence);
+		builtResidences.FindOrAdd(levelBeforeUpgrade).Residences.Remove(upgradedResidence);
+	}
+}
+
 int32 AEtosPlayerController::GetTotalPopulation() const
 {
 	return totalPopulation;
@@ -177,6 +194,17 @@ int32 AEtosPlayerController::GetTotalStorage()
 FORCEINLINE UInGameUI * AEtosPlayerController::GetInGameUI()
 {
 	return UUtilityFunctionLibrary::GetEtosHUD(this)->GetInGameUI();
+}
+
+int32 AEtosPlayerController::GetAvailablePromotions(const EResidentLevel & to)
+{
+	switch (to)
+	{
+	case EResidentLevel::Citizen:
+		return (float)builtResidences.FindOrAdd(EResidentLevel::Peasant).Residences.Num() * 0.8f - usedPromotions.FindOrAdd(to);
+	default:
+		return 0;
+	}
 }
 
 FORCEINLINE void AEtosPlayerController::PauseGame(FKey key)
@@ -349,32 +377,41 @@ void AEtosPlayerController::AddIncome(float DeltaTime)
 
 				taxPerResident = 0;
 
-				for (AResidence* residence : builtResidences)
+				int32 j = 0;
+				bool removeNullptrs = false;
+				for (AResidence* residence : builtResidences.FindOrAdd(level).Residences)
 				{
+					if (residence == nullptr)
+					{
+						removeNullptrs = true;
+						continue;
+					}
+
 					if (residence->MyLevel == level)
 					{
 						for (auto& pair : taxData->taxPerResource)
 						{
 							taxPerResident += residence->GetSatisfaction(pair.Resource) * pair.Tax;
 						}
+						++j;
 					}
 				}
-				taxPerResident /= builtResidences.Num();
+
+				if (removeNullptrs)
+				{
+					builtResidences[level].Residences.Shrink();
+				}
+
+				if (j > 0)
+				{
+					taxPerResident /= j;
+				}
+
 				taxPerResident += taxData->BaseTax;
 
 				population = populationPerLevel.FindOrAdd(level);
 				currentTaxIncome += population * taxPerResident;
 			}
-
-			//// for each EResidentLevel ..
-			//// if level is valid
-
-			//taxPerResident = GM->GetBaseTaxForResident(EResidentLevel::Peasant /*level*/);
-			////population = populationPerLevel.FindOrAdd(level);
-
-			//currentTaxIncome += (float)totalPopulation /*population*/ * taxPerResident;
-
-			//// ..
 
 			totalIncome = currentTaxIncome;
 
@@ -412,9 +449,129 @@ void AEtosPlayerController::ReportDestroyedBuilding(ABuilding * destroyedBuildin
 			builtBuildings.Remove(destroyedBuilding);
 		}
 
-		if (builtResidences.Contains(destroyedBuilding))
+		if (AResidence* residence = dynamic_cast<AResidence*, ABuilding>(destroyedBuilding))
 		{
-			builtResidences.Remove(destroyedBuilding);
+			if (builtResidences.FindOrAdd(residence->MyLevel).Residences.Contains(residence))
+			{
+				builtResidences[residence->MyLevel].Residences.Remove(residence);
+			}
+		}
+	}
+}
+
+void AEtosPlayerController::Save()
+{
+	//UGameplayStatics::DoesSaveGameExist...
+	UEtosSaveGame* SaveGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosSaveGame::StaticClass()));
+	SaveGameInstance->PlayerName = TEXT("Player 1");
+	SaveGameInstance->ResourceAmounts = this->resourceAmounts;
+	SaveGameInstance->PopulationPerLevel = this->populationPerLevel;
+	SaveGameInstance->UsedPromotions = this->usedPromotions;
+
+	for (const auto& building : this->builtBuildings)
+	{
+		if (building->IsValidLowLevel())
+		{
+			if (AResidence * const residence = dynamic_cast<AResidence*, ABuilding>(building))
+			{
+				SaveGameInstance->AddResidence(residence);
+			}
+			else
+			{
+				SaveGameInstance->AddBuilding(building);
+			}
+		}
+	}
+
+	if (auto const World = GetWorld())
+	{
+		for (TActorIterator<AMarketBarrow> ActorItr(World); ActorItr; ++ActorItr)
+		{
+			if (ActorItr->IsValidLowLevel())
+			{
+				auto resource = ActorItr->GetTransportedResource();
+				if (resource.Amount > 0)
+				{
+					SaveGameInstance->ResourcesOnTransit.Add(resource);
+				}
+			}
+		}
+	}
+
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->SaveSlotName, SaveGameInstance->UserIndex);
+}
+
+void AEtosPlayerController::Load()
+{
+	UEtosSaveGame* LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosSaveGame::StaticClass()));
+	LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->SaveSlotName, LoadGameInstance->UserIndex));
+
+	if (LoadGameInstance->IsValidLowLevel())
+	{
+		this->resourceAmounts = LoadGameInstance->ResourceAmounts;
+		this->populationPerLevel = LoadGameInstance->PopulationPerLevel;
+		this->usedPromotions = LoadGameInstance->UsedPromotions;
+
+		if (const auto GM = Util::GetEtosGameMode(this))
+		{
+			int32 count = GM->GetBuildingAmount();
+
+			TMap<FName, FPredefinedBuildingData> BuildingData;
+
+			for (int32 i = 0; i < count; ++i)
+			{
+				auto data = GM->GetPredefinedBuildingData(i);
+				BuildingData.Add(data->Name, *data);
+			}
+
+			builtBuildings.Reset();
+			builtResidences.Reset();
+
+			for (auto& buildingData : LoadGameInstance->BuiltBuildings)
+			{
+				auto data = BuildingData[buildingData.Name];
+				SpawnBuilding(data.BuildingBlueprint, FBuildingData(data));
+
+				if (newBuilding->IsValidLowLevel())
+				{
+					BuildLoadedBuilding(buildingData);
+				}
+			}
+
+			auto data = BuildingData[LoadGameInstance->BuiltResidences[0].Name];
+			for (auto& residenceData : LoadGameInstance->BuiltResidences)
+			{
+				SpawnBuilding(data.BuildingBlueprint, FBuildingData(data));
+
+				if (newBuilding->IsValidLowLevel())
+				{
+					if (AResidence * const residence = dynamic_cast<AResidence*, ABuilding>(newBuilding))
+					{
+						residence->MyLevel = residenceData.Level;
+						residence->Residents = residenceData.Residents;
+						residence->MaxResidents = residenceData.MaxResidents;
+						BuildLoadedBuilding(residenceData);
+						if (residence->MyLevel == EResidentLevel::Citizen)
+						{
+							residence->UpgradeToCitizen();
+						}
+						residence->SetAllSatisfactions(residenceData.ResourceSatisfaction, residenceData.NeedsSatisfaction, residenceData.TotalSatisfaction);
+					}
+				}
+			}
+
+			if (auto const World = GetWorld())
+			{
+				for (TActorIterator<APath> ActorItr(World); ActorItr; ++ActorItr)
+				{
+					ActorItr->ReconnectToSurroundings();
+				}
+			}
+
+			for (auto& resource : LoadGameInstance->ResourcesOnTransit)
+			{
+				AddResource(resource);
+			}
 		}
 	}
 }
@@ -469,13 +626,15 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 			bIsBulidingPath = false;
 			UE_LOG(LogTemp, Warning, TEXT("building canceled"));
 		}
-		else if (newBuilding)
+		else if (newBuilding->IsValidLowLevel())
 		{
 			if (newBuilding->OccupiedBuildSpace_Custom)
 			{
 				newBuilding->OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
 			}
+			newBuilding->Data.bIsHeld = false;
 			newBuilding->Destroy();
+			newBuilding->ConditionalBeginDestroy();
 			bIsHoldingObject = false;
 			UE_LOG(LogTemp, Warning, TEXT("building canceled"));
 		}
@@ -493,7 +652,7 @@ FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(const TArray<FResourc
 FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * Class, const FBuildingData & Data)
 {
 	if (bIsHoldingObject)
-		return nullptr;
+		CancelPlacementOfBuilding(FKey());
 
 	if (!Class)
 		return nullptr;
@@ -515,24 +674,38 @@ FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * C
 	return nullptr;
 }
 
-FORCEINLINE void AEtosPlayerController::BuildNewBuilding_Internal()
+FORCEINLINE void AEtosPlayerController::BuildNewBuilding_Internal(bool skipCosts)
 {
 	newBuilding->Data.bIsHeld = false;
 	bIsHoldingObject = false;
 
-	PayCostsOfBuilding(newBuilding->Data.BuildCost);
+	if (!skipCosts)
+		PayCostsOfBuilding(newBuilding->Data.BuildCost);
 
 	if (builtBuildings.AddUnique(newBuilding) != INDEX_NONE)
 	{
 		if (AResidence* residence = dynamic_cast<AResidence*, ABuilding>(newBuilding))
 		{
-			builtResidences.AddUnique(residence);
+			builtResidences.FindOrAdd(residence->MyLevel).Residences.AddUnique(residence);
 		}
 
 		newBuilding->OnDestroyed.AddDynamic(this, &AEtosPlayerController::OnBuildingDestroyed);
 
 		newBuilding->OnBuild();
 	}
+}
+
+void AEtosPlayerController::BuildLoadedBuilding(const FBuildingSaveData & Data)
+{
+	newBuilding->SetActorTransform(Data.Transform);
+	newBuilding->Data.bPositionIsBlocked = false;
+	BuildNewBuilding_Internal(true);
+	newBuilding->SetBarrowsInUse(0);
+	newBuilding->Data.bBarrowIsOnTheWay = false;
+	newBuilding->Data.NeededResource1.Amount = Data.NeededResource1Amount;
+	newBuilding->Data.NeededResource2.Amount = Data.NeededResource2Amount;
+	newBuilding->Data.ProducedResource.Amount = Data.ProducedResourceAmount;
+	newBuilding->SetActive(Data.bIsActive);
 }
 
 FORCEINLINE void AEtosPlayerController::StartBuildingPath(APath* newPath)

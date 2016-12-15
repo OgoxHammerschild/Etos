@@ -133,6 +133,11 @@ public:
 
 	void SetFoundationSize(int32 width, int32 height);
 
+	int32 GetBarrowsInUse();
+
+	// for loading savegame only
+	void SetBarrowsInUse(int32 amount);
+
 	void DecreaseBarrowsInUse();
 
 	// Whether the other building has the resources this building needs
