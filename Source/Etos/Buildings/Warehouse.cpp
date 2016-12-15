@@ -93,7 +93,7 @@ inline void AWarehouse::SendMarketBarrows()
 				if (BarrowsInUse < MaxBarrows)
 				{
 					int32 producedAmount = building->Data.ProducedResource.Amount;
-					if (building && producedAmount > 0 && MyPlayerController->GetResourceAmount(Data.ProducedResource.Type) + producedAmount < totalStorage)
+					if (building && producedAmount > 0 && MyPlayerController->GetResourceAmount(building->Data.ProducedResource.Type) + producedAmount <= totalStorage)
 					{
 						if (!building->Data.bBarrowIsOnTheWay)
 						{

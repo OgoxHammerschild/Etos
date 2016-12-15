@@ -2,10 +2,22 @@
 
 #pragma once
 
+class AResidence;
 #include "Etos/ObjectPool/ObjectPool.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "GameFramework/PlayerController.h"
 #include "EtosPlayerController.generated.h"
+
+USTRUCT()
+struct FResidenceArray
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY()
+		TArray<AResidence*> Residences;
+};
 
 /**
  *
@@ -33,13 +45,14 @@ private:
 		TMap<EResidentLevel, int32> populationPerLevel;
 
 	UPROPERTY()
-		TMap<EResidentLevel, int32> availablePromotions;
+		// @key = level promoted to
+		TMap<EResidentLevel, int32> usedPromotions;
 
 	UPROPERTY()
 		TArray<ABuilding*> builtBuildings;
 
 	UPROPERTY()
-		TArray<AResidence*> builtResidences;
+		TMap<EResidentLevel, FResidenceArray> builtResidences;
 
 	UPROPERTY(VisibleAnywhere)
 		ABuilding* newBuilding;
@@ -100,6 +113,8 @@ public:
 
 	void UpdatePopulation(const EResidentLevel& from, const EResidentLevel& to, const int32& residents);
 
+	void ReportUpgrade(AResidence* upgradedResidence, const EResidentLevel& levelBeforeUpgrade, const EResidentLevel & levelAfterUpgrade);
+
 	int32 GetTotalPopulation() const;
 
 	int32 GetPopulationAmount(const EResidentLevel& level);
@@ -114,6 +129,8 @@ public:
 
 	class UInGameUI* GetInGameUI();
 
+	int32 GetAvailablePromotions(const EResidentLevel& to);
+
 	ABuilding* SpawnBuilding(ABuilding* Class, const FBuildingData& Data);
 
 	ABuilding* SpawnBuilding(const TSubclassOf<ABuilding>& Subclass, const FBuildingData& Data);
@@ -125,6 +142,10 @@ public:
 	bool HasEnoughResources(const TArray<FResource>& buildCost) const;
 
 	void ReportDestroyedBuilding(ABuilding* destroyedBuilding);
+
+	void Save();
+
+	void Load();
 
 private:
 
@@ -163,7 +184,9 @@ private:
 
 	ABuilding* SpawnBuilding_Internal(UClass* Class, const FBuildingData& Data);
 
-	void BuildNewBuilding_Internal();
+	void BuildNewBuilding_Internal(bool skipCosts = false);
+
+	void BuildLoadedBuilding(const struct FBuildingSaveData& Data);
 
 	void StartBuildingPath(APath* newPath);
 

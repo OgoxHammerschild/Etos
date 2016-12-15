@@ -17,7 +17,8 @@ class ETOS_API AWarehouse : public ABuilding
 
 private:
 
-	int32 storageSpace = 40;
+	UPROPERTY()
+		int32 storageSpace = 40;
 
 public:
 

@@ -12,8 +12,9 @@ AEtosGameMode::AEtosGameMode()
 	if (!PredefinedBuildingData)
 	{
 		typedef ConstructorHelpers::FObjectFinder<UDataTable> FDataTableFinder;
-
 		static FDataTableFinder DataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/PredefinedBuildingData.PredefinedBuildingData'"));
+
+		DataTableFinder = FDataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/PredefinedBuildingData.PredefinedBuildingData'"));
 		if (DataTableFinder.Succeeded())
 		{
 			PredefinedBuildingData = DataTableFinder.Object;
@@ -126,7 +127,7 @@ FTaxData * AEtosGameMode::GetTaxData(const EResidentLevel & level)
 {
 	check(TaxData);
 
-	FTaxData* data;
+	FTaxData* data = nullptr;
 
 	switch (level)
 	{
