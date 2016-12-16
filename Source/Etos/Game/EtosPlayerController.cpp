@@ -13,6 +13,8 @@
 #include "Etos/Buildings/Residence.h"
 #include "EtosGameMode.h"
 #include "Etos/Pawns/MarketBarrow.h"
+#include "Etos/Game/EtosSaveGame.h"
+#include "Kismet/GameplayStatics.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -508,9 +510,18 @@ void AEtosPlayerController::Load()
 
 	if (LoadGameInstance->IsValidLowLevel())
 	{
-		this->resourceAmounts = LoadGameInstance->ResourceAmounts;
-		this->populationPerLevel = LoadGameInstance->PopulationPerLevel;
-		this->usedPromotions = LoadGameInstance->UsedPromotions;
+		if (LoadGameInstance->ResourceAmounts.Num() > 0)
+		{
+			this->resourceAmounts = LoadGameInstance->ResourceAmounts;
+		}
+		if (LoadGameInstance->PopulationPerLevel.Num() > 0)
+		{
+			this->populationPerLevel = LoadGameInstance->PopulationPerLevel;
+		}
+		if (LoadGameInstance->UsedPromotions.Num() > 0)
+		{
+			this->usedPromotions = LoadGameInstance->UsedPromotions;
+		}
 
 		if (const auto GM = Util::GetEtosGameMode(this))
 		{
@@ -520,42 +531,48 @@ void AEtosPlayerController::Load()
 
 			for (int32 i = 0; i < count; ++i)
 			{
-				auto data = GM->GetPredefinedBuildingData(i);
-				BuildingData.Add(data->Name, *data);
+				if (auto data = GM->GetPredefinedBuildingData(i))
+					BuildingData.Add(data->Name, *data);
 			}
 
 			builtBuildings.Reset();
 			builtResidences.Reset();
 
-			for (auto& buildingData : LoadGameInstance->BuiltBuildings)
+			if (LoadGameInstance->BuiltBuildings.Num() > 0)
 			{
-				auto data = BuildingData[buildingData.Name];
-				SpawnBuilding(data.BuildingBlueprint, FBuildingData(data));
-
-				if (newBuilding->IsValidLowLevel())
+				for (auto& buildingData : LoadGameInstance->BuiltBuildings)
 				{
-					BuildLoadedBuilding(buildingData);
+					auto data = BuildingData[buildingData.Name];
+					SpawnBuilding(data.BuildingBlueprint, FBuildingData(data));
+
+					if (newBuilding->IsValidLowLevel())
+					{
+						BuildLoadedBuilding(buildingData);
+					}
 				}
 			}
 
-			auto data = BuildingData[LoadGameInstance->BuiltResidences[0].Name];
-			for (auto& residenceData : LoadGameInstance->BuiltResidences)
+			if (LoadGameInstance->BuiltResidences.Num() > 0)
 			{
-				SpawnBuilding(data.BuildingBlueprint, FBuildingData(data));
-
-				if (newBuilding->IsValidLowLevel())
+				auto data = BuildingData[LoadGameInstance->BuiltResidences[0].Name];
+				for (auto& residenceData : LoadGameInstance->BuiltResidences)
 				{
-					if (AResidence * const residence = dynamic_cast<AResidence*, ABuilding>(newBuilding))
+					SpawnBuilding(data.BuildingBlueprint, FBuildingData(data));
+
+					if (newBuilding->IsValidLowLevel())
 					{
-						residence->MyLevel = residenceData.Level;
-						residence->Residents = residenceData.Residents;
-						residence->MaxResidents = residenceData.MaxResidents;
-						BuildLoadedBuilding(residenceData);
-						if (residence->MyLevel == EResidentLevel::Citizen)
+						if (AResidence * const residence = dynamic_cast<AResidence*, ABuilding>(newBuilding))
 						{
-							residence->UpgradeToCitizen();
+							residence->MyLevel = residenceData.Level;
+							residence->Residents = residenceData.Residents;
+							residence->MaxResidents = residenceData.MaxResidents;
+							BuildLoadedBuilding(residenceData);
+							if (residence->MyLevel == EResidentLevel::Citizen)
+							{
+								residence->UpgradeToCitizen();
+							}
+							residence->SetAllSatisfactions(residenceData.ResourceSatisfaction, residenceData.NeedsSatisfaction, residenceData.TotalSatisfaction);
 						}
-						residence->SetAllSatisfactions(residenceData.ResourceSatisfaction, residenceData.NeedsSatisfaction, residenceData.TotalSatisfaction);
 					}
 				}
 			}
@@ -568,9 +585,12 @@ void AEtosPlayerController::Load()
 				}
 			}
 
-			for (auto& resource : LoadGameInstance->ResourcesOnTransit)
+			if (LoadGameInstance->ResourcesOnTransit.Num() > 0)
 			{
-				AddResource(resource);
+				for (auto& resource : LoadGameInstance->ResourcesOnTransit)
+				{
+					AddResource(resource);
+				}
 			}
 		}
 	}

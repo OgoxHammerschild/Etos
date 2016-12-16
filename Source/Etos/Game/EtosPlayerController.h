@@ -3,8 +3,6 @@
 #pragma once
 
 class AResidence;
-#include "Etos/Game/EtosSaveGame.h"
-#include "Kismet/GameplayStatics.h"
 #include "Etos/ObjectPool/ObjectPool.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "GameFramework/PlayerController.h"

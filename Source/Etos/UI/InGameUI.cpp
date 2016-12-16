@@ -192,25 +192,11 @@ void UInGameUI::CreateButtons()
 				{
 					if (UBuildMenuButton* const button = CreateWidget<UBuildMenuButton>(PlayerController, BuildMenuButtonBlueprint))
 					{
-						FBuildingData data = FBuildingData();
-						data.BuildCost = preDefData->BuildCost;
-						data.BuildingIcon = preDefData->BuildingIcon;
-						data.MaxStoredResources = preDefData->MaxStoredResources;
-						data.Name = preDefData->Name;
-						data.NeededResource1.Type = preDefData->NeededResource1;
-						data.NeededResource1.Amount = 0;
-						data.NeededResource2.Type = preDefData->NeededResource2;
-						data.NeededResource2.Amount = 0;
-						data.ProducedResource.Type = preDefData->ProducedResource;
-						data.ProducedResource.Amount = 0;
-						data.ProductionTime = preDefData->ProductionTime;
-						data.Radius = preDefData->Radius;
-						data.Upkeep = preDefData->Upkeep;
-
-						button->Data = data;
+						button->Data = FBuildingData(*preDefData);
 
 						check(button->BuildingIcon);
 						button->BuildingIcon->SetBrushFromTexture(preDefData->BuildingIcon);
+
 						button->Building = preDefData->BuildingBlueprint;
 						button->SetPadding(FMargin(5));
 
