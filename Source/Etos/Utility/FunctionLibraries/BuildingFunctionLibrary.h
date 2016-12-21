@@ -9,7 +9,7 @@ class ABuilding;
 #include "BuildingFunctionLibrary.generated.h"
 
 UENUM(BlueprintType)
-enum class EOffsetDirections
+enum class EOffsetDirections : uint8
 {
 	TopLeft,
 	TopRight,

@@ -23,3 +23,11 @@ public class EtosEditorTarget : TargetRules
 		OutExtraModuleNames.AddRange( new string[] { "Etos" } );
 	}
 }
+
+//"Plugins": [
+//    {
+//        "Name": "Substance",
+//        "Enabled": true,
+//        ""
+//    }
+//],

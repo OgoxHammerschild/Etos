@@ -27,7 +27,7 @@ ARTSCamera::ARTSCamera()
 }
 
 // Called to bind functionality to input
-void ARTSCamera::SetupPlayerInputComponent(class UInputComponent* InputComponent)
+void ARTSCamera::SetupPlayerInputComponent(UInputComponent* InputComponent)
 {
 	Super::SetupPlayerInputComponent(InputComponent);
 
