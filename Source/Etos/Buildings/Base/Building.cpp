@@ -838,18 +838,6 @@ void ABuilding::DetermineOrderedResource(EResource & OrderedResource, ABuilding*
 	{
 		OrderedResource = res2.Type;
 	}
-
-	/*	FResource res1 = Data.NeededResource1;
-	FResource res2 = Data.NeededResource2;
-
-	if (res1.Type != orderedResource && res1.Amount < 1 && building->HasResource(res1.Type))
-	{
-	orderedResource = res1.Type;
-	}
-	else if (res2.Type != orderedResource && res2.Amount < 1 && building->HasResource(res2.Type))
-	{
-	orderedResource = res2.Type;
-	}*/
 }
 
 void ABuilding::SetBarrowsInUse(int32 amount)

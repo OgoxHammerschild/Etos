@@ -52,7 +52,7 @@ public:
 	UPROPERTY()
 		TSubclassOf<AResourcePopup> ResourcePopup;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		FBuildingData Data;
 
 	// Width in Tiles
@@ -101,7 +101,7 @@ private:
 		float currentUpkeepDebts = 0;
 
 	UPROPERTY()
-		bool bIsActive;
+		bool bIsActive = true;
 
 	UPROPERTY()
 		TArray<ABuilding*> collisions;
