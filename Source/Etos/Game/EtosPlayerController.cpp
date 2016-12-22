@@ -324,27 +324,38 @@ void AEtosPlayerController::SelectBuilding(FKey key)
 			{
 				if (ABuilding* const building = dynamic_cast<ABuilding*, AActor> (&*Hit.Actor))
 				{
-					GUI->BPEvent_ShowBuildingInfo(building->Data);
-
-					if (AWarehouse* const warehouse = dynamic_cast<AWarehouse*, ABuilding> (building))
+					if (AResidence* const residence = dynamic_cast<AResidence*, ABuilding>(building))
 					{
-						GUI->HideBuildButtons();
-						GUI->ShowResourceInfo(resourceAmounts);
+						GUI->ShowResidenceInfo(residence);
+						GUI->BPEvent_HideBuildingInfo();
+						GUI->ShowBuildButtons();
+						GUI->HideResourceInfo();
 					}
 					else
 					{
-						GUI->ShowBuildButtons();
-						GUI->HideResourceInfo();
+						GUI->BPEvent_ShowBuildingInfo(building->Data);
+						GUI->HideResidenceInfo();
+
+						if (AWarehouse* const warehouse = dynamic_cast<AWarehouse*, ABuilding> (building))
+						{
+							GUI->HideBuildButtons();
+							GUI->ShowResourceInfo(resourceAmounts);
+						}
+						else
+						{
+							GUI->ShowBuildButtons();
+							GUI->HideResourceInfo();
+						}
 					}
 				}
 			}
 		}
-		return;
 	}
 	else if (UInGameUI* const GUI = GetInGameUI())
 	{
 		GUI->BPEvent_HideBuildingInfo();
 		GUI->HideResourceInfo();
+		GUI->HideResidenceInfo();
 		GUI->ShowBuildButtons();
 	}
 }
@@ -505,6 +516,12 @@ void AEtosPlayerController::Save()
 
 void AEtosPlayerController::Load()
 {
+	if (!UGameplayStatics::DoesSaveGameExist(TEXT("NewSaveGame"), 0))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("NewSaveGame was not found"));
+		return;
+	}
+
 	UEtosSaveGame* LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosSaveGame::StaticClass()));
 	LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->SaveSlotName, LoadGameInstance->UserIndex));
 
@@ -516,7 +533,7 @@ void AEtosPlayerController::Load()
 		}
 		if (LoadGameInstance->PopulationPerLevel.Num() > 0)
 		{
-			this->populationPerLevel = LoadGameInstance->PopulationPerLevel;
+			//this->populationPerLevel = LoadGameInstance->PopulationPerLevel;
 		}
 		if (LoadGameInstance->UsedPromotions.Num() > 0)
 		{
@@ -554,7 +571,7 @@ void AEtosPlayerController::Load()
 
 			if (LoadGameInstance->BuiltResidences.Num() > 0)
 			{
-				auto data = BuildingData[LoadGameInstance->BuiltResidences[0].Name];
+				auto data = BuildingData[TEXT("Farmhouse")]; // maybe make variable in case the name changes in predefData or localization
 				for (auto& residenceData : LoadGameInstance->BuiltResidences)
 				{
 					SpawnBuilding(data.BuildingBlueprint, FBuildingData(data));

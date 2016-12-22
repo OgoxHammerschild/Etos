@@ -4,7 +4,14 @@
 
 class UResourceLayout;
 class UBuildMenuButton;
+class USatisfactionLayout;
+
+#include "UMG.h"
+#include "UMGStyle.h"
+#include "Slate/SObjectWidget.h"
+#include "IUMGModule.h"
 #include "Blueprint/UserWidget.h"
+
 #include "Etos/Game/EtosPlayerController.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "InGameUI.generated.h"
@@ -25,6 +32,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Build Buttons")
 		TSubclassOf<UBuildMenuButton> BuildMenuButtonBlueprint;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Info|Residence")
+		TSubclassOf<USatisfactionLayout> SatisfactionLayoutBlueprint;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build Buttons")
 		int32 ButtonsPerRow = 4;
 
@@ -37,7 +47,8 @@ private:
 		AEtosPlayerController* playerController;
 
 	UPROPERTY()
-		TMap<EResource, UTextBlock* > resourceTexts;
+		// the texts in the top left of the screen
+		TMap<EResource, UTextBlock*> resourceTexts;
 
 	UPROPERTY()
 		UTextBlock* populationText;
@@ -61,10 +72,19 @@ private:
 		UGridPanel* gridPanel;
 
 	UPROPERTY()
+		UUniformGridPanel* residenceInfoPanel;
+
+	UPROPERTY()
 		TArray<UBuildMenuButton*> buttons;
 
 	UPROPERTY()
 		TMap<EResource, UResourceLayout*> resources;
+
+	UPROPERTY()
+		UResourceLayout* tempLayout;
+
+	UPROPERTY()
+		UBuildMenuButton* tempButton;
 
 public:
 
@@ -73,6 +93,10 @@ public:
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
 		void SetGridPanel(UPARAM(DisplayName = "Button Grid Panel") UGridPanel* panel);
+
+	// Create a reference between the elements in the designer and the elements in C++
+	UFUNCTION(BlueprintCallable, Category = "Referencing")
+		void SetResidenceInfoPanel(UUniformGridPanel* panel);
 
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
@@ -101,6 +125,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Building", meta = (DisplayName = "Hide Building-Info"))
 		void BPEvent_HideBuildingInfo();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Residence", meta = (DisplayName = "OnShowResidenceInfo"))
+		void BPEvent_OnShowResidenceInfo();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Residence", meta = (DisplayName = "OnHideResidenceInfo"))
+		void BPEvent_OnHideResidenceInfo();
+
 	//Note: Make to FResource-array ?
 	UFUNCTION(BlueprintCallable, Category = "Info|Resource", meta = (DisplayName = "Show Resource-Info"))
 		void ShowResourceInfo(const TArray<TEnumAsByte<EResource>>& playerResources, const  TArray<int32>& playerResourceAmounts);
@@ -116,6 +146,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Build Buttons", meta = (DisplayName = "Hide Build Buttons"))
 		void HideBuildButtons();
 
+	UFUNCTION(BlueprintCallable, Category = "Info|Residence", meta = (DisplayName = "Show Residence-Info"))
+		void ShowResidenceInfo(AResidence* residence);
+
+	UFUNCTION(BlueprintCallable, Category = "Info|Residence", meta = (DisplayName = "Hide Residence-Info"))
+		void HideResidenceInfo();
+
 private:
 
 	AEtosPlayerController* GetPlayerController();
@@ -125,4 +161,6 @@ private:
 	void UpdateResourceLayouts(const TMap<EResource, int32>& playerResourceAmounts);
 
 	UGridSlot* AddChildToGridPanel(UWidget* Content, int32 Column, int32 Row);
+
+	UUniformGridSlot* AddChildToResidenceInfoPanel(UWidget* Content, int32 Column, int32 Row);
 };

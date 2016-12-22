@@ -2,10 +2,12 @@
 
 #include "Etos.h"
 #include "InGameUI.h"
-#include "Etos/UI/BuildMenuButton.h"
-#include "Etos/UI/ResourceLayout.h"
+#include "BuildMenuButton.h"
+#include "ResourceLayout.h"
+#include "SatisfactionLayout.h"
 #include "Etos/Game/EtosGameMode.h"
 #include "Etos/Buildings/Base/Building.h"
+#include "Etos/Buildings/Residence.h"
 
 void UInGameUI::NativeConstruct()
 {
@@ -17,6 +19,11 @@ void UInGameUI::NativeConstruct()
 void UInGameUI::SetGridPanel(UGridPanel* panel)
 {
 	gridPanel = panel;
+}
+
+void UInGameUI::SetResidenceInfoPanel(UUniformGridPanel * panel)
+{
+	residenceInfoPanel = panel;
 }
 
 void UInGameUI::LinkTextToResource(UTextBlock* text, EResource resource)
@@ -50,19 +57,18 @@ void UInGameUI::UpdateResourceAmounts()
 			FFormatNamedArguments args;
 			args.Add(TEXT("amount"), amount);
 
-			const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EResource"), true);
-			if (enumPtr)
-			{
-				FString resourceName = enumPtr->GetEnumName((int32)elem.Key);
-				resourceName.Replace(TEXT("EResource::"), TEXT(""));
-				args.Add(TEXT("resourceName"), FText::FromString(resourceName));
+			//const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EResource"), true);
+			//if (enumPtr)
+			//{
+			//	FString resourceName = enumPtr->GetEnumName((int32)elem.Key);
+			args.Add(TEXT("resourceName"), FText::FromString(Enum::ToString(elem.Key)));
 
-				elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", "{resourceName}: {amount}"), args));
-			}
-			else
-			{
-				elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", "{amount}"), args));
-			}
+			elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", "{resourceName}: {amount}"), args));
+			//}
+			//else
+			//{
+			//	elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", "{amount}"), args));
+			//}
 		}
 	}
 }
@@ -160,27 +166,74 @@ void UInGameUI::HideBuildButtons()
 	}
 }
 
+void UInGameUI::ShowResidenceInfo(AResidence * residence)
+{
+	checkf(SatisfactionLayoutBlueprint, TEXT("No Satisfaction Layout Blueprint was selected for InGameUI"));
+	checkf(residenceInfoPanel, TEXT("No Residence Info Panel was linked for InGameUI"));
+
+	if (AEtosPlayerController * const PlayerController = UUtilityFunctionLibrary::GetFirstEtosPlayerController(this))
+	{
+		if (residenceInfoPanel->HasAnyChildren())
+		{
+			residenceInfoPanel->ClearChildren();
+		}
+
+		TMap<EResource, float> ResourceSatisfaction;
+		TMap<EResidentNeed, bool> NeedsSatisfaction;
+		float TotalSatisfaction;
+		residence->GetAllSatisfactions(ResourceSatisfaction, NeedsSatisfaction, TotalSatisfaction);
+
+		int32 i = 0;
+		for (auto& resource : ResourceSatisfaction)
+		{
+			if (Enum::IsValid(resource.Key))
+			{
+				auto layout = CreateWidget<USatisfactionLayout>(PlayerController, SatisfactionLayoutBlueprint);
+				if (layout)
+				{
+					layout->Residence = residence;
+					layout->MyResource = resource.Key;
+					AddChildToResidenceInfoPanel(layout, i % 2, i / 2);
+					++i;
+				}
+			}
+		}
+
+		for (auto& need : NeedsSatisfaction)
+		{
+			if (Enum::IsValid(need.Key))
+			{
+				auto layout = CreateWidget<USatisfactionLayout>(PlayerController, SatisfactionLayoutBlueprint);
+				if (layout)
+				{
+					layout->Residence = residence;
+					layout->MyNeed = need.Key;
+					AddChildToResidenceInfoPanel(layout, i % 2, i / 2);
+					++i;
+				}
+			}
+		}
+	}
+	BPEvent_OnShowResidenceInfo();
+}
+
+void UInGameUI::HideResidenceInfo()
+{
+	BPEvent_OnHideResidenceInfo();
+}
+
 AEtosPlayerController * UInGameUI::GetPlayerController()
 {
-	if (playerController)
+	if (!playerController)
 	{
-		return playerController;
+		playerController = dynamic_cast<AEtosPlayerController*, APlayerController>(GetWorld()->GetFirstPlayerController());
 	}
-
-	playerController = dynamic_cast<AEtosPlayerController*, APlayerController>(GetWorld()->GetFirstPlayerController());
-
-	if (playerController)
-	{
-		return playerController;
-	}
-
-	return nullptr;
+	return playerController;
 }
 
 void UInGameUI::CreateButtons()
 {
-	if (!BuildMenuButtonBlueprint)
-		return;
+	checkf(BuildMenuButtonBlueprint, TEXT("No Build Menu Button Blueprint was selected for InGameUI"));
 
 	if (AEtosPlayerController * const PlayerController = UUtilityFunctionLibrary::GetFirstEtosPlayerController(this))
 	{
@@ -190,19 +243,21 @@ void UInGameUI::CreateButtons()
 			{
 				if (FPredefinedBuildingData* const preDefData = GameMode->GetPredefinedBuildingData(buildingID))
 				{
-					if (UBuildMenuButton* const button = CreateWidget<UBuildMenuButton>(PlayerController, BuildMenuButtonBlueprint))
+					tempButton = CreateWidget<UBuildMenuButton>(PlayerController, BuildMenuButtonBlueprint);
+					if (tempButton)
 					{
-						button->Data = FBuildingData(*preDefData);
+						tempButton->Data = FBuildingData(*preDefData);
 
-						check(button->BuildingIcon);
-						button->BuildingIcon->SetBrushFromTexture(preDefData->BuildingIcon);
+						//check(button->BuildingIcon);
+						//button->BuildingIcon->SetBrushFromTexture(button->Data.BuildingIcon);
+						tempButton->IconusRectus = tempButton->Data.BuildingIcon;
 
-						button->Building = preDefData->BuildingBlueprint;
-						button->SetPadding(FMargin(5));
+						tempButton->Building = preDefData->BuildingBlueprint;
+						tempButton->SetPadding(FMargin(5));
 
-						AddChildToGridPanel(button, (buildingID - 1) % ButtonsPerRow, (buildingID - 1) / ButtonsPerRow);
+						AddChildToGridPanel(tempButton, (buildingID - 1) % ButtonsPerRow, (buildingID - 1) / ButtonsPerRow);
 
-						buttons.Add(button);
+						buttons.Add(tempButton);
 					}
 				}
 			}
@@ -226,15 +281,17 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 		{
 			if (AEtosPlayerController * const PlayerController = Util::GetFirstEtosPlayerController(this))
 			{
-				if (UResourceLayout * const layout = CreateWidget<UResourceLayout>(PlayerController, ResourceLayoutBlueprint))
+				tempLayout = CreateWidget<UResourceLayout>(PlayerController, ResourceLayoutBlueprint);
+				if (tempLayout)
 				{
-					layout->Resource = FResource(resource.Key, resource.Value);
-					layout->MaxStoredResources = 100;
-					layout->SetPadding(FMargin(10));
+					tempLayout->Resource = FResource(resource.Key, resource.Value);
+					tempLayout->MaxStoredResources = 100;
+					tempLayout->ToolTipText = FText::FromString(Enum::ToString(resource.Key));
+					tempLayout->SetPadding(FMargin(10));
 
-					AddChildToGridPanel(layout, i % ResourcesPerRow, i / ResourcesPerRow);
+					AddChildToGridPanel(tempLayout, i % ResourcesPerRow, i / ResourcesPerRow);
 
-					resources.FindOrAdd(resource.Key) = layout;
+					resources.FindOrAdd(resource.Key) = tempLayout;
 				}
 			}
 		}
@@ -244,10 +301,24 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 
 UGridSlot * UInGameUI::AddChildToGridPanel(UWidget * Content, int32 Column, int32 Row)
 {
-	check(gridPanel);
+	checkf(gridPanel, TEXT("No Grid Panel was linked in InGameUI"));
 	check(Content);
 
 	UGridSlot* gridSlot = gridPanel->AddChildToGrid(Content);
+	gridSlot->SetColumn(Column);
+	gridSlot->SetRow(Row);
+	gridSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);
+	gridSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Top);
+
+	return gridSlot;
+}
+
+UUniformGridSlot * UInGameUI::AddChildToResidenceInfoPanel(UWidget * Content, int32 Column, int32 Row)
+{
+	checkf(residenceInfoPanel, TEXT("No Residence Info Panel was linked for InGameUI"));
+	check(Content);
+
+	UUniformGridSlot* gridSlot = residenceInfoPanel->AddChildToUniformGrid(Content);
 	gridSlot->SetColumn(Column);
 	gridSlot->SetRow(Row);
 	gridSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);
