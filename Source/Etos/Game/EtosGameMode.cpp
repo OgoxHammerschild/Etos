@@ -5,6 +5,8 @@
 #include "Runtime/Engine/Public/GameDelegates.h"
 #include "EtosPlayerController.h"
 
+UTexture2D* AEtosGameMode::defaultTexture = nullptr;
+
 AEtosGameMode::AEtosGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -30,6 +32,15 @@ AEtosGameMode::AEtosGameMode()
 		if (DataTableFinder.Succeeded())
 		{
 			TaxData = DataTableFinder.Object;
+		}
+	}
+
+	if (!defaultTexture)
+	{
+		ConstructorHelpers::FObjectFinder<UTexture2D> TextureFinder(TEXT("Texture2D'/Game/NewTexture2D.NewTexture2D'"));
+		if (TextureFinder.Succeeded())
+		{
+			defaultTexture = TextureFinder.Object;
 		}
 	}
 
@@ -167,13 +178,13 @@ FResidentNeeds AEtosGameMode::GetCitizenNeeds()
 	FResidentNeeds needs = FResidentNeeds(EResidentLevel::Citizen);
 
 	needs.ResidentNeeds.Add(EResidentNeed::TownCenter);
-	//needs.ResidentNeeds.Add(EResidentNeed::Chapel);
+	needs.ResidentNeeds.Add(EResidentNeed::Chapel);
 	//needs.ResidentNeeds.Add(EResidentNeed::Tavern);
 
 	needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Fish, 500, 2));
-	//needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Most, 340, 1.5));
+	needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Most, 340, 1.5));
 
-	return FResidentNeeds();
+	return needs;
 }
 
 float AEtosGameMode::GetBaseTaxForResident(const EResidentLevel& level)
@@ -186,4 +197,9 @@ float AEtosGameMode::GetBaseTaxForResident(const EResidentLevel& level)
 	}
 
 	return tax;
+}
+
+UTexture2D * AEtosGameMode::GetDefaultTexture()
+{
+	return defaultTexture;
 }

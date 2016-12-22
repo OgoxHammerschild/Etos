@@ -38,6 +38,8 @@ public:
 
 private:
 
+	static UTexture2D* defaultTexture;
+
 	UPROPERTY()
 		TMap<EResidentLevel, float> taxPerResidentPerMinute;
 
@@ -53,6 +55,8 @@ private:
 public:
 
 	AEtosGameMode();
+
+	static UTexture2D* GetDefaultTexture();
 
 	virtual void Tick(float DeltaTime) override;
 

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Etos/Utility/EnumLibrary.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UtilityFunctionLibrary.generated.h"
 
@@ -35,6 +36,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static class ASimpleCollisionManager* GetEtosCollisionManager(UObject* WorldContextObject);
 
+	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions", meta = (UnsafeDuringActorConstruction = "true"))
+		static UTexture2D* GetDefaultTexture();
+
 	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static bool TraceSingleForBuildings(UObject* WorldContextObject, const FVector& Start, const FVector& End, FHitResult& HitResult);
 
@@ -63,6 +67,18 @@ public:
 	// https://wiki.unrealengine.com/Enums_For_Both_C%2B%2B_and_BP#Get_Name_of_Enum_as_String
 	template<typename TEnum>
 	static FString ConvertEnumValueToString(const FString& EnumName, TEnum Value);
+
+	// forwarding IsValids from Enum namespace to BPs
+
+	//
+	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions")
+		static bool IsValidR(EResource value);
+
+	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions")
+		static bool IsValidL(EResidentLevel value);
+
+	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions")
+		static bool IsValidN(EResidentNeed value);
 
 private:
 

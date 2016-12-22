@@ -7,8 +7,14 @@
 #include "Etos/Game/EtosPlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+#define DEFINE_ENUM_ISVALID(EnumType) bool UUtilityFunctionLibrary::IsValid(EnumType value) { return Enum::IsValid(value); }
+
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::BuildingObjectType = InitBuildingObjectType();
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::FloorObjectType = InitFloorObjectType();
+
+//DEFINE_ENUM_ISVALID(EResource);
+//DEFINE_ENUM_ISVALID(EResidentLevel);
+//DEFINE_ENUM_ISVALID(EResidentNeed);
 
 FORCEINLINE AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* WorldContextObject)
 {
@@ -61,6 +67,11 @@ FORCEINLINE ASimpleCollisionManager * UUtilityFunctionLibrary::GetEtosCollisionM
 		return gm->CollisionManager;
 	}
 	return nullptr;
+}
+
+UTexture2D * UUtilityFunctionLibrary::GetDefaultTexture()
+{
+	return AEtosGameMode::GetDefaultTexture();
 }
 
 FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & HitResult)
@@ -122,6 +133,21 @@ FORCEINLINE FString UUtilityFunctionLibrary::ConvertEnumValueToString(const FStr
 	}
 
 	return enumPtr->GetEnumName((int32)Value);
+}
+
+bool UUtilityFunctionLibrary::IsValidR(EResource value)
+{
+	return Enum::IsValid(value);
+}
+
+bool UUtilityFunctionLibrary::IsValidL(EResidentLevel value)
+{
+	return Enum::IsValid(value);
+}
+
+bool UUtilityFunctionLibrary::IsValidN(EResidentNeed value)
+{
+	return Enum::IsValid(value);
 }
 
 FORCEINLINE TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitBuildingObjectType()
