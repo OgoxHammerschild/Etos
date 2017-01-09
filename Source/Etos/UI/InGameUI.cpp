@@ -16,9 +16,10 @@ void UInGameUI::NativeConstruct()
 	CreateButtons();
 }
 
-void UInGameUI::SetGridPanel(UGridPanel* panel)
+void UInGameUI::SetGridPanel(UGridPanel* buttonPanel, UGridPanel* resourcePanel)
 {
-	gridPanel = panel;
+	buildButtonGridPanel = buttonPanel;
+	resourceInfoGridPanel = resourcePanel;
 }
 
 void UInGameUI::SetResidenceInfoPanel(UUniformGridPanel * panel)
@@ -193,7 +194,7 @@ void UInGameUI::ShowResidenceInfo(AResidence * residence)
 				{
 					layout->Residence = residence;
 					layout->MyResource = resource.Key;
-					AddChildToResidenceInfoPanel(layout, i % 2, i / 2);
+					AddChildToGridPanel(residenceInfoPanel, layout, i % 2, i / 2);
 					++i;
 				}
 			}
@@ -208,7 +209,7 @@ void UInGameUI::ShowResidenceInfo(AResidence * residence)
 				{
 					layout->Residence = residence;
 					layout->MyNeed = need.Key;
-					AddChildToResidenceInfoPanel(layout, i % 2, i / 2);
+					AddChildToGridPanel(residenceInfoPanel, layout, i % 2, i / 2);
 					++i;
 				}
 			}
@@ -220,6 +221,14 @@ void UInGameUI::ShowResidenceInfo(AResidence * residence)
 void UInGameUI::HideResidenceInfo()
 {
 	BPEvent_OnHideResidenceInfo();
+}
+
+void UInGameUI::StartDemolishing()
+{
+	if (GetPlayerController())
+	{
+		playerController->StartDemolishMode();
+	}
 }
 
 AEtosPlayerController * UInGameUI::GetPlayerController()
@@ -239,7 +248,7 @@ void UInGameUI::CreateButtons()
 	{
 		if (AEtosGameMode * const GameMode = UUtilityFunctionLibrary::GetEtosGameMode(this))
 		{
-			for (int32 buildingID = 1; buildingID < GameMode->GetBuildingAmount(); buildingID++)
+			for (int32 buildingID = 1; buildingID < GameMode->GetBuildingAmount(); ++buildingID)
 			{
 				if (FPredefinedBuildingData* const preDefData = GameMode->GetPredefinedBuildingData(buildingID))
 				{
@@ -255,7 +264,7 @@ void UInGameUI::CreateButtons()
 						tempButton->Building = preDefData->BuildingBlueprint;
 						tempButton->SetPadding(FMargin(5));
 
-						AddChildToGridPanel(tempButton, (buildingID - 1) % ButtonsPerRow, (buildingID - 1) / ButtonsPerRow);
+						AddChildToGridPanel(buildButtonGridPanel, tempButton, (buildingID - 1) % ButtonsPerRow, (buildingID - 1) / ButtonsPerRow);
 
 						buttons.Add(tempButton);
 					}
@@ -289,7 +298,7 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 					tempLayout->ToolTipText = FText::FromString(Enum::ToString(resource.Key));
 					tempLayout->SetPadding(FMargin(10));
 
-					AddChildToGridPanel(tempLayout, i % ResourcesPerRow, i / ResourcesPerRow);
+					AddChildToGridPanel(resourceInfoGridPanel, tempLayout, i % ResourcesPerRow, i / ResourcesPerRow);
 
 					resources.FindOrAdd(resource.Key) = tempLayout;
 				}
@@ -299,12 +308,12 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 	}
 }
 
-UGridSlot * UInGameUI::AddChildToGridPanel(UWidget * Content, int32 Column, int32 Row)
+UGridSlot * UInGameUI::AddChildToGridPanel(UGridPanel * Panel, UWidget * Content, int32 Column, int32 Row)
 {
-	checkf(gridPanel, TEXT("No Grid Panel was linked in InGameUI"));
+	checkf(Panel, TEXT("The Panel Param was not valid. Maybe no Panel was linked in the InGameUI-BP?"));
 	check(Content);
 
-	UGridSlot* gridSlot = gridPanel->AddChildToGrid(Content);
+	UGridSlot* gridSlot = Panel->AddChildToGrid(Content);
 	gridSlot->SetColumn(Column);
 	gridSlot->SetRow(Row);
 	gridSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);
@@ -313,12 +322,12 @@ UGridSlot * UInGameUI::AddChildToGridPanel(UWidget * Content, int32 Column, int3
 	return gridSlot;
 }
 
-UUniformGridSlot * UInGameUI::AddChildToResidenceInfoPanel(UWidget * Content, int32 Column, int32 Row)
+UUniformGridSlot * UInGameUI::AddChildToGridPanel(UUniformGridPanel * Panel, UWidget * Content, int32 Column, int32 Row)
 {
-	checkf(residenceInfoPanel, TEXT("No Residence Info Panel was linked for InGameUI"));
+	checkf(Panel, TEXT("The Panel Param was not valid. Maybe no Panel was linked in the InGameUI-BP?"));
 	check(Content);
 
-	UUniformGridSlot* gridSlot = residenceInfoPanel->AddChildToUniformGrid(Content);
+	UUniformGridSlot* gridSlot = Panel->AddChildToUniformGrid(Content);
 	gridSlot->SetColumn(Column);
 	gridSlot->SetRow(Row);
 	gridSlot->SetHorizontalAlignment(EHorizontalAlignment::HAlign_Left);

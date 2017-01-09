@@ -69,7 +69,10 @@ private:
 		UTextBlock* upkeepText;
 
 	UPROPERTY()
-		UGridPanel* gridPanel;
+		UGridPanel* buildButtonGridPanel;
+
+	UPROPERTY()
+		UGridPanel* resourceInfoGridPanel;
 
 	UPROPERTY()
 		UUniformGridPanel* residenceInfoPanel;
@@ -92,7 +95,7 @@ public:
 
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
-		void SetGridPanel(UPARAM(DisplayName = "Button Grid Panel") UGridPanel* panel);
+		void SetGridPanel(UPARAM(DisplayName = "Build Button Grid Panel") UGridPanel* buttonPanel, UPARAM(DisplayName = "Resource Info Grid Panel") UGridPanel* resourcePanel);
 
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
@@ -152,15 +155,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Info|Residence", meta = (DisplayName = "Hide Residence-Info"))
 		void HideResidenceInfo();
 
+	UFUNCTION(BlueprintCallable, Category = "Penis")
+		void StartDemolishing();
+
 private:
 
 	AEtosPlayerController* GetPlayerController();
 
 	void CreateButtons();
 
-	void UpdateResourceLayouts(const TMap<EResource, int32>& playerResourceAmounts);
+	void UpdateResourceLayouts(const TMap<EResource, int32>& PlayerResourceAmounts);
 
-	UGridSlot* AddChildToGridPanel(UWidget* Content, int32 Column, int32 Row);
+	UGridSlot* AddChildToGridPanel(UGridPanel* Panel, UWidget* Content, int32 Column, int32 Row);
 
-	UUniformGridSlot* AddChildToResidenceInfoPanel(UWidget* Content, int32 Column, int32 Row);
+	UUniformGridSlot* AddChildToGridPanel(UUniformGridPanel* Panel, UWidget* Content, int32 Column, int32 Row);
 };
