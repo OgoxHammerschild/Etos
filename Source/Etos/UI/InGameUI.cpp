@@ -5,6 +5,7 @@
 #include "BuildMenuButton.h"
 #include "ResourceLayout.h"
 #include "SatisfactionLayout.h"
+#include "ResourceCostLayout.h"
 #include "Etos/Game/EtosGameMode.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "Etos/Buildings/Residence.h"
@@ -25,6 +26,11 @@ void UInGameUI::SetGridPanel(UGridPanel* buttonPanel, UGridPanel* resourcePanel)
 void UInGameUI::SetResidenceInfoPanel(UUniformGridPanel * panel)
 {
 	residenceInfoPanel = panel;
+}
+
+void UInGameUI::SetBuildCostsPanel(UVerticalBox * panel)
+{
+	buildCostsPanel = panel;
 }
 
 void UInGameUI::LinkTextToResource(UTextBlock* text, EResource resource)
@@ -231,6 +237,29 @@ void UInGameUI::StartDemolishing()
 	}
 }
 
+void UInGameUI::ShowBuildCost(FBuildingData const & BuildingData)
+{
+	checkf(ResourceCostLayoutBlueprint, TEXT("No Resource Cost Layout Blueprint was selected for InGameUI"));
+
+	if (GetPlayerController())
+	{
+		for (auto& cost : BuildingData.BuildCost)
+		{
+			if (auto layout = CreateWidget<UResourceCostLayout>(playerController, ResourceCostLayoutBlueprint))
+			{
+				layout->Cost = cost;
+				auto slot = buildCostsPanel->AddChildToVerticalBox(layout);
+				slot->SetPadding(FMargin(4, 4, 4, 0));
+			}
+		}
+	}
+}
+
+void UInGameUI::HideBuildCost(FBuildingData const& BuildingData)
+{
+	buildCostsPanel->ClearChildren();
+}
+
 AEtosPlayerController * UInGameUI::GetPlayerController()
 {
 	if (!playerController)
@@ -265,6 +294,9 @@ void UInGameUI::CreateButtons()
 						tempButton->SetPadding(FMargin(5));
 
 						AddChildToGridPanel(buildButtonGridPanel, tempButton, (buildingID - 1) % ButtonsPerRow, (buildingID - 1) / ButtonsPerRow);
+
+						tempButton->OnHovered.AddDynamic(this, &UInGameUI::ShowBuildCost);
+						tempButton->OnUnhovered.AddDynamic(this, &UInGameUI::HideBuildCost);
 
 						buttons.Add(tempButton);
 					}

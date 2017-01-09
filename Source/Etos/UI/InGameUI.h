@@ -5,6 +5,7 @@
 class UResourceLayout;
 class UBuildMenuButton;
 class USatisfactionLayout;
+class UResourceCostLayout;
 
 #include "UMG.h"
 #include "UMGStyle.h"
@@ -34,6 +35,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Info|Residence")
 		TSubclassOf<USatisfactionLayout> SatisfactionLayoutBlueprint;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Info|Build Cost")
+		TSubclassOf<UResourceCostLayout> ResourceCostLayoutBlueprint;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build Buttons")
 		int32 ButtonsPerRow = 4;
@@ -78,6 +82,9 @@ private:
 		UUniformGridPanel* residenceInfoPanel;
 
 	UPROPERTY()
+		UVerticalBox* buildCostsPanel;
+
+	UPROPERTY()
 		TArray<UBuildMenuButton*> buttons;
 
 	UPROPERTY()
@@ -100,6 +107,10 @@ public:
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
 		void SetResidenceInfoPanel(UUniformGridPanel* panel);
+
+	// Create a reference between the elements in the designer and the elements in C++
+	UFUNCTION(BlueprintCallable, Category = "Referencing")
+		void SetBuildCostsPanel(UVerticalBox* panel);
 
 	// Create a reference between the elements in the designer and the elements in C++
 	UFUNCTION(BlueprintCallable, Category = "Referencing")
@@ -143,10 +154,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Info|Resource", meta = (DisplayName = "Hide Resource-Info"))
 		void HideResourceInfo();
 
-	UFUNCTION(BlueprintCallable, Category = "Build Buttons", meta = (DisplayName = "Show Build Buttons"))
+	UFUNCTION(BlueprintCallable, Category = "Menu Actions|Build Buttons", meta = (DisplayName = "Show Build Buttons"))
 		void ShowBuildButtons();
 
-	UFUNCTION(BlueprintCallable, Category = "Build Buttons", meta = (DisplayName = "Hide Build Buttons"))
+	UFUNCTION(BlueprintCallable, Category = "Menu Actions|Build Buttons", meta = (DisplayName = "Hide Build Buttons"))
 		void HideBuildButtons();
 
 	UFUNCTION(BlueprintCallable, Category = "Info|Residence", meta = (DisplayName = "Show Residence-Info"))
@@ -155,10 +166,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Info|Residence", meta = (DisplayName = "Hide Residence-Info"))
 		void HideResidenceInfo();
 
-	UFUNCTION(BlueprintCallable, Category = "Penis")
+	UFUNCTION(BlueprintCallable, Category = "Menu Actions|Demolish")
 		void StartDemolishing();
 
 private:
+
+	UFUNCTION()
+		void ShowBuildCost(FBuildingData const& BuildingData);
+
+	UFUNCTION()
+		void HideBuildCost(FBuildingData const& BuildingData);
 
 	AEtosPlayerController* GetPlayerController();
 

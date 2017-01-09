@@ -68,7 +68,7 @@ public:
 	template<typename TEnum>
 	static FString ConvertEnumValueToString(const FString& EnumName, TEnum Value);
 
-	// forwarding IsValids from Enum namespace to BPs
+	// vvv forwarding IsValids from Enum namespace to BPs vvv
 
 	//
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions")
@@ -79,7 +79,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions")
 		static bool IsValidN(EResidentNeed value);
-
+	//
 private:
 
 	static TArray<TEnumAsByte<EObjectTypeQuery>> InitBuildingObjectType();
