@@ -99,7 +99,7 @@ void ABuilding::Tick(float DeltaTime)
 	if (Data.bIsBuilt)
 	{
 		CallDelayAction(DeltaTime, Data.ProductionTime);
-		//SpendUpkeep(DeltaTime);
+		//SpendUpkeep(DeltaTime); is now handled by PC
 	}
 	else
 	{
@@ -109,6 +109,33 @@ void ABuilding::Tick(float DeltaTime)
 		}
 		GetSurroundingBuildings();
 	}
+}
+
+void ABuilding::Demolish()
+{
+	for (auto& building : Data.PathConnections)
+	{
+		if (building->IsValidLowLevel())
+		{
+			building->Connections.Remove(this);
+		}
+	}
+
+	if (GetMyPlayerController())
+	{
+		MyPlayerController->UpdateUpkeep(-Data.Upkeep);
+
+		for (auto& cost : Data.BuildCost)
+		{
+			// give back full cost in easy mode
+			MyPlayerController->AddResource(cost);
+		}
+	}
+
+	Data.bIsBuilt = false;
+
+	Destroy();
+	ConditionalBeginDestroy();
 }
 
 void ABuilding::BeginDestroy()
@@ -496,7 +523,6 @@ void ABuilding::BuildSpace_OnEndOverlap(UPrimitiveComponent* OverlappedComponent
 				}
 			}
 		}
-
 	}
 }
 
@@ -504,10 +530,8 @@ void ABuilding::BuildSpace_OnBeginOverlap_Custom(UBoxCollider* other)
 {
 	if (bMovedOnce)
 	{
-		if (other->IsPendingKillOrUnreachable() || other->GetAttachmentRootActor()->IsPendingKillOrUnreachable())
-		{
+		if (!other->IsValidLowLevel())
 			return;
-		}
 
 		UE_LOG(LogTemp, Warning, TEXT("%s collided with %s"), *GetName(), *other->GetAttachmentRootActor()->GetName());
 
@@ -524,14 +548,12 @@ void ABuilding::BuildSpace_OnEndOverlap_Custom(UBoxCollider* other)
 {
 	if (bMovedOnce)
 	{
-		if (other->IsPendingKillOrUnreachable() || other->GetAttachmentRootActor()->IsPendingKillOrUnreachable())
-		{
+		if (!other->IsValidLowLevel())
 			return;
-		}
 
 		UE_LOG(LogTemp, Warning, TEXT("%s and %s are no more colliding"), *GetName(), *other->GetAttachmentRootActor()->GetName());
 
-		if (--collisionCount == 0)
+		if (--collisionCount <= 0)
 		{
 			Data.bPositionIsBlocked = false;
 		}
@@ -627,7 +649,7 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 				continue;
 
 			ABuilding * const building = dynamic_cast<ABuilding*, AActor>(&*hit.Actor);
-			if (building)
+			if (building->IsValidLowLevel() && building->Data.bIsBuilt)
 			{
 				BuildingsInRange.Add(building);
 			}

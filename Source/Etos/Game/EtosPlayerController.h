@@ -32,6 +32,9 @@ private:
 	UPROPERTY()
 		bool bIsHoldingObject = false;
 
+	UPROPERTY()
+		bool bIsInDemolishMode = false;
+
 	UPROPERTY(VisibleAnywhere)
 		TMap<EResource, int32> resourceAmounts;
 
@@ -147,6 +150,8 @@ public:
 
 	void Load();
 
+	void StartDemolishMode();
+
 private:
 
 	UFUNCTION()
@@ -166,6 +171,9 @@ private:
 
 	UFUNCTION()
 		void SelectBuilding(FKey key);
+
+	UFUNCTION()
+		void DemolishBuilding(FKey key);
 
 	UFUNCTION()
 		void OnBuildingDestroyed(AActor* DestroyedActor);

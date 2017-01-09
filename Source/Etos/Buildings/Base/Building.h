@@ -120,6 +120,9 @@ public:
 
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent);
 
+	// Destroy this Building.
+	virtual void Demolish();
+
 	virtual void BeginDestroy() override;
 
 	virtual void OnBuild();

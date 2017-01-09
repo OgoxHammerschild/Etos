@@ -67,6 +67,7 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly);
 	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding);
 	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding);
+	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding);
 
 #if WITH_EDITOR
 	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::Save);
@@ -306,7 +307,10 @@ FORCEINLINE void AEtosPlayerController::ClickRepeatedly(FKey key)
 	{
 		FBuildingData data = FBuildingData(newBuilding->Data);
 		BuildNewBuilding(key);
-		SpawnBuilding(newBuilding, data);
+		if (!bIsHoldingObject)
+		{
+			SpawnBuilding(newBuilding, data);
+		}
 	}
 }
 
@@ -357,6 +361,21 @@ void AEtosPlayerController::SelectBuilding(FKey key)
 		GUI->HideResourceInfo();
 		GUI->HideResidenceInfo();
 		GUI->ShowBuildButtons();
+	}
+}
+
+void AEtosPlayerController::DemolishBuilding(FKey key)
+{
+	if (bIsInDemolishMode)
+	{
+		FHitResult Hit = FHitResult();
+		if (Util::TraceSingleAtMousePosition(this, Hit, 100000.f, Util::BuildingObjectType))
+		{
+			if (ABuilding* const building = dynamic_cast<ABuilding*, AActor>(&*Hit.Actor))
+			{
+				building->Demolish();
+			}
+		}
 	}
 }
 
@@ -613,6 +632,11 @@ void AEtosPlayerController::Load()
 	}
 }
 
+void AEtosPlayerController::StartDemolishMode()
+{
+	bIsInDemolishMode = true;
+}
+
 FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
 {
 	try
@@ -676,6 +700,11 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 			UE_LOG(LogTemp, Warning, TEXT("building canceled"));
 		}
 	}
+
+	if (bIsInDemolishMode)
+	{
+		bIsInDemolishMode = false;
+	}
 }
 
 FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(const TArray<FResource>& buildCost)
@@ -690,6 +719,8 @@ FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * C
 {
 	if (bIsHoldingObject)
 		CancelPlacementOfBuilding(FKey());
+
+	bIsInDemolishMode = false;
 
 	if (!Class)
 		return nullptr;
