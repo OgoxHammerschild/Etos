@@ -44,10 +44,10 @@ private:
 		TMap<EResidentLevel, float> taxPerResidentPerMinute;
 
 	UPROPERTY()
-		float checkWinTimerTotal;
+		float checkWinTimerTotal = 5;
 
 	UPROPERTY()
-		float checkWinTimerPassed;
+		float checkWinTimerPassed = 0;
 
 	UPROPERTY()
 		int32 populationWinAmount = 200;

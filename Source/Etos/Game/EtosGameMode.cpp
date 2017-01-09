@@ -164,7 +164,7 @@ FResidentNeeds AEtosGameMode::GetPeasantNeeds()
 {
 	FResidentNeeds needs = FResidentNeeds(EResidentLevel::Peasant);
 
-	needs.ResidentNeeds.Add(EResidentNeed::TownCenter);
+	needs.ResidentNeeds.Add(EResidentNeed::MarketPlace);
 	//needs.ResidentNeeds.Add(EResidentNeed::Chapel);
 
 	needs.ResourceConsumptions.Add(FResourceConsumption(EResource::Fish, 200, 2));
@@ -177,7 +177,7 @@ FResidentNeeds AEtosGameMode::GetCitizenNeeds()
 {
 	FResidentNeeds needs = FResidentNeeds(EResidentLevel::Citizen);
 
-	needs.ResidentNeeds.Add(EResidentNeed::TownCenter);
+	needs.ResidentNeeds.Add(EResidentNeed::MarketPlace);
 	needs.ResidentNeeds.Add(EResidentNeed::Chapel);
 	//needs.ResidentNeeds.Add(EResidentNeed::Tavern);
 
