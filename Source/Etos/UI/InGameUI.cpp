@@ -110,6 +110,20 @@ void UInGameUI::UpdateBalance(const int32& income, const int32& upkeep)
 }
 #undef LOCTEXT_NAMESPACE 
 
+void UInGameUI::ShowBuildingInfo(ABuilding * SelectedBuilding)
+{
+	this->selectedBuilding = SelectedBuilding;
+
+	if (this->selectedBuilding->IsValidLowLevel())
+	{
+		BPEvent_ShowBuildingInfo(this->selectedBuilding->Data);
+	}
+	else
+	{
+		BPEvent_HideBuildingInfo();
+	}
+}
+
 void UInGameUI::ShowResourceInfo(const TArray<TEnumAsByte<EResource>>& playerResources, const TArray<int32>& playerResourceAmounts)
 {
 	if (playerResources.Num() != playerResourceAmounts.Num())
@@ -235,6 +249,69 @@ void UInGameUI::StartDemolishing()
 	{
 		playerController->StartDemolishMode();
 	}
+}
+
+FName UInGameUI::GetSelectedBuildingName()
+{
+	if (selectedBuilding)
+	{
+		return selectedBuilding->Data.Name;
+	}
+	return FName();
+}
+
+UTexture2D * UInGameUI::GetSelectedBuildingIcon()
+{
+	if (selectedBuilding)
+	{
+		return Util::EnsureTexture(selectedBuilding->Data.BuildingIcon);
+	}
+	return Util::GetDefaultTexture();
+}
+
+int32 UInGameUI::GetSelectedBuildingUpkeep()
+{
+	if (selectedBuilding)
+	{
+		return selectedBuilding->Data.Upkeep;
+	}
+	return 0;
+}
+
+FResource UInGameUI::GetSelectedBuildingNeededResource1()
+{
+	if (selectedBuilding)
+	{
+		return selectedBuilding->Data.NeededResource1;
+	}
+	return FResource();
+}
+
+FResource UInGameUI::GetSelectedBuildingNeededResource2()
+{
+	if (selectedBuilding)
+	{
+		return selectedBuilding->Data.NeededResource2;
+	}
+	return FResource();
+}
+
+FResource UInGameUI::GetSelectedBuildingProducedResource()
+{
+	if (selectedBuilding)
+	{
+		return selectedBuilding->Data.ProducedResource;
+	}
+	return FResource();
+}
+
+int32 UInGameUI::GetSelectedBuildingMaxStoredResources()
+{
+	if (selectedBuilding)
+	{
+		return selectedBuilding->Data.MaxStoredResources;
+	}
+	return 0;
 }
 
 void UInGameUI::ShowBuildCost(FBuildingData const & BuildingData)

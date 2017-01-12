@@ -48,6 +48,9 @@ public:
 private:
 
 	UPROPERTY()
+		ABuilding* selectedBuilding;
+
+	UPROPERTY()
 		AEtosPlayerController* playerController;
 
 	UPROPERTY()
@@ -133,6 +136,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Update")
 		void UpdateBalance(const int32& income, const int32& upkeep);
 
+	UFUNCTION(BlueprintCallable, Category = "Info|Building")
+		void ShowBuildingInfo(ABuilding* InSelectedBuilding);
+
+	// Don't call this directly, use ShowBuildingInfo(ABuilding* InSelectedBuilding) instead
 	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Building", meta = (DisplayName = "Show Building-Info"))
 		void BPEvent_ShowBuildingInfo(const FBuildingData& buildingData);
 
@@ -168,6 +175,28 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Menu Actions|Demolish")
 		void StartDemolishing();
+
+	UFUNCTION(BlueprintPure, Category = "Info|Building")
+		FName GetSelectedBuildingName();
+
+	// is ensured
+	UFUNCTION(BlueprintPure, Category = "Info|Building")
+		UTexture2D* GetSelectedBuildingIcon();
+
+	UFUNCTION(BlueprintPure, Category = "Info|Building")
+		int32 GetSelectedBuildingUpkeep();
+
+	UFUNCTION(BlueprintPure, Category = "Info|Building")
+		FResource GetSelectedBuildingNeededResource1();
+
+	UFUNCTION(BlueprintPure, Category = "Info|Building")
+		FResource GetSelectedBuildingNeededResource2();
+
+	UFUNCTION(BlueprintPure, Category = "Info|Building")
+		FResource GetSelectedBuildingProducedResource();
+
+	UFUNCTION(BlueprintPure, Category = "Info|Building")
+		int32 GetSelectedBuildingMaxStoredResources();
 
 private:
 
