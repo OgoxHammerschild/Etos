@@ -10,7 +10,8 @@ class APath;
 class AResourcePopup;
 class UBoxCollider;
 class AMarketBarrow;
-//#include "Etos/Utility/StructLibrary.h"
+
+#include "Etos/Utility/InOut.h"
 #include "Etos/Utility/Structs/BuildingData.h"
 #include "Etos/ObjectPool/ObjectPool.h"
 #include "GameFramework/Actor.h"
@@ -51,6 +52,9 @@ public:
 
 	UPROPERTY()
 		TSubclassOf<AResourcePopup> ResourcePopup;
+
+	UPROPERTY()
+		TSubclassOf<AResourcePopup> ResourcePopupList;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		FBuildingData Data;
@@ -128,18 +132,18 @@ public:
 	virtual void OnBuild();
 
 	// @resource = EResource::None returns the produced resource
-	virtual FResource HandOutResource(const EResource& resource = EResource::None);
+	virtual FResource HandOutResource( EResource in resource = EResource::None);
 
-	virtual void ReceiveResource(const FResource& resource);
+	virtual void ReceiveResource( FResource in resource);
 
 	void ResetStoredResources();
 
-	void SetFoundationSize(int32 width, int32 height);
+	void SetFoundationSize(int32 in width, int32 in height);
 
 	int32 GetBarrowsInUse();
 
 	// for loading savegame only
-	void SetBarrowsInUse(int32 amount);
+	void SetBarrowsInUse(int32 in amount);
 
 	void DecreaseBarrowsInUse();
 
@@ -147,20 +151,25 @@ public:
 	bool HasNeededResources(ABuilding* other);
 
 	// Whether the other building offers the specified resource 
-	bool HasResource(ABuilding* other, EResource resource);
+	bool HasResource(ABuilding* other, EResource in resource);
 
 	// Whether this building offers the specified resource 
-	virtual	bool HasResource(EResource resource);
+	virtual	bool HasResource(EResource in resource);
 
 	bool IsActive();
 
-	void SetActive(bool isActive);
+	void SetActive(bool in isActive);
 
 	bool TryReturningToPool(AMarketBarrow* barrow);
 
-	void GetOverlappingBulidings(TArray<ABuilding*>& OverlappingBuildings);
+	void GetOverlappingBulidings(TArray<ABuilding*> out OverlappingBuildings);
 
-	bool operator<(const ABuilding& B) const;
+	// Spawns a popup at the building position
+	void SpawnResourcePopup(FVector in Offset, UTexture2D* ResourceIcon, FText in Text, FLinearColor in TextColor);
+
+	AResourcePopup* SpawnResourcePopupList(FVector in Offset);
+
+	bool operator<(ABuilding in B) const;
 
 protected:
 
@@ -172,9 +181,9 @@ protected:
 
 	virtual void BindDelayAction();
 
-	virtual void SpendUpkeep(float DeltaTime);
+	virtual void SpendUpkeep(float in DeltaTime);
 
-	virtual void SendMarketBarrow_Internal(ABuilding* targetBuilding, const EResource& orderedResource, const FVector& spawnLocation, const FVector& targetLocation);
+	virtual void SendMarketBarrow_Internal(ABuilding* targetBuilding,  EResource in orderedResource,  FVector in spawnLocation,  FVector in targetLocation);
 
 	void InitOccupiedBuildSpace();
 
@@ -184,9 +193,10 @@ protected:
 
 	TArray<ABuilding*> GetBuildingsInRange();
 
-	void CallDelayAction(float pastTime, float delayDuration = 1);
+	void CallDelayAction(float in pastTime, float in delayDuration = 1);
 
-	void SpawnResourcePopup(FVector offset = FVector(0, 0, 200));
+	// Spawns the +1 popup with the produced resource icon 
+	void SpawnResourcePopup(FVector in Offset = FVector(0, 0, 200));
 
 	AEtosPlayerController * GetMyPlayerController();
 
@@ -230,5 +240,7 @@ private:
 
 	void MoveToMouseLocation();
 
-	void DetermineOrderedResource(EResource& OrderedResource, ABuilding* TargetBuilding);
+	void DetermineOrderedResource(EResource out OrderedResource, ABuilding* TargetBuilding);
+
+	AResourcePopup* SpawnResourcePopup_Internal(FVector in Offset, TSubclassOf<AResourcePopup> in AlternativeBlueprint = nullptr);
 };

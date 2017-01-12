@@ -39,6 +39,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions", meta = (UnsafeDuringActorConstruction = "true"))
 		static UTexture2D* GetDefaultTexture();
 
+	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions", meta = (UnsafeDuringActorConstruction = "true"))
+		static UTexture2D* EnsureTexture(UTexture2D* Texture);
+
 	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static bool TraceSingleForBuildings(UObject* WorldContextObject, const FVector& Start, const FVector& End, FHitResult& HitResult);
 

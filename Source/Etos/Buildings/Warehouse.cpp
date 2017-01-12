@@ -45,7 +45,7 @@ FORCEINLINE void AWarehouse::ReceiveResource(const FResource& resource)
 	}
 }
 
-bool AWarehouse::HasResource(EResource resource)
+bool AWarehouse::HasResource(EResource in resource)
 {
 	if (MyPlayerController)
 	{

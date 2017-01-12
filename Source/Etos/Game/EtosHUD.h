@@ -2,6 +2,9 @@
 
 #pragma once
 
+class UInGameUI;
+class AResourcePopup;
+
 #include "GameFramework/HUD.h"
 #include "EtosHUD.generated.h"
 
@@ -15,14 +18,17 @@ class ETOS_API AEtosHUD : public AHUD
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
-		TSubclassOf<class UInGameUI> wInGameUI;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+		TSubclassOf<UInGameUI> wInGameUI;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 		TSubclassOf<UUserWidget> wWinScreen;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 		TSubclassOf<UUserWidget> wLoseScreen;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+		TSubclassOf<AResourcePopup> TextPopupBlueprint;
 
 private:
 

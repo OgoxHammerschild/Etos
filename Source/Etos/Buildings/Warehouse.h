@@ -26,7 +26,7 @@ public:
 
 	virtual void ReceiveResource(const FResource& resource) override;
 
-	virtual	bool HasResource(EResource resource) override;
+	virtual	bool HasResource(EResource in resource) override;
 
 protected:
 

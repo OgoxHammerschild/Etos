@@ -48,10 +48,19 @@ ABuilding::ABuilding()
 
 	if (!ResourcePopup)
 	{
-		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopup.BP_ResourcePopup'"));
+		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopup_2017-01-11-21-50-04.BP_ResourcePopup'"));
 		if (popupFinder.Succeeded())
 		{
 			ResourcePopup = (UClass*)popupFinder.Object->GeneratedClass;
+		}
+	}
+
+	if (!ResourcePopupList)
+	{
+		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopupList_2017-01-11-21-49-32.BP_ResourcePopupList'"));
+		if (popupFinder.Succeeded())
+		{
+			ResourcePopupList = (UClass*)popupFinder.Object->GeneratedClass;
 		}
 	}
 
@@ -99,7 +108,6 @@ void ABuilding::Tick(float DeltaTime)
 	if (Data.bIsBuilt)
 	{
 		CallDelayAction(DeltaTime, Data.ProductionTime);
-		//SpendUpkeep(DeltaTime); is now handled by PC
 	}
 	else
 	{
@@ -125,10 +133,17 @@ void ABuilding::Demolish()
 	{
 		MyPlayerController->UpdateUpkeep(-Data.Upkeep);
 
+		auto* popupList = SpawnResourcePopupList(FVector(0, 0, 200));
+
 		for (auto& cost : Data.BuildCost)
 		{
 			// give back full cost in easy mode
 			MyPlayerController->AddResource(cost);
+
+			FString Text = TEXT("+");
+			Text.AppendInt(cost.Amount);
+
+			popupList->BPEvent_UpdateWidget(cost.Icon, FText::FromString(Text));
 		}
 	}
 
@@ -186,7 +201,7 @@ void ABuilding::OnBuild()
 	Data.bIsBuilt = true;
 }
 
-FResource ABuilding::HandOutResource(const EResource & resource)
+FResource ABuilding::HandOutResource( EResource in resource)
 {
 	if (EResource::None == resource)
 	{
@@ -204,7 +219,7 @@ FResource ABuilding::HandOutResource(const EResource & resource)
 	return FResource();
 }
 
-void ABuilding::ReceiveResource(const FResource & resource)
+void ABuilding::ReceiveResource( FResource in resource)
 {
 	if (Data.NeededResource1.Type == resource.Type)
 	{
@@ -223,7 +238,7 @@ void ABuilding::ResetStoredResources()
 	Data.ProducedResource.Amount = 0;
 }
 
-void ABuilding::SetFoundationSize(int32 width, int32 height)
+void ABuilding::SetFoundationSize(int32 in width, int32 in height)
 {
 	if (bUseCustomBoxCollider)
 	{
@@ -254,7 +269,7 @@ int32 ABuilding::GetBarrowsInUse()
 	return BarrowsInUse;
 }
 
-FORCEINLINE bool ABuilding::operator<(const ABuilding & B) const
+FORCEINLINE bool ABuilding::operator<( ABuilding in B) const
 {
 	return Data.ProducedResource.Amount < B.Data.ProducedResource.Amount;
 }
@@ -416,7 +431,7 @@ void ABuilding::BindDelayAction()
 	Action.BindDynamic(this, &ABuilding::AddResource);
 }
 
-void ABuilding::SpendUpkeep(float DeltaTime)
+void ABuilding::SpendUpkeep(float in DeltaTime)
 {
 	if (Data.Upkeep <= 0)
 		return;
@@ -437,7 +452,7 @@ void ABuilding::SpendUpkeep(float DeltaTime)
 	}
 }
 
-void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding, const EResource& orderedResource, const FVector& spawnLocation, const FVector& targetLocation)
+void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding,  EResource in orderedResource,  FVector in spawnLocation,  FVector in targetLocation)
 {
 	bool isValid = false;
 	UPROPERTY()
@@ -659,7 +674,7 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 	return BuildingsInRange;
 }
 
-void ABuilding::CallDelayAction(float pastTime, float delayDuration)
+void ABuilding::CallDelayAction(float in pastTime, float in delayDuration)
 {
 	if (delayDuration <= 0)
 		return;
@@ -673,25 +688,29 @@ void ABuilding::CallDelayAction(float pastTime, float delayDuration)
 	}
 }
 
-void ABuilding::SpawnResourcePopup(FVector offset)
+void ABuilding::SpawnResourcePopup(FVector in offset)
 {
-	if (ResourcePopup)
+	if (auto popup = SpawnResourcePopup_Internal(offset))
 	{
-		if (UWorld* const World = GetWorld())
-		{
-			FActorSpawnParameters params = FActorSpawnParameters();
-			params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-			if (APlayerCameraManager* const PlayerCameraManager = Util::GetFirstEtosPlayerController(this)->PlayerCameraManager)
-			{
-				FVector cameraLocation = PlayerCameraManager->GetCameraLocation();
-
-				FRotator rotation = UKismetMathLibrary::FindLookAtRotation(cameraLocation + PlayerCameraManager->GetCameraRotation().Vector(), cameraLocation);
-
-				World->SpawnActor<AActor>(ResourcePopup, GetActorLocation() + offset, rotation, params);
-			}
-		}
+		popup->BPEvent_UpdateWidget(Data.ProducedResource.Icon);
 	}
+}
+
+void ABuilding::SpawnResourcePopup(FVector in offset, UTexture2D * ResourceIcon, FText in Text, FLinearColor in TextColor)
+{
+	if (auto popup = SpawnResourcePopup_Internal(offset))
+	{
+		popup->BPEvent_UpdateWidget(ResourceIcon, Text, FSlateColor(TextColor));
+	}
+}
+
+AResourcePopup * ABuilding::SpawnResourcePopupList(FVector in Offset)
+{
+	if (ResourcePopupList)
+	{
+		return SpawnResourcePopup_Internal(Offset, ResourcePopupList);
+	}
+	return nullptr;
 }
 
 FORCEINLINE AEtosPlayerController * ABuilding::GetMyPlayerController()
@@ -846,7 +865,7 @@ void ABuilding::MoveToMouseLocation()
 	}
 }
 
-void ABuilding::DetermineOrderedResource(EResource & OrderedResource, ABuilding* TargetBuilding)
+void ABuilding::DetermineOrderedResource(EResource out OrderedResource, ABuilding* TargetBuilding)
 {
 	OrderedResource = EResource::None;
 	FResource res1 = Data.NeededResource1;
@@ -862,7 +881,29 @@ void ABuilding::DetermineOrderedResource(EResource & OrderedResource, ABuilding*
 	}
 }
 
-void ABuilding::SetBarrowsInUse(int32 amount)
+AResourcePopup* ABuilding::SpawnResourcePopup_Internal(FVector in Offset, TSubclassOf<AResourcePopup> in AlternativeBlueprint)
+{
+	if (AlternativeBlueprint || ResourcePopup)
+	{
+		if (UWorld* const World = GetWorld())
+		{
+			FActorSpawnParameters params = FActorSpawnParameters();
+			params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			if (APlayerCameraManager* const PlayerCameraManager = Util::GetFirstEtosPlayerController(this)->PlayerCameraManager)
+			{
+				FVector cameraLocation = PlayerCameraManager->GetCameraLocation();
+
+				FRotator rotation = UKismetMathLibrary::FindLookAtRotation(cameraLocation + PlayerCameraManager->GetCameraRotation().Vector(), cameraLocation);
+
+				return World->SpawnActor<AResourcePopup>(AlternativeBlueprint ? AlternativeBlueprint : ResourcePopup, GetActorLocation() + Offset, rotation, params);
+			}
+		}
+	}
+	return nullptr;
+}
+
+void ABuilding::SetBarrowsInUse(int32 in amount)
 {
 	BarrowsInUse = amount;
 }
@@ -892,12 +933,12 @@ bool ABuilding::HasNeededResources(ABuilding * other)
 		&& other->Data.ProducedResource.Amount >= 5;
 }
 
-bool ABuilding::HasResource(ABuilding * other, EResource resource)
+bool ABuilding::HasResource(ABuilding * other, EResource in resource)
 {
 	return other->Data.ProducedResource.Type == resource && other->Data.ProducedResource.Amount > 0;
 }
 
-bool ABuilding::HasResource(EResource resource)
+bool ABuilding::HasResource(EResource in resource)
 {
 	return HasResource(this, resource);
 }
@@ -907,7 +948,7 @@ bool ABuilding::IsActive()
 	return bIsActive;
 }
 
-void ABuilding::SetActive(bool isActive)
+void ABuilding::SetActive(bool in isActive)
 {
 	bIsActive = isActive;
 	SetActorHiddenInGame(!bIsActive);
@@ -935,7 +976,7 @@ bool ABuilding::TryReturningToPool(AMarketBarrow * barrow)
 	return false;
 }
 
-void ABuilding::GetOverlappingBulidings(TArray<ABuilding*>& OverlappingBuildings)
+void ABuilding::GetOverlappingBulidings(TArray<ABuilding*> out OverlappingBuildings)
 {
 	TArray<AActor*> actors;
 	Radius->GetOverlappingActors(actors, TSubclassOf<ABuilding>());

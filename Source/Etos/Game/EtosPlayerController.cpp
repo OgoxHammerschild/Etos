@@ -15,6 +15,7 @@
 #include "Etos/Pawns/MarketBarrow.h"
 #include "Etos/Game/EtosSaveGame.h"
 #include "Kismet/GameplayStatics.h"
+#include "Etos/UI/ResourcePopup.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -73,15 +74,14 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::Save);
 	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::Load);
 #endif
-
 }
 
-FORCEINLINE void AEtosPlayerController::AddResource(const FResource& resource)
+FORCEINLINE void AEtosPlayerController::AddResource(FResource in resource)
 {
 	AddResource(resource.Type, resource.Amount);
 }
 
-void AEtosPlayerController::AddResource(const EResource & resource, const int32 & amount)
+void AEtosPlayerController::AddResource(EResource in resource, int32 in amount)
 {
 	if (Enum::IsValid(resource))
 	{
@@ -90,12 +90,12 @@ void AEtosPlayerController::AddResource(const EResource & resource, const int32 
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::RemoveResource(const FResource& resource)
+FORCEINLINE void AEtosPlayerController::RemoveResource(FResource in resource)
 {
 	RemoveResource(resource.Type, resource.Amount);
 }
 
-void AEtosPlayerController::RemoveResource(const EResource & resource, const int32 & amount)
+void AEtosPlayerController::RemoveResource(EResource in resource, int32 in amount)
 {
 	if (Enum::IsValid(resource))
 	{
@@ -104,12 +104,12 @@ void AEtosPlayerController::RemoveResource(const EResource & resource, const int
 	}
 }
 
-bool AEtosPlayerController::TryRemovingResource(const FResource & resource)
+bool AEtosPlayerController::TryRemovingResource(FResource in resource)
 {
 	return TryRemovingResource(resource.Type, resource.Amount);
 }
 
-bool AEtosPlayerController::TryRemovingResource(const EResource & resource, const int32 & amount)
+bool AEtosPlayerController::TryRemovingResource(EResource in resource, int32 in amount)
 {
 	if (GetResourceAmount(resource) > 0)
 	{
@@ -120,12 +120,12 @@ bool AEtosPlayerController::TryRemovingResource(const EResource & resource, cons
 	return false;
 }
 
-FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(const EResource& resource)
+FORCEINLINE int32 AEtosPlayerController::GetResourceAmount(EResource in resource)
 {
 	return resourceAmounts.FindOrAdd(resource);
 }
 
-void AEtosPlayerController::UpdatePopulation(const EResidentLevel& level, const int32& deltaPolulation)
+void AEtosPlayerController::UpdatePopulation(EResidentLevel in level, int32 in deltaPolulation)
 {
 	if (!Enum::IsValid(level))
 		return;
@@ -139,7 +139,7 @@ void AEtosPlayerController::UpdatePopulation(const EResidentLevel& level, const 
 	}
 }
 
-void AEtosPlayerController::UpdatePopulation(const EResidentLevel& from, const EResidentLevel& to, const int32& residents)
+void AEtosPlayerController::UpdatePopulation(EResidentLevel in from, EResidentLevel in to, int32 in residents)
 {
 	if (!Enum::IsValid(from) || !Enum::IsValid(to))
 		return;
@@ -153,7 +153,7 @@ void AEtosPlayerController::UpdatePopulation(const EResidentLevel& from, const E
 	}
 }
 
-void AEtosPlayerController::ReportUpgrade(AResidence * upgradedResidence, const EResidentLevel & levelBeforeUpgrade, const EResidentLevel & levelAfterUpgrade)
+void AEtosPlayerController::ReportUpgrade(AResidence * in upgradedResidence, EResidentLevel in levelBeforeUpgrade, EResidentLevel in levelAfterUpgrade)
 {
 	if (Enum::IsValid(levelBeforeUpgrade) && Enum::IsValid(levelAfterUpgrade))
 	{
@@ -168,12 +168,12 @@ int32 AEtosPlayerController::GetTotalPopulation() const
 	return totalPopulation;
 }
 
-int32 AEtosPlayerController::GetPopulationAmount(const EResidentLevel& level)
+int32 AEtosPlayerController::GetPopulationAmount(EResidentLevel in level)
 {
 	return populationPerLevel.FindOrAdd(level);
 }
 
-void AEtosPlayerController::UpdateUpkeep(int32 deltaUpkeep)
+void AEtosPlayerController::UpdateUpkeep(int32 in deltaUpkeep)
 {
 	totalUpkeep += deltaUpkeep;
 	UpdateBalanceUI(totalIncome, totalUpkeep);
@@ -184,7 +184,7 @@ int32 AEtosPlayerController::GetTotalUpkeep()
 	return totalUpkeep;
 }
 
-void AEtosPlayerController::UpdateStorage(int32 deltaStorage)
+void AEtosPlayerController::UpdateStorage(int32 in deltaStorage)
 {
 	totalStorage += deltaStorage;
 }
@@ -199,7 +199,7 @@ FORCEINLINE UInGameUI * AEtosPlayerController::GetInGameUI()
 	return UUtilityFunctionLibrary::GetEtosHUD(this)->GetInGameUI();
 }
 
-int32 AEtosPlayerController::GetAvailablePromotions(const EResidentLevel & to)
+int32 AEtosPlayerController::GetAvailablePromotions(EResidentLevel in to)
 {
 	switch (to)
 	{
@@ -214,14 +214,37 @@ FORCEINLINE void AEtosPlayerController::PauseGame(FKey key)
 {
 }
 
-FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* Class, const FBuildingData& Data)
+FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* in Class, FBuildingData in Data)
 {
 	return SpawnBuilding_Internal(Class->GetClass(), Data);
 }
 
-FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(const TSubclassOf<ABuilding>& Subclass, const FBuildingData& Data)
+FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding(TSubclassOf<ABuilding> in Subclass, FBuildingData in Data)
 {
 	return SpawnBuilding_Internal(Subclass, Data);
+}
+
+AResourcePopup * AEtosPlayerController::SpawnTextPopup(FVector in Position, FText in Text, FLinearColor in TextColor)
+{
+	if (auto* const HUD = Util::GetEtosHUD(this))
+	{
+		checkf(HUD->TextPopupBlueprint, TEXT("No default Text Popup Actor Blueprint was selected for EtosHUD"));
+
+		if (UWorld* const World = GetWorld())
+		{
+			FActorSpawnParameters params = FActorSpawnParameters();
+			params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+			FVector cameraLocation = PlayerCameraManager->GetCameraLocation();
+
+			FRotator rotation = UKismetMathLibrary::FindLookAtRotation(cameraLocation + PlayerCameraManager->GetCameraRotation().Vector(), cameraLocation);
+
+			AResourcePopup* popup = World->SpawnActor<AResourcePopup>(HUD->TextPopupBlueprint, Position, rotation, params);
+			popup->BPEvent_UpdateWidget(nullptr, Text, FSlateColor(TextColor));
+			return popup;
+		}
+	}
+	return nullptr;
 }
 
 void AEtosPlayerController::Win()
@@ -291,9 +314,9 @@ inline void AEtosPlayerController::BuildNewBuilding(FKey key)
 					}
 				}
 			}
-			else UE_LOG(LogTemp, Warning, TEXT("Not enough resources"));
+			else SpawnTextPopup(newBuilding->GetActorLocation(), FText::FromName(TEXT("Not enough resources")));  // UE_LOG(LogTemp, Warning, TEXT("Not enough resources"));
 		}
-		else UE_LOG(LogTemp, Warning, TEXT("Position is blocked"));
+		else SpawnTextPopup(newBuilding->GetActorLocation(), FText::FromName(TEXT("Position is blocked"))); // UE_LOG(LogTemp, Warning, TEXT("Position is blocked"));
 	}
 }
 
@@ -337,7 +360,7 @@ void AEtosPlayerController::SelectBuilding(FKey key)
 					}
 					else
 					{
-						GUI->BPEvent_ShowBuildingInfo(building->Data);
+						GUI->ShowBuildingInfo(building);
 						GUI->HideResidenceInfo();
 
 						if (AWarehouse* const warehouse = dynamic_cast<AWarehouse*, ABuilding> (building))
@@ -387,7 +410,7 @@ void AEtosPlayerController::OnBuildingDestroyed(AActor * DestroyedActor)
 	}
 }
 
-void AEtosPlayerController::AddIncome(float DeltaTime)
+void AEtosPlayerController::AddIncome(float in DeltaTime)
 {
 	incomeTimerPassed += DeltaTime;
 	if (incomeTimerPassed >= incomeTimerTotal)
@@ -460,7 +483,7 @@ void AEtosPlayerController::AddIncome(float DeltaTime)
 	}
 }
 
-FORCEINLINE bool AEtosPlayerController::HasEnoughResources(const TArray<FResource>& buildCost) const
+FORCEINLINE bool AEtosPlayerController::HasEnoughResources(TArray<FResource> in buildCost) const
 {
 	for (const FResource& cost : buildCost)
 	{
@@ -472,7 +495,7 @@ FORCEINLINE bool AEtosPlayerController::HasEnoughResources(const TArray<FResourc
 	return true;
 }
 
-void AEtosPlayerController::ReportDestroyedBuilding(ABuilding * destroyedBuilding)
+void AEtosPlayerController::ReportDestroyedBuilding(ABuilding * in destroyedBuilding)
 {
 	if (destroyedBuilding)
 	{
@@ -657,7 +680,7 @@ FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
 	}
 }
 
-void AEtosPlayerController::Panic(const std::exception & wait)
+void AEtosPlayerController::Panic(std::exception in wait)
 {
 	UE_LOG(LogTemp, Error, TEXT("A %s occured. Oh Shit!"), wait.what());
 }
@@ -707,15 +730,25 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(const TArray<FResource>& buildCost)
+FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(ABuilding* in building)
 {
-	for (FResource resource : buildCost)
+	auto* popupList = building->SpawnResourcePopupList(FVector(0, 0, 200));
+
+	for (FResource const& cost : building->Data.BuildCost)
 	{
-		RemoveResource(resource);
+		RemoveResource(cost);
+
+		FString Text = TEXT("-");
+		Text.AppendInt(cost.Amount);
+
+		if (popupList)
+		{
+			popupList->BPEvent_UpdateWidget(cost.Icon, FText::FromString(Text), FLinearColor::Red);
+		}
 	}
 }
 
-FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * Class, const FBuildingData & Data)
+FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * in Class, FBuildingData in Data)
 {
 	if (bIsHoldingObject)
 		CancelPlacementOfBuilding(FKey());
@@ -742,13 +775,13 @@ FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * C
 	return nullptr;
 }
 
-FORCEINLINE void AEtosPlayerController::BuildNewBuilding_Internal(bool skipCosts)
+FORCEINLINE void AEtosPlayerController::BuildNewBuilding_Internal(bool in skipCosts)
 {
 	newBuilding->Data.bIsHeld = false;
 	bIsHoldingObject = false;
 
 	if (!skipCosts)
-		PayCostsOfBuilding(newBuilding->Data.BuildCost);
+		PayCostsOfBuilding(newBuilding);
 
 	if (builtBuildings.AddUnique(newBuilding) != INDEX_NONE)
 	{
@@ -763,7 +796,7 @@ FORCEINLINE void AEtosPlayerController::BuildNewBuilding_Internal(bool skipCosts
 	}
 }
 
-void AEtosPlayerController::BuildLoadedBuilding(const FBuildingSaveData & Data)
+void AEtosPlayerController::BuildLoadedBuilding(FBuildingSaveData in Data)
 {
 	newBuilding->SetActorTransform(Data.Transform);
 	newBuilding->Data.bPositionIsBlocked = false;
@@ -776,7 +809,7 @@ void AEtosPlayerController::BuildLoadedBuilding(const FBuildingSaveData & Data)
 	newBuilding->SetActive(Data.bIsActive);
 }
 
-FORCEINLINE void AEtosPlayerController::StartBuildingPath(APath* newPath)
+FORCEINLINE void AEtosPlayerController::StartBuildingPath(APath* in newPath)
 {
 	tempPaths.Add(newPath);
 	newPath->Data.bIsHeld = false;
@@ -828,7 +861,7 @@ inline void AEtosPlayerController::UpdatePathPreview()
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World)
+FORCEINLINE void AEtosPlayerController::SpawnPathPreview(FVector in spawnLocation, int32 in index, UWorld* in World)
 {
 	bool bGotPathFromPool = false;
 	APath* newPath = pathPool->GetPooledObject<APath*>(bGotPathFromPool);
@@ -850,7 +883,7 @@ FORCEINLINE void AEtosPlayerController::SpawnPathPreview(const FVector& spawnLoc
 	tempPaths[index]->SetFoundationSize(tempPaths[index]->Width, tempPaths[index]->Height);
 }
 
-void AEtosPlayerController::DestroyPathPreview(APath * tempPath)
+void AEtosPlayerController::DestroyPathPreview(APath * in tempPath)
 {
 	if (pathPool->AddObjectToPool(tempPath))
 	{
@@ -866,7 +899,7 @@ void AEtosPlayerController::DestroyPathPreview(APath * tempPath)
 	}
 }
 
-void AEtosPlayerController::UpdatePopulationUI(const int32 & peasants, const int32 & citizens)
+void AEtosPlayerController::UpdatePopulationUI(int32 in peasants, int32 in citizens)
 {
 	if (auto* const GUI = GetInGameUI())
 	{
@@ -874,7 +907,7 @@ void AEtosPlayerController::UpdatePopulationUI(const int32 & peasants, const int
 	}
 }
 
-void AEtosPlayerController::UpdateBalanceUI(const int32 & income, const int32 & upkeep)
+void AEtosPlayerController::UpdateBalanceUI(int32 in income, int32 in upkeep)
 {
 	if (auto* const GUI = GetInGameUI())
 	{

@@ -74,6 +74,16 @@ UTexture2D * UUtilityFunctionLibrary::GetDefaultTexture()
 	return AEtosGameMode::GetDefaultTexture();
 }
 
+UTexture2D * UUtilityFunctionLibrary::EnsureTexture(UTexture2D * Texture)
+{
+	if (Texture->IsValidLowLevel())
+	{
+		return Texture;
+	}
+
+	return GetDefaultTexture();
+}
+
 FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & HitResult)
 {
 	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::ForOneFrame, HitResult, true, FLinearColor(98, 147, 238));

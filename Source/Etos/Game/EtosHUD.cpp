@@ -8,10 +8,9 @@ UInGameUI * AEtosHUD::GetInGameUI()
 {
 	if (inGameUI == nullptr)
 	{
-		if (wInGameUI != nullptr)
-		{
-			inGameUI = CreateWidget<UInGameUI>(GetOwningPlayerController(), wInGameUI);
-		}
+		checkf(wInGameUI, TEXT("No default In Game GUI Widget was selected for EtosHUD"));
+
+		inGameUI = CreateWidget<UInGameUI>(GetOwningPlayerController(), wInGameUI);
 	}
 
 	return inGameUI;
@@ -21,10 +20,9 @@ UUserWidget * AEtosHUD::GetWinScreen()
 {
 	if (winScreen == nullptr)
 	{
-		if (wWinScreen != nullptr)
-		{
-			winScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wWinScreen);
-		}
+		checkf(wWinScreen, TEXT("No default Win Screen Widget was selected for EtosHUD"));
+
+		winScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wWinScreen);
 	}
 	return winScreen;
 }
@@ -33,10 +31,9 @@ UUserWidget * AEtosHUD::GetLoseScreen()
 {
 	if (loseScreen == nullptr)
 	{
-		if (wLoseScreen != nullptr)
-		{
-			loseScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wLoseScreen);
-		}
+		checkf(wLoseScreen, TEXT("No default Lose Screen Widget was selected for EtosHUD"));
+
+		loseScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wLoseScreen);
 	}
 	return loseScreen;
 }

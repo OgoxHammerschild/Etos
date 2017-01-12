@@ -3,6 +3,7 @@
 #pragma once
 
 class AResidence;
+#include "Etos/Utility/InOut.h"
 #include "Etos/ObjectPool/ObjectPool.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "GameFramework/PlayerController.h"
@@ -98,53 +99,55 @@ public:
 
 	virtual void SetupInputComponent() override;
 
-	void AddResource(const FResource& resource);
+	void AddResource(FResource in resource);
 
-	void AddResource(const EResource& resource, const int32& amount);
+	void AddResource(EResource in resource, int32 in amount);
 
-	void RemoveResource(const FResource& resource);
+	void RemoveResource(FResource in resource);
 
-	void RemoveResource(const EResource& resource, const int32& amount);
+	void RemoveResource(EResource in resource, int32 in amount);
 
-	bool TryRemovingResource(const FResource& resource);
+	bool TryRemovingResource(FResource in resource);
 
-	bool TryRemovingResource(const EResource& resource, const int32& amount);
+	bool TryRemovingResource(EResource in resource, int32 in amount);
 
-	int32 GetResourceAmount(const EResource& resource);
+	int32 GetResourceAmount(EResource in resource);
 
-	void UpdatePopulation(const EResidentLevel& level, const int32& deltaPolulation);
+	void UpdatePopulation(EResidentLevel in level, int32 in deltaPolulation);
 
-	void UpdatePopulation(const EResidentLevel& from, const EResidentLevel& to, const int32& residents);
+	void UpdatePopulation(EResidentLevel in from, EResidentLevel in to, int32 in residents);
 
-	void ReportUpgrade(AResidence* upgradedResidence, const EResidentLevel& levelBeforeUpgrade, const EResidentLevel & levelAfterUpgrade);
+	void ReportUpgrade(AResidence* in upgradedResidence, EResidentLevel in levelBeforeUpgrade, EResidentLevel in levelAfterUpgrade);
 
 	int32 GetTotalPopulation() const;
 
-	int32 GetPopulationAmount(const EResidentLevel& level);
+	int32 GetPopulationAmount(EResidentLevel in level);
 
-	void UpdateUpkeep(int32 deltaUpkeep);
+	void UpdateUpkeep(int32 in deltaUpkeep);
 
 	int32 GetTotalUpkeep();
 
-	void UpdateStorage(int32 deltaStorage);
+	void UpdateStorage(int32 in deltaStorage);
 
 	int32 GetTotalStorage();
 
 	class UInGameUI* GetInGameUI();
 
-	int32 GetAvailablePromotions(const EResidentLevel& to);
+	int32 GetAvailablePromotions(EResidentLevel in to);
 
-	ABuilding* SpawnBuilding(ABuilding* Class, const FBuildingData& Data);
+	ABuilding* SpawnBuilding(ABuilding* in Class, FBuildingData in Data);
 
-	ABuilding* SpawnBuilding(const TSubclassOf<ABuilding>& Subclass, const FBuildingData& Data);
+	ABuilding* SpawnBuilding(TSubclassOf<ABuilding> in Subclass, FBuildingData in Data);
+
+	AResourcePopup* SpawnTextPopup(FVector in Position, FText in Text, FLinearColor in TextColor = FLinearColor::Red);
 
 	void Win();
 
 	void Lose();
 
-	bool HasEnoughResources(const TArray<FResource>& buildCost) const;
+	bool HasEnoughResources(TArray<FResource> in buildCost) const;
 
-	void ReportDestroyedBuilding(ABuilding* destroyedBuilding);
+	void ReportDestroyedBuilding(ABuilding* in destroyedBuilding);
 
 	void Save();
 
@@ -178,33 +181,33 @@ private:
 	UFUNCTION()
 		void OnBuildingDestroyed(AActor* DestroyedActor);
 
-	void AddIncome(float DeltaTime);
+	void AddIncome(float in DeltaTime);
 
 	//ABuilding* GetBuildingUnderCursor();
 
 	void AddHUDToViewport();
 
-	void Panic(const std::exception& e);
+	void Panic(std::exception in e);
 
 	void InitResourceMapping();
 
-	void PayCostsOfBuilding(const TArray<FResource>& buildCost);
+	void PayCostsOfBuilding(ABuilding* in building);
 
-	ABuilding* SpawnBuilding_Internal(UClass* Class, const FBuildingData& Data);
+	ABuilding* SpawnBuilding_Internal(UClass* in Class, FBuildingData in Data);
 
-	void BuildNewBuilding_Internal(bool skipCosts = false);
+	void BuildNewBuilding_Internal(bool in skipCosts = false);
 
-	void BuildLoadedBuilding(const struct FBuildingSaveData& Data);
+	void BuildLoadedBuilding(struct FBuildingSaveData in Data);
 
-	void StartBuildingPath(APath* newPath);
+	void StartBuildingPath(APath* in newPath);
 
 	void UpdatePathPreview();
 
-	void SpawnPathPreview(const FVector& spawnLocation, const int32& index, UWorld* const World);
+	void SpawnPathPreview(FVector in spawnLocation, int32 in index, UWorld* in World);
 
-	void DestroyPathPreview(APath* tempPath);
+	void DestroyPathPreview(APath* in tempPath);
 
-	void UpdatePopulationUI(const int32& peasants, const int32& citizens);
+	void UpdatePopulationUI( int32 in peasants,  int32 in citizens);
 
-	void UpdateBalanceUI(const int32& income, const int32& upkeep);
+	void UpdateBalanceUI( int32 in income,  int32 in upkeep);
 };
