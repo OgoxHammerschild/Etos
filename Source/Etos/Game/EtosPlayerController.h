@@ -149,11 +149,19 @@ public:
 
 	void ReportDestroyedBuilding(ABuilding* in destroyedBuilding);
 
-	void Save();
-
-	void Load();
-
 	void StartDemolishMode();
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void Save();
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void Load();
+
+	UFUNCTION(BlueprintCallable, Category = "Pause")
+		void TogglePause();
+
+	UFUNCTION(BlueprintCallable, Category = "Pause")
+		void ToggleGameMenu();
 
 private:
 

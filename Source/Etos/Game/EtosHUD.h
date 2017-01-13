@@ -28,6 +28,12 @@ public:
 		TSubclassOf<UUserWidget> wLoseScreen;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+		TSubclassOf<UUserWidget> wPausedScreen;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+		TSubclassOf<UUserWidget> wGameMenu;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 		TSubclassOf<AResourcePopup> TextPopupBlueprint;
 
 private:
@@ -41,6 +47,12 @@ private:
 	UPROPERTY()
 		UUserWidget* loseScreen;
 
+	UPROPERTY()
+		UUserWidget* pausedScreen;
+
+	UPROPERTY()
+		UUserWidget* gameMenu;
+
 public:
 
 	UInGameUI* GetInGameUI();
@@ -48,6 +60,10 @@ public:
 	UUserWidget* GetWinScreen();
 
 	UUserWidget* GetLoseScreen();
+
+	UUserWidget* GetGameMenu();
+
+	UUserWidget* GetPausedScreen();
 
 	virtual void BeginDestroy() override;
 };

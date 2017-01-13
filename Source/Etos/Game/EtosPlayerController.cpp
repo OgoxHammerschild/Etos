@@ -52,6 +52,9 @@ void AEtosPlayerController::BeginPlay()
 
 void AEtosPlayerController::Tick(float DeltaTime)
 {
+	if (IsPaused())
+		return;
+
 	if (bIsBulidingPath)
 	{
 		UpdatePathPreview();
@@ -63,8 +66,8 @@ void AEtosPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 	InputComponent->BindAction("Build", IE_Pressed, this, &AEtosPlayerController::BuildNewBuilding);
-	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame);
-	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu);
+	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame).bExecuteWhenPaused = true;
+	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu).bExecuteWhenPaused = true;
 	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly);
 	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding);
 	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding);
@@ -212,6 +215,37 @@ int32 AEtosPlayerController::GetAvailablePromotions(EResidentLevel in to)
 
 FORCEINLINE void AEtosPlayerController::PauseGame(FKey key)
 {
+	ServerPause();
+
+	if (IsPaused())
+	{
+		if (auto* const GUI = GetInGameUI())
+		{
+			GUI->RemoveFromParent();
+			if (auto* const HUD = Util::GetEtosHUD(this))
+			{
+				if (auto* const PausedScreen = HUD->GetPausedScreen())
+				{
+					PausedScreen->AddToViewport();
+				}
+			}
+		}
+	}
+	else
+	{
+		if (auto* const World = GetWorld())
+		{
+			if (auto* const Viewport = World->GetGameViewport())
+			{
+				Viewport->RemoveAllViewportWidgets();
+			}
+		}
+
+		if (auto* const GUI = GetInGameUI())
+		{
+			GUI->AddToViewport();
+		}
+	}
 }
 
 FORCEINLINE ABuilding* AEtosPlayerController::SpawnBuilding(ABuilding* in Class, FBuildingData in Data)
@@ -322,6 +356,17 @@ inline void AEtosPlayerController::BuildNewBuilding(FKey key)
 
 FORCEINLINE void AEtosPlayerController::ShowGameMenu(FKey key)
 {
+	PauseGame(key);
+	if (IsPaused())
+	{
+		if (auto* const HUD = Util::GetEtosHUD(this))
+		{
+			if (auto* const GameMenu = HUD->GetGameMenu())
+			{
+				GameMenu->AddToViewport();
+			}
+		}
+	}
 }
 
 FORCEINLINE void AEtosPlayerController::ClickRepeatedly(FKey key)
@@ -569,13 +614,39 @@ void AEtosPlayerController::Load()
 
 	if (LoadGameInstance->IsValidLowLevel())
 	{
+		UWorld* const World = GetWorld();
+
+		if (World)
+		{
+			// clear all buildings of current game
+			for (TActorIterator<ABuilding> ActorItr(World); ActorItr; ++ActorItr)
+			{
+				ActorItr->Destroy();
+				ActorItr->ConditionalBeginDestroy();
+			}
+
+			for (TActorIterator<AMarketBarrow> ActorItr(World); ActorItr; ++ActorItr)
+			{
+				ActorItr->Destroy();
+				ActorItr->ConditionalBeginDestroy();
+			}
+		}
+
+		totalUpkeep = 0;
+		totalPopulation = 0;
+		for (auto& counter : this->populationPerLevel)
+		{
+			counter.Value = 0;
+		}
+		UpdatePopulationUI(0, 0);
+
 		if (LoadGameInstance->ResourceAmounts.Num() > 0)
 		{
 			this->resourceAmounts = LoadGameInstance->ResourceAmounts;
-		}
-		if (LoadGameInstance->PopulationPerLevel.Num() > 0)
-		{
-			//this->populationPerLevel = LoadGameInstance->PopulationPerLevel;
+			if (auto* const GUI = GetInGameUI())
+			{
+				GUI->UpdateResourceAmounts();
+			}
 		}
 		if (LoadGameInstance->UsedPromotions.Num() > 0)
 		{
@@ -588,7 +659,7 @@ void AEtosPlayerController::Load()
 
 			TMap<FName, FPredefinedBuildingData> BuildingData;
 
-			for (int32 i = 0; i < count; ++i)
+			for (int32 i = 1; i < count; ++i)
 			{
 				if (auto data = GM->GetPredefinedBuildingData(i))
 					BuildingData.Add(data->Name, *data);
@@ -636,7 +707,7 @@ void AEtosPlayerController::Load()
 				}
 			}
 
-			if (auto const World = GetWorld())
+			if (World)
 			{
 				for (TActorIterator<APath> ActorItr(World); ActorItr; ++ActorItr)
 				{
@@ -655,6 +726,16 @@ void AEtosPlayerController::Load()
 	}
 }
 
+void AEtosPlayerController::TogglePause()
+{
+	PauseGame(FKey());
+}
+
+void AEtosPlayerController::ToggleGameMenu()
+{
+	ShowGameMenu(FKey());
+}
+
 void AEtosPlayerController::StartDemolishMode()
 {
 	bIsInDemolishMode = true;
@@ -662,8 +743,11 @@ void AEtosPlayerController::StartDemolishMode()
 
 FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
 {
+#if WITH_EDITOR
 	try
 	{
+#endif // WITH_EDITOR
+
 		UInGameUI* const GUI = GetInGameUI();
 		if (GUI != nullptr)
 		{
@@ -673,11 +757,14 @@ FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
 		{
 			GEngine->AddOnScreenDebugMessage(1, 5, FColor(1, 1, 1, 1), TEXT("Gui was not found"));
 		}
+
+#if WITH_EDITOR
 	}
 	catch (const std::exception& e)
 	{
 		Panic(e);
 	}
+#endif // WITH_EDITOR
 }
 
 void AEtosPlayerController::Panic(std::exception in wait)
