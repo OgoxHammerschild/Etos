@@ -105,6 +105,63 @@ inline bool UBuildingFunctionLibrary::FindPath(const ABuilding* Source, const AB
 	return false;
 }
 
+bool UBuildingFunctionLibrary::FindPath(const ABuilding * Source, const ABuilding * Target, APath *out StartPath, APath *out GoalPath)
+{
+	static bool bFindStart = false;
+
+	if (Target && Source)
+	{
+		if (Target == Source)
+		{
+			return true;
+		}
+
+		TArray<ABuilding*> openList = TArray<ABuilding*>();
+		openList.Empty(Source->Data.PathConnections.Num());
+
+		openList.Append(Source->Data.PathConnections);
+
+		if (openList.Num() > 0 &&
+			openList[0] == Target)
+		{
+			if (bFindStart)
+			{
+				bFindStart = false;
+				return true;
+			}
+			bFindStart = true;
+
+			return FindPath(Target, Source, GoalPath, StartPath);
+		}
+
+		for (int32 i = 0; i < openList.Num(); ++i)
+		{
+			if (APath* const current = dynamic_cast<APath*, ABuilding>(openList[i]))
+			{
+				for (ABuilding* const building : current->Connections)
+				{
+					if (building == Target)
+					{
+						GoalPath = current;
+						if (bFindStart)
+						{
+							bFindStart = false;
+							return true;
+						}
+						bFindStart = true;
+
+						return FindPath(Target, Source, GoalPath, StartPath);
+					}
+					openList.AddUnique(building);
+				}
+			}
+		}
+	}
+	StartPath = nullptr;
+	GoalPath = nullptr;
+	return false;
+}
+
 FORCEINLINE FVector UBuildingFunctionLibrary::GetNextGridLocation(const FVector & location, const FVector2Di & size, const float & heightOffset)
 {
 	float X = UKismetMathLibrary::Round(location.X / 100) * 100;

@@ -33,7 +33,7 @@ FResource AWarehouse::HandOutResource(const EResource & resource)
 	return FResource();
 }
 
-FORCEINLINE void AWarehouse::ReceiveResource(const FResource& resource)
+void AWarehouse::ReceiveResource(const FResource& resource)
 {
 	if (MyPlayerController)
 	{
@@ -58,7 +58,7 @@ bool AWarehouse::HasResource(EResource in resource)
 	}
 }
 
-inline void AWarehouse::BindDelayAction()
+void AWarehouse::BindDelayAction()
 {
 	Action.BindDynamic(this, &AWarehouse::SendMarketBarrows);
 }
@@ -73,13 +73,13 @@ void AWarehouse::OnBuild()
 	Super::OnBuild();
 }
 
-inline void AWarehouse::SendMarketBarrows()
+void AWarehouse::SendMarketBarrows()
 {
 	if (BP_MarketBarrow)
 	{
 		RefreshBuildingsInRadius();
 
-		Data.BuildingsInRadius.Sort([](const ABuilding& A, const ABuilding& B)
+		Data.BuildingsInRadius.Sort([]( ABuilding in A,  ABuilding in B)
 		{
 			return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount;
 		});
@@ -97,15 +97,15 @@ inline void AWarehouse::SendMarketBarrows()
 					{
 						if (!building->Data.bBarrowIsOnTheWay)
 						{
-							if (BFuncs::FindPath(this, building))
+							APath* start; APath* goal;
+							if (BFuncs::FindPath(this, building, start, goal))
 							{
-								// TODO: find closest path tiles
-								if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
+								if (start && goal)
 								{
 									SendMarketBarrow_Internal(building, // target building
 										building->Data.ProducedResource.Type, // ordered resource
-										Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
-										building->Data.PathConnections[0]->GetActorLocation()); // target location
+										start->GetActorLocation() + FVector(0, 0, 100), // spawn location
+										goal->GetActorLocation()); // target location
 								}
 							}
 						}

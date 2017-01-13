@@ -812,7 +812,7 @@ void ABuilding::GetNeededResources()
 		{
 			RefreshBuildingsInRadius();
 
-			Data.BuildingsInRadius.Sort([](const ABuilding& A, const ABuilding& B)
+			Data.BuildingsInRadius.Sort([]( ABuilding in A,  ABuilding in B)
 			{
 				return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount;
 			});
@@ -825,10 +825,10 @@ void ABuilding::GetNeededResources()
 					{
 						if (!building->Data.bBarrowIsOnTheWay)
 						{
-							if (BFuncs::FindPath(this, building))
+							APath* start; APath* goal;
+							if (BFuncs::FindPath(this, building, start, goal))
 							{
-								// TODO: find closest path tiles
-								if (Data.PathConnections.IsValidIndex(0) && building->Data.PathConnections.IsValidIndex(0))
+								if (start && goal)
 								{
 									EResource orderedResource = EResource::None;
 									DetermineOrderedResource(orderedResource, building);
@@ -838,8 +838,8 @@ void ABuilding::GetNeededResources()
 										SendMarketBarrow_Internal(
 											building, // target
 											orderedResource,
-											Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 100), // spawn location
-											building->Data.PathConnections[0]->GetActorLocation()); // target location
+											start->GetActorLocation() + FVector(0, 0, 100), // spawn location
+											goal->GetActorLocation()); // target location
 									}
 								}
 							}

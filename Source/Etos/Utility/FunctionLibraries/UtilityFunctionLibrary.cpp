@@ -84,22 +84,22 @@ UTexture2D * UUtilityFunctionLibrary::EnsureTexture(UTexture2D * Texture)
 	return GetDefaultTexture();
 }
 
-FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & HitResult)
+bool UUtilityFunctionLibrary::TraceSingleForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & HitResult)
 {
 	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::ForOneFrame, HitResult, true, FLinearColor(98, 147, 238));
 }
 
-FORCEINLINE bool UUtilityFunctionLibrary::TraceMultiForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, TArray<FHitResult>& HitResults)
+bool UUtilityFunctionLibrary::TraceMultiForBuildings(UObject* WorldContextObject, const FVector & Start, const FVector & End, TArray<FHitResult>& HitResults)
 {
 	return UKismetSystemLibrary::LineTraceMultiForObjects(WorldContextObject, Start, End, BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::ForOneFrame, HitResults, true, FLinearColor::Blue);
 }
 
-FORCEINLINE bool UUtilityFunctionLibrary::TraceSingleForFloor(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & Hit)
+bool UUtilityFunctionLibrary::TraceSingleForFloor(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & Hit)
 {
 	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
 }
 
-FORCEINLINE bool UUtilityFunctionLibrary::BP_TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes, float Range)
+bool UUtilityFunctionLibrary::BP_TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes, float Range)
 {
 	return TraceSingleAtMousePosition(WorldContextObject, Hit, Range, ObjectTypes);
 }
@@ -128,13 +128,13 @@ inline bool UUtilityFunctionLibrary::TraceSingleAtMousePosition(UObject * WorldC
 	return false;
 }
 
-FORCEINLINE FString UUtilityFunctionLibrary::ConvertBoolToString(const bool & b)
+FString UUtilityFunctionLibrary::ConvertBoolToString(const bool & b)
 {
 	return b ? FString(TEXT("true")) : FString(TEXT("false"));
 }
 
 template<typename TEnum>
-FORCEINLINE FString UUtilityFunctionLibrary::ConvertEnumValueToString(const FString& EnumName, TEnum Value)
+FString UUtilityFunctionLibrary::ConvertEnumValueToString(const FString& EnumName, TEnum Value)
 {
 	const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, *EnumName, true);
 	if (!enumPtr)
@@ -160,7 +160,7 @@ bool UUtilityFunctionLibrary::IsValidN(EResidentNeed value)
 	return Enum::IsValid(value);
 }
 
-FORCEINLINE TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitBuildingObjectType()
+TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitBuildingObjectType()
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> buildingObjectType;
 	buildingObjectType.Init(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel1/*Building*/), 1);
@@ -168,7 +168,7 @@ FORCEINLINE TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitB
 	return buildingObjectType;
 }
 
-FORCEINLINE TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitFloorObjectType()
+TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::InitFloorObjectType()
 {
 	TArray<TEnumAsByte<EObjectTypeQuery>> floorObjectType;
 	floorObjectType.Init(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_GameTraceChannel2/*Floor*/), 1);

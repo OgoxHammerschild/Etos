@@ -122,7 +122,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
 
+#if WITH_EDITOR
+
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent);
+	
+#endif // WITH_EDITOR
 
 	// Destroy this Building.
 	virtual void Demolish();

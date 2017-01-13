@@ -72,3 +72,5 @@ DerivedDataCache/*
 *.fbx
 /Content/Materials
 
+/Content/Meshes
+/Content/Textures
