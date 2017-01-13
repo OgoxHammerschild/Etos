@@ -51,6 +51,9 @@ private:
 		ABuilding* selectedBuilding;
 
 	UPROPERTY()
+		AResidence* selectedResidence;
+
+	UPROPERTY()
 		AEtosPlayerController* playerController;
 
 	UPROPERTY()
@@ -146,9 +149,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Building", meta = (DisplayName = "Hide Building-Info"))
 		void BPEvent_HideBuildingInfo();
 
+	// Don't call this directly, use ShowResidenceInfo(AResidence* residence) instead
 	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Residence", meta = (DisplayName = "OnShowResidenceInfo"))
 		void BPEvent_OnShowResidenceInfo();
 
+	// Don't call this directly, use HideResidenceInfo() instead
 	UFUNCTION(BlueprintImplementableEvent, Category = "Info|Residence", meta = (DisplayName = "OnHideResidenceInfo"))
 		void BPEvent_OnHideResidenceInfo();
 
@@ -181,22 +186,25 @@ public:
 
 	// is ensured
 	UFUNCTION(BlueprintPure, Category = "Info|Building")
-		UTexture2D* GetSelectedBuildingIcon();
+		UTexture2D* GetSelectedBuilding_Icon();
 
 	UFUNCTION(BlueprintPure, Category = "Info|Building")
-		int32 GetSelectedBuildingUpkeep();
+		int32 GetSelectedBuilding_Upkeep();
 
 	UFUNCTION(BlueprintPure, Category = "Info|Building")
-		FResource GetSelectedBuildingNeededResource1();
+		FResource GetSelectedBuilding_NeededResource1();
 
 	UFUNCTION(BlueprintPure, Category = "Info|Building")
-		FResource GetSelectedBuildingNeededResource2();
+		FResource GetSelectedBuilding_NeededResource2();
 
 	UFUNCTION(BlueprintPure, Category = "Info|Building")
-		FResource GetSelectedBuildingProducedResource();
+		FResource GetSelectedBuilding_ProducedResource();
 
 	UFUNCTION(BlueprintPure, Category = "Info|Building")
-		int32 GetSelectedBuildingMaxStoredResources();
+		int32 GetSelectedBuilding_MaxStoredResources();
+
+	UFUNCTION(BlueprintPure, Category = "Info|Residence")
+		FText GetSelectedResidence_ResidentsText();
 
 private:
 

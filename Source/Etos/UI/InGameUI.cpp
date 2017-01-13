@@ -150,16 +150,6 @@ void UInGameUI::ShowResourceInfo(const TMap<EResource, int32>& playerResourceAmo
 		layout.Value->SetVisibility(ESlateVisibility::Visible);
 		layout.Value->SetPadding(FMargin(10));
 	}
-
-	//TArray<EResource> resources = TArray<EResource>();
-	//TArray<int32> amounts = TArray<int32>();
-
-	//playerResourceAmounts.GenerateKeyArray(resources);
-	//playerResourceAmounts.GenerateValueArray(amounts);
-
-	//TArray<TEnumAsByte<EResource>> resourcesAsBytes = TArray<TEnumAsByte<EResource>>(resources);
-
-	//BPEvent_OnShowResourceInfo(resourcesAsBytes, amounts);
 }
 
 void UInGameUI::HideResourceInfo()
@@ -203,6 +193,7 @@ void UInGameUI::ShowResidenceInfo(AResidence * residence)
 		TMap<EResidentNeed, bool> NeedsSatisfaction;
 		float TotalSatisfaction;
 		residence->GetAllSatisfactions(ResourceSatisfaction, NeedsSatisfaction, TotalSatisfaction);
+		selectedResidence = residence;
 
 		int32 i = 0;
 		for (auto& resource : ResourceSatisfaction)
@@ -260,7 +251,7 @@ FName UInGameUI::GetSelectedBuildingName()
 	return FName();
 }
 
-UTexture2D * UInGameUI::GetSelectedBuildingIcon()
+UTexture2D * UInGameUI::GetSelectedBuilding_Icon()
 {
 	if (selectedBuilding)
 	{
@@ -269,7 +260,7 @@ UTexture2D * UInGameUI::GetSelectedBuildingIcon()
 	return Util::GetDefaultTexture();
 }
 
-int32 UInGameUI::GetSelectedBuildingUpkeep()
+int32 UInGameUI::GetSelectedBuilding_Upkeep()
 {
 	if (selectedBuilding)
 	{
@@ -278,7 +269,7 @@ int32 UInGameUI::GetSelectedBuildingUpkeep()
 	return 0;
 }
 
-FResource UInGameUI::GetSelectedBuildingNeededResource1()
+FResource UInGameUI::GetSelectedBuilding_NeededResource1()
 {
 	if (selectedBuilding)
 	{
@@ -287,7 +278,7 @@ FResource UInGameUI::GetSelectedBuildingNeededResource1()
 	return FResource();
 }
 
-FResource UInGameUI::GetSelectedBuildingNeededResource2()
+FResource UInGameUI::GetSelectedBuilding_NeededResource2()
 {
 	if (selectedBuilding)
 	{
@@ -296,7 +287,7 @@ FResource UInGameUI::GetSelectedBuildingNeededResource2()
 	return FResource();
 }
 
-FResource UInGameUI::GetSelectedBuildingProducedResource()
+FResource UInGameUI::GetSelectedBuilding_ProducedResource()
 {
 	if (selectedBuilding)
 	{
@@ -305,13 +296,27 @@ FResource UInGameUI::GetSelectedBuildingProducedResource()
 	return FResource();
 }
 
-int32 UInGameUI::GetSelectedBuildingMaxStoredResources()
+int32 UInGameUI::GetSelectedBuilding_MaxStoredResources()
 {
 	if (selectedBuilding)
 	{
 		return selectedBuilding->Data.MaxStoredResources;
 	}
 	return 0;
+}
+
+FText UInGameUI::GetSelectedResidence_ResidentsText()
+{
+	if (selectedResidence)
+	{
+		FString text = Enum::ToString(selectedResidence->MyLevel);
+		text.Append(": ");
+		text.AppendInt(selectedResidence->Residents);
+		text.Append("/");
+		text.AppendInt(selectedResidence->MaxResidents);
+		return FText::FromString(text);
+	}
+	return FText();
 }
 
 void UInGameUI::ShowBuildCost(FBuildingData const & BuildingData)
