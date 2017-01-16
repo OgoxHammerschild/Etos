@@ -153,6 +153,16 @@ void ABuilding::Demolish()
 	ConditionalBeginDestroy();
 }
 
+void ABuilding::Destroyed()
+{
+	if (bUseCustomBoxCollider && OccupiedBuildSpace_Custom->IsValidLowLevel())
+	{
+		OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
+		OccupiedBuildSpace_Custom->UnregisterCollider();
+	}
+	Super::Destroyed();
+}
+
 void ABuilding::BeginDestroy()
 {
 	Super::BeginDestroy();
@@ -201,7 +211,7 @@ void ABuilding::OnBuild()
 	Data.bIsBuilt = true;
 }
 
-FResource ABuilding::HandOutResource( EResource in resource)
+FResource ABuilding::HandOutResource(EResource in resource)
 {
 	if (EResource::None == resource)
 	{
@@ -219,7 +229,7 @@ FResource ABuilding::HandOutResource( EResource in resource)
 	return FResource();
 }
 
-void ABuilding::ReceiveResource( FResource in resource)
+void ABuilding::ReceiveResource(FResource in resource)
 {
 	if (Data.NeededResource1.Type == resource.Type)
 	{
@@ -269,7 +279,7 @@ int32 ABuilding::GetBarrowsInUse()
 	return BarrowsInUse;
 }
 
-FORCEINLINE bool ABuilding::operator<( ABuilding in B) const
+FORCEINLINE bool ABuilding::operator<(ABuilding in B) const
 {
 	return Data.ProducedResource.Amount < B.Data.ProducedResource.Amount;
 }
@@ -452,7 +462,7 @@ void ABuilding::SpendUpkeep(float in DeltaTime)
 	}
 }
 
-void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding,  EResource in orderedResource,  FVector in spawnLocation,  FVector in targetLocation)
+void ABuilding::SendMarketBarrow_Internal(ABuilding* targetBuilding, EResource in orderedResource, FVector in spawnLocation, FVector in targetLocation)
 {
 	bool isValid = false;
 	UPROPERTY()
@@ -812,7 +822,7 @@ void ABuilding::GetNeededResources()
 		{
 			RefreshBuildingsInRadius();
 
-			Data.BuildingsInRadius.Sort([]( ABuilding in A,  ABuilding in B)
+			Data.BuildingsInRadius.Sort([](ABuilding in A, ABuilding in B)
 			{
 				return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount;
 			});

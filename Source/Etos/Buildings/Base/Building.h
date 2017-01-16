@@ -131,6 +131,8 @@ public:
 	// Destroy this Building.
 	virtual void Demolish();
 
+	virtual void Destroyed() override;
+
 	virtual void BeginDestroy() override;
 
 	virtual void OnBuild();

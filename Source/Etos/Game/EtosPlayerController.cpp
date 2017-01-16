@@ -354,7 +354,7 @@ inline void AEtosPlayerController::BuildNewBuilding(FKey key)
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::ShowGameMenu(FKey key)
+void AEtosPlayerController::ShowGameMenu(FKey key)
 {
 	PauseGame(key);
 	if (IsPaused())
@@ -369,7 +369,7 @@ FORCEINLINE void AEtosPlayerController::ShowGameMenu(FKey key)
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::ClickRepeatedly(FKey key)
+void AEtosPlayerController::ClickRepeatedly(FKey key)
 {
 	if (bIsHoldingObject)
 	{
@@ -782,7 +782,7 @@ FORCEINLINE void AEtosPlayerController::InitResourceMapping()
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
+void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 {
 	if (bIsHoldingObject)
 	{
@@ -817,7 +817,7 @@ FORCEINLINE void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 	}
 }
 
-FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(ABuilding* in building)
+void AEtosPlayerController::PayCostsOfBuilding(ABuilding* in building)
 {
 	auto* popupList = building->SpawnResourcePopupList(FVector(0, 0, 200));
 
@@ -835,7 +835,7 @@ FORCEINLINE void AEtosPlayerController::PayCostsOfBuilding(ABuilding* in buildin
 	}
 }
 
-FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * in Class, FBuildingData in Data)
+ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * in Class, FBuildingData in Data)
 {
 	if (bIsHoldingObject)
 		CancelPlacementOfBuilding(FKey());
@@ -862,7 +862,7 @@ FORCEINLINE ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * i
 	return nullptr;
 }
 
-FORCEINLINE void AEtosPlayerController::BuildNewBuilding_Internal(bool in skipCosts)
+void AEtosPlayerController::BuildNewBuilding_Internal(bool in skipCosts)
 {
 	newBuilding->Data.bIsHeld = false;
 	bIsHoldingObject = false;
