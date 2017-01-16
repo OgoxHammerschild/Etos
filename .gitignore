@@ -62,3 +62,9 @@ Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+Content/StarterContent/
+Content/Meshes/Flowers/SM_grass_patch_flower4.uasset
+Content/Meshes/
+Content/Textures/Trees/tex_birchbark_diff.uasset
+Content/Textures/
+Content/Blueprints/Pawns/PeasantMan/
