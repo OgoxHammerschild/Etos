@@ -62,9 +62,15 @@ Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
-Content/StarterContent/
-Content/Meshes/Flowers/SM_grass_patch_flower4.uasset
-Content/Meshes/
-Content/Textures/Trees/tex_birchbark_diff.uasset
-Content/Textures/
-Content/Blueprints/Pawns/PeasantMan/
+/Source/Etos/Buildings/Base/Building.cpp~RF97b8792.TMP
+/OpenDocument Tabellendokument (neu).ods
+/Source/Etos/MySceneComponent.h
+/Source/Etos/MySceneComponent.cpp
+/Content/StarterContent
+/enc_temp_folder
+/Content/Blueprints/Pawns/PeasantMan
+*.fbx
+/Content/Materials
+
+/Content/Meshes
+/Content/Textures

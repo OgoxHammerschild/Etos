@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// © 2016 - 2017 Daniel Bortfeld
 
 #include "Etos.h"
 #include "Etos/UI/InGameUI.h"
@@ -6,19 +6,64 @@
 
 UInGameUI * AEtosHUD::GetInGameUI()
 {
-	if (inGameUI)
+	if (inGameUI == nullptr)
 	{
-		return inGameUI;
-	}
+		checkf(wInGameUI, TEXT("No default In Game GUI Widget was selected for EtosHUD"));
 
-	if (wInGameUI)
-	{
 		inGameUI = CreateWidget<UInGameUI>(GetOwningPlayerController(), wInGameUI);
 	}
 
-	if (inGameUI)
+	return inGameUI;
+}
+
+UUserWidget * AEtosHUD::GetWinScreen()
+{
+	if (winScreen == nullptr)
 	{
-		return inGameUI;
+		checkf(wWinScreen, TEXT("No default Win Screen Widget was selected for EtosHUD"));
+
+		winScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wWinScreen);
 	}
-	return nullptr;
+	return winScreen;
+}
+
+UUserWidget * AEtosHUD::GetLoseScreen()
+{
+	if (loseScreen == nullptr)
+	{
+		checkf(wLoseScreen, TEXT("No default Lose Screen Widget was selected for EtosHUD"));
+
+		loseScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wLoseScreen);
+	}
+	return loseScreen;
+}
+
+UUserWidget * AEtosHUD::GetGameMenu()
+{
+	if (gameMenu == nullptr)
+	{
+		checkf(wGameMenu, TEXT("No default Game Menu Widget was selected for EtosHUD"));
+
+		loseScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wGameMenu);
+	}
+	return loseScreen;
+}
+
+UUserWidget * AEtosHUD::GetPausedScreen()
+{
+	if (pausedScreen == nullptr)
+	{
+		checkf(wPausedScreen, TEXT("No default Paused Screen Widget was selected for EtosHUD"));
+
+		loseScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wPausedScreen);
+	}
+	return loseScreen;
+}
+
+void AEtosHUD::BeginDestroy()
+{
+	wInGameUI = nullptr;
+	inGameUI = nullptr;
+
+	Super::BeginDestroy();
 }

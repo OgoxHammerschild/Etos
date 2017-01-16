@@ -1,60 +1,115 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// © 2016 - 2017 Daniel Bortfeld
 
 #include "Etos.h"
 #include "Warehouse.h"
-#include "MarketBarrow.h"
+#include "Etos/Pawns/MarketBarrow.h"
 #include "Etos/Game/EtosPlayerController.h"
 #include "Etos/Buildings/Path.h"
+#include "Etos/Utility/FunctionLibraries/BuildingFunctionLibrary.h"
 
-void AWarehouse::ReceiveResource(FResource resource)
+FResource AWarehouse::HandOutResource(const EResource & resource)
 {
-	if (GetMyPlayerController())
+	if (resource != EResource::None)
 	{
-		//MyPlayerController->addresou
+		if (GetMyPlayerController())
+		{
+			FResource orderedResource = FResource(resource);
+			for (int32 i = 0; i < 5; i++)
+			{
+				if (MyPlayerController->GetResourceAmount(resource) > 0)
+				{
+					orderedResource.Amount++;
+					MyPlayerController->RemoveResource(FResource(resource, 1));
+				}
+				else
+				{
+					return orderedResource;
+				}
+			}
+			return orderedResource;
+		}
+	}
+
+	return FResource();
+}
+
+void AWarehouse::ReceiveResource(const FResource& resource)
+{
+	if (MyPlayerController)
+	{
+		MyPlayerController->AddResource(resource);
+	}
+	else
+	{
+		GetMyPlayerController();
 	}
 }
 
-FORCEINLINE void AWarehouse::DecreaseBarrowsInUse()
+bool AWarehouse::HasResource(EResource in resource)
 {
-	barrowsInUse--;
+	if (MyPlayerController)
+	{
+		return MyPlayerController->GetResourceAmount(resource) > 0;
+	}
+	else
+	{
+		GetMyPlayerController();
+		return false;
+	}
 }
 
 void AWarehouse::BindDelayAction()
 {
-	Action.BindUFunction(this, "SendMarketBarrows");
+	Action.BindDynamic(this, &AWarehouse::SendMarketBarrows);
 }
 
-AEtosPlayerController * AWarehouse::GetMyPlayerController()
+void AWarehouse::OnBuild()
 {
-	if (!MyPlayerController)
+	if (GetMyPlayerController())
 	{
-		MyPlayerController = (AEtosPlayerController*)GetWorld()->GetFirstPlayerController();
+		MyPlayerController->UpdateStorage(storageSpace);
 	}
-	return MyPlayerController;
+
+	Super::OnBuild();
 }
 
 void AWarehouse::SendMarketBarrows()
 {
-	for (ABuilding* building : Data.BuildingsInRadius)
+	if (BP_MarketBarrow)
 	{
-		if (barrowsInUse < maxBarrows)
+		RefreshBuildingsInRadius();
+
+		Data.BuildingsInRadius.Sort([]( ABuilding in A,  ABuilding in B)
 		{
-			if (building && building->Data.ProducedResource.Amount > 0)
+			return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount;
+		});
+
+		if (GetMyPlayerController())
+		{
+			int32 totalStorage = MyPlayerController->GetTotalStorage();
+
+			for (ABuilding* building : Data.BuildingsInRadius)
 			{
-				if (!building->Data.bBarrowIsOnTheWay)
+				if (BarrowsInUse < MaxBarrows)
 				{
-					// TODO: search path
-
-					AMarketBarrow* newMarketBarrow = GetWorld()->SpawnActor<AMarketBarrow>(Data.PathConnections[0]->GetActorLocation() + FVector(0, 0, 25), FRotator());
-
-					// TODO: init barrow
-
-					if (!newMarketBarrow->GetController())
+					int32 producedAmount = building->Data.ProducedResource.Amount;
+					if (building && producedAmount > 0 && MyPlayerController->GetResourceAmount(building->Data.ProducedResource.Type) + producedAmount <= totalStorage)
 					{
-						newMarketBarrow->SpawnDefaultController();
+						if (!building->Data.bBarrowIsOnTheWay)
+						{
+							APath* start; APath* goal;
+							if (BFuncs::FindPath(this, building, start, goal))
+							{
+								if (start && goal)
+								{
+									SendMarketBarrow_Internal(building, // target building
+										building->Data.ProducedResource.Type, // ordered resource
+										start->GetActorLocation() + FVector(0, 0, 100), // spawn location
+										goal->GetActorLocation()); // target location
+								}
+							}
+						}
 					}
-
-					barrowsInUse++;
 				}
 			}
 		}
