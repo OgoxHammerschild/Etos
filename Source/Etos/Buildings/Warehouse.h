@@ -1,41 +1,41 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// © 2016 - 2017 Daniel Bortfeld
 
 #pragma once
 
 class AEtosPlayerController;
+class AMarketBarrow;
 #include "Buildings/Base/Building.h"
 #include "Warehouse.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class ETOS_API AWarehouse : public ABuilding
 {
 	GENERATED_BODY()
-	
+
 private:
 
 	UPROPERTY()
-		int32 barrowsInUse;
-	UPROPERTY()
-		int32 maxBarrows;
-	UPROPERTY()
-		AEtosPlayerController* MyPlayerController;
+		int32 storageSpace = 40;
 
 public:
 
-	void ReceiveResource(FResource resource);
+	virtual FResource HandOutResource(const EResource& resource = EResource::None) override;
 
-	void DecreaseBarrowsInUse();
+	virtual void ReceiveResource(const FResource& resource) override;
+
+	virtual	bool HasResource(EResource in resource) override;
 
 protected:
 
 	virtual void BindDelayAction() override;
 
+	virtual void OnBuild() override;
+
 private:
 
-	AEtosPlayerController* GetMyPlayerController();
-
-	void SendMarketBarrows();
+	UFUNCTION()
+		void SendMarketBarrows();
 };

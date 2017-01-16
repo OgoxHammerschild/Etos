@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// © 2016 - 2017 Daniel Bortfeld
 
 #pragma once
 
@@ -15,7 +15,7 @@ public:
 	UPROPERTY()
 		USceneComponent* Root;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 		UArrowComponent* Origin;
 
 	UPROPERTY()
@@ -30,13 +30,13 @@ private:
 		float cameraZAngle = 0.f;
 
 	UPROPERTY()
-		float cameraHeightAngle = 45.f;
+		float cameraHeightAngle = 27.5f;
 
 	UPROPERTY()
 		float cameraHeightAngleMin = 10;
 
 	UPROPERTY()
-		float cameraHeightAngleMax = 90;
+		float cameraHeightAngleMax = 70;
 
 	UPROPERTY()
 		float rotationSpeed = 4.0f;
@@ -45,32 +45,28 @@ private:
 		float cameraRadius = 2048.f;
 
 	UPROPERTY()
-		float zoomSpeed = 256.f;
+		float zoomSpeed = 768.f;
 
 	UPROPERTY()
 		float radiusMin = 256.f;
 
 	UPROPERTY()
-		float radiusMax = 2048.f;
+		float radiusMax = 1792.f;
 
 	UPROPERTY()
 		float movementSpeed = 10.f;
 
+	//idk what that is good for
 	UPROPERTY()
 		float edgeForwardAxis = 0.f;
 
+	//idk what that is good for
 	UPROPERTY()
 		float edgeRightAxis = 0.f;
 
 public:
 	// Sets default values for this pawn's properties
 	ARTSCamera();
-
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	// Called every frame
-	virtual void Tick(float DeltaSeconds) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;

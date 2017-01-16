@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// © 2016 - 2017 Daniel Bortfeld
 
 #include "Etos.h"
 #include "RTSCamera.h"
@@ -17,28 +17,17 @@ ARTSCamera::ARTSCamera()
 	Origin->SetRelativeRotation(FRotator(90, 0, 0));
 	Origin->ArrowColor = FColor(255, 0, 0, 255);
 	Origin->ArrowSize = 0.2f;
+	Origin->bRenderInMainPass = false;
+	Origin->bReceivesDecals = false;
+	Origin->bHiddenInGame = true;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->SetRelativeLocation(FVector(256, 0, 256));
 }
 
-// Called when the game starts or when spawned
-void ARTSCamera::BeginPlay()
-{
-	Super::BeginPlay();
-
-}
-
-// Called every frame
-void ARTSCamera::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 // Called to bind functionality to input
-void ARTSCamera::SetupPlayerInputComponent(class UInputComponent* InputComponent)
+void ARTSCamera::SetupPlayerInputComponent(UInputComponent* InputComponent)
 {
 	Super::SetupPlayerInputComponent(InputComponent);
 
@@ -47,7 +36,7 @@ void ARTSCamera::SetupPlayerInputComponent(class UInputComponent* InputComponent
 	InputComponent->BindAction("RotateCamera", IE_Pressed, this, &ARTSCamera::Rotate);
 	InputComponent->BindAction("RotateCamera", IE_Released, this, &ARTSCamera::StopRotation);
 	InputComponent->BindAxis("Turn", this, &ARTSCamera::Turn);
-	InputComponent->BindAxis("LookUp", this, &ARTSCamera::LookUp);
+	//InputComponent->BindAxis("LookUp", this, &ARTSCamera::LookUp);
 	InputComponent->BindAxis("MoveForward", this, &ARTSCamera::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ARTSCamera::MoveRight);
 }

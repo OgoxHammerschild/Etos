@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// © 2016 - 2017 Daniel Bortfeld
 
 #pragma once
 
@@ -15,18 +15,25 @@ class ETOS_API APath : public ABuilding
 
 public:
 
-	virtual void OnConstruction(const FTransform& Transform) override;
+	APath();
+
+	//virtual void OnConstruction(const FTransform& Transform) override;
 
 	virtual void OnBuild() override;
 
+	void ReconnectToSurroundings();
+
 protected:
 
-	UFUNCTION()
-		virtual void InitTracePoints() override;
+	virtual void CreateTracePoints() override;
+
+	virtual void RelocateTracePoints() override;
+
+	virtual void GetSurroundingBuildings() override;
 
 public:
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		TArray<ABuilding*> PossibleConnections;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		TArray<ABuilding*> Connections;
 };
