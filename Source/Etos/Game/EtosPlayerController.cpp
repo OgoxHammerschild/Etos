@@ -16,6 +16,7 @@
 #include "Etos/Game/EtosSaveGame.h"
 #include "Kismet/GameplayStatics.h"
 #include "Etos/UI/ResourcePopup.h"
+#include "EtosMetaSaveGame.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -74,8 +75,8 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding);
 
 #if WITH_EDITOR
-	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::Save);
-	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::Load);
+	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::QuickSave);
+	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::QuickLoad);
 #endif
 }
 
@@ -559,11 +560,22 @@ void AEtosPlayerController::ReportDestroyedBuilding(ABuilding * in destroyedBuil
 	}
 }
 
-void AEtosPlayerController::Save()
+bool AEtosPlayerController::Save(FString SaveSlotName)
 {
-	//UGameplayStatics::DoesSaveGameExist...
+	//if (UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
+	//{
+		// display warning
+		//if (warning says no)
+		//{
+		//	return false;
+		//}
+	//}
+
 	UEtosSaveGame* SaveGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosSaveGame::StaticClass()));
 	SaveGameInstance->PlayerName = TEXT("Player 1");
+	SaveGameInstance->SaveSlotName = SaveSlotName;
+	SaveGameInstance->UserIndex = 0;
+
 	SaveGameInstance->ResourceAmounts = this->resourceAmounts;
 	SaveGameInstance->PopulationPerLevel = this->populationPerLevel;
 	SaveGameInstance->UsedPromotions = this->usedPromotions;
@@ -598,19 +610,24 @@ void AEtosPlayerController::Save()
 		}
 	}
 
-	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->SaveSlotName, SaveGameInstance->UserIndex);
+	if (UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->SaveSlotName, SaveGameInstance->UserIndex))
+	{
+		return AddSlotNameToMeta(SaveGameInstance->SaveSlotName);
+	}
+	return false;
 }
 
-void AEtosPlayerController::Load()
+bool AEtosPlayerController::Load(FString SaveSlotName)
 {
-	if (!UGameplayStatics::DoesSaveGameExist(TEXT("NewSaveGame"), 0))
+	if (!UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("NewSaveGame was not found"));
-		return;
+		UE_LOG(LogTemp, Warning, TEXT("%s was not found"), *SaveSlotName);
+		RemoveSlotNameFromMeta(SaveSlotName);
+		return false;
 	}
 
 	UEtosSaveGame* LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosSaveGame::StaticClass()));
-	LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->SaveSlotName, LoadGameInstance->UserIndex));
+	LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::LoadGameFromSlot(SaveSlotName, LoadGameInstance->UserIndex));
 
 	if (LoadGameInstance->IsValidLowLevel())
 	{
@@ -723,7 +740,19 @@ void AEtosPlayerController::Load()
 				}
 			}
 		}
+		return true;
 	}
+	return false;
+}
+
+void AEtosPlayerController::QuickSave()
+{
+	Save(TEXT("QuickSave"));
+}
+
+void AEtosPlayerController::QuickLoad()
+{
+	Load(TEXT("QuickSave"));
 }
 
 void AEtosPlayerController::TogglePause()
@@ -1000,4 +1029,40 @@ void AEtosPlayerController::UpdateBalanceUI(int32 in income, int32 in upkeep)
 	{
 		GUI->UpdateBalance(income, upkeep);
 	}
+}
+
+bool AEtosPlayerController::AddSlotNameToMeta(FString in slotName)
+{
+	UEtosMetaSaveGame* MetaSaveGameInstance = GetMetaSaveGame();
+
+	MetaSaveGameInstance->SaveSlots.Add(slotName, FDateTime::Now());
+
+	return UGameplayStatics::SaveGameToSlot(MetaSaveGameInstance, MetaSaveGameInstance->SaveSlotName, 0);
+}
+
+bool AEtosPlayerController::RemoveSlotNameFromMeta(FString in slotName)
+{
+	UEtosMetaSaveGame* MetaSaveGameInstance = GetMetaSaveGame();
+
+	MetaSaveGameInstance->SaveSlots.Remove(slotName);
+
+	return UGameplayStatics::SaveGameToSlot(MetaSaveGameInstance, MetaSaveGameInstance->SaveSlotName, 0);
+}
+
+UEtosMetaSaveGame * AEtosPlayerController::GetMetaSaveGame()
+{
+	FString metaName = TEXT("Meta");
+	UEtosMetaSaveGame* MetaSaveGameInstance = Cast<UEtosMetaSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosMetaSaveGame::StaticClass()));
+	if (UGameplayStatics::DoesSaveGameExist(metaName, 0))
+	{
+		MetaSaveGameInstance = Cast<UEtosMetaSaveGame>(UGameplayStatics::LoadGameFromSlot(metaName, 0));
+	}
+	else
+	{
+		MetaSaveGameInstance->PlayerName = TEXT("Player 1");
+		MetaSaveGameInstance->SaveSlotName = metaName;
+		MetaSaveGameInstance->UserIndex = 0;
+	}
+	
+	return MetaSaveGameInstance;
 }

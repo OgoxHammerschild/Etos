@@ -3,6 +3,8 @@
 #pragma once
 
 class AResidence;
+class UEtosMetaSaveGame;
+
 #include "Etos/Utility/InOut.h"
 #include "Etos/ObjectPool/ObjectPool.h"
 #include "Etos/Buildings/Base/Building.h"
@@ -152,10 +154,16 @@ public:
 	void StartDemolishMode();
 
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
-		void Save();
+		bool Save(FString SaveSlotName = TEXT("NewSaveGame"));
 
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
-		void Load();
+		bool Load(FString SaveSlotName = TEXT("NewSaveGame"));
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void QuickSave();
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void QuickLoad();
 
 	UFUNCTION(BlueprintCallable, Category = "Pause")
 		void TogglePause();
@@ -218,4 +226,10 @@ private:
 	void UpdatePopulationUI( int32 in peasants,  int32 in citizens);
 
 	void UpdateBalanceUI( int32 in income,  int32 in upkeep);
+
+	bool AddSlotNameToMeta(FString in slotName);
+
+	bool RemoveSlotNameFromMeta(FString in slotName);
+
+	UEtosMetaSaveGame* GetMetaSaveGame();
 };
