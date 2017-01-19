@@ -69,3 +69,5 @@ DerivedDataCache/*
 *.fbx
 /Content/Meshes
 /Content/Textures
+/Content/Blueprints/Buildings/Chapel/Textures
+/Content/Blueprints/Buildings/Toolmaker/Textures
