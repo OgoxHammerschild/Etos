@@ -745,6 +745,29 @@ bool AEtosPlayerController::Load(FString SaveSlotName)
 	return false;
 }
 
+bool AEtosPlayerController::LoadLatestSaveGame()
+{
+	if (auto* MetaSaveGameInstance = GetMetaSaveGame())
+	{
+		TArray<FDateTime> saveDates;
+		MetaSaveGameInstance->SaveSlots.GenerateValueArray(saveDates);
+		saveDates.Sort();
+
+		FString latestSlotName = *MetaSaveGameInstance->SaveSlots.FindKey(saveDates.Last());
+
+		if (UGameplayStatics::DoesSaveGameExist(latestSlotName, 0))
+		{
+			return Load(latestSlotName);
+		}
+		else
+		{
+			RemoveSlotNameFromMeta(latestSlotName);
+		}
+	}
+
+	return false;
+}
+
 void AEtosPlayerController::QuickSave()
 {
 	Save(TEXT("QuickSave"));
@@ -768,6 +791,27 @@ void AEtosPlayerController::ToggleGameMenu()
 void AEtosPlayerController::StartDemolishMode()
 {
 	bIsInDemolishMode = true;
+}
+
+bool AEtosPlayerController::RemoveInvalidSaveGamesFromMeta(TArray<FString>in invalidSaveSlots)
+{
+	bool bRemovedAny = false;
+
+	if (invalidSaveSlots.Num() > 0)
+	{
+		for (auto& slotName : invalidSaveSlots)
+		{
+			if (!UGameplayStatics::DoesSaveGameExist(slotName, 0))
+			{
+				if (RemoveSlotNameFromMeta(slotName))
+				{
+					bRemovedAny = true;
+				}
+			}
+		}
+	}
+
+	return bRemovedAny;
 }
 
 FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
@@ -1063,6 +1107,6 @@ UEtosMetaSaveGame * AEtosPlayerController::GetMetaSaveGame()
 		MetaSaveGameInstance->SaveSlotName = metaName;
 		MetaSaveGameInstance->UserIndex = 0;
 	}
-	
+
 	return MetaSaveGameInstance;
 }

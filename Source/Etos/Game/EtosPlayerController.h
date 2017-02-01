@@ -153,11 +153,17 @@ public:
 
 	void StartDemolishMode();
 
+	// returns: whether any save games were removed from meta
+	bool RemoveInvalidSaveGamesFromMeta(TArray<FString> in invalidSaveSlots);
+
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
 		bool Save(FString SaveSlotName = TEXT("NewSaveGame"));
 
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
 		bool Load(FString SaveSlotName = TEXT("NewSaveGame"));
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		bool LoadLatestSaveGame();
 
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
 		void QuickSave();
