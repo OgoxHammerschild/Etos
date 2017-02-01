@@ -208,6 +208,8 @@ protected:
 
 	void RefreshBuildingsInRadius();
 
+	FVector2Di GetRotatedSize();
+
 	UFUNCTION()
 		void OnBuildingDestroyed(AActor* DestroyedActor);
 

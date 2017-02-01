@@ -743,6 +743,12 @@ void ABuilding::RefreshBuildingsInRadius()
 	}
 }
 
+FVector2Di ABuilding::GetRotatedSize()
+{
+	FRotator rotation = GetActorRotation();
+	return FMath::Abs(FMath::RoundToInt(rotation.Yaw) % 180) == 90 ? FVector2Di(Height, Width) : FVector2Di(Width, Height);
+}
+
 void ABuilding::OnBuildingDestroyed(AActor * DestroyedActor)
 {
 	if (this == DestroyedActor)
@@ -870,7 +876,7 @@ void ABuilding::MoveToMouseLocation()
 	FHitResult Hit;
 	if (Util::TraceSingleAtMousePosition(this, Hit))
 	{
-		SetActorLocation(BFuncs::GetNextGridLocation(Hit.ImpactPoint, FVector2Di(Width, Height)));
+		SetActorLocation(BFuncs::GetNextGridLocation(Hit.ImpactPoint, GetRotatedSize()));
 		bMovedOnce = true;
 	}
 }

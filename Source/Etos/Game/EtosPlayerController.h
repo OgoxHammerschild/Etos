@@ -201,6 +201,9 @@ private:
 		void DemolishBuilding(FKey key);
 
 	UFUNCTION()
+		void RotateHeldBuilding(FKey key);
+
+	UFUNCTION()
 		void OnBuildingDestroyed(AActor* DestroyedActor);
 
 	void AddIncome(float in DeltaTime);

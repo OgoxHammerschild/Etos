@@ -73,6 +73,7 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding);
 	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding);
 	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding);
+	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding);
 
 #if WITH_EDITOR
 	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::QuickSave);
@@ -444,6 +445,18 @@ void AEtosPlayerController::DemolishBuilding(FKey key)
 			{
 				building->Demolish();
 			}
+		}
+	}
+}
+
+void AEtosPlayerController::RotateHeldBuilding(FKey key)
+{
+	if (bIsHoldingObject)
+	{
+		if (!newBuilding->Data.bIsBuilt)
+		{
+			FRotator rotation = newBuilding->GetActorRotation();
+			newBuilding->SetActorRotation(FRotator(0, FMath::RoundToInt(rotation.Yaw) % 360 + 90, 0));
 		}
 	}
 }
