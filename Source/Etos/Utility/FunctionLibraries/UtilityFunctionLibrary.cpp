@@ -12,6 +12,8 @@
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::BuildingObjectType = InitBuildingObjectType();
 TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::FloorObjectType = InitFloorObjectType();
 
+TMap <EResource, FIcon> UUtilityFunctionLibrary::ResourceIcons = TMap<EResource, FIcon>();
+
 //DEFINE_ENUM_ISVALID(EResource);
 //DEFINE_ENUM_ISVALID(EResidentLevel);
 //DEFINE_ENUM_ISVALID(EResidentNeed);
@@ -81,6 +83,28 @@ UTexture2D * UUtilityFunctionLibrary::EnsureTexture(UTexture2D * Texture)
 		return Texture;
 	}
 
+	return GetDefaultTexture();
+}
+
+UTexture2D * UUtilityFunctionLibrary::GetIcon(EResource const & Resource, EIconSize const& Size)
+{
+	if (!Enum::IsValid(Resource))
+	{
+		return GetDefaultTexture();
+	}
+
+	if (ResourceIcons.Num() > 0)
+	{
+		switch (Size)
+		{
+		case EIconSize::Smol:
+			return EnsureTexture(ResourceIcons[Resource].Icon_Smol);
+		case EIconSize::Big:
+			return EnsureTexture(ResourceIcons[Resource].Icon_Big);
+		default:
+			return GetDefaultTexture();
+		}
+	}
 	return GetDefaultTexture();
 }
 

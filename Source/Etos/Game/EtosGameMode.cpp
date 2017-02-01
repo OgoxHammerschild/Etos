@@ -11,27 +11,48 @@ AEtosGameMode::AEtosGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	typedef ConstructorHelpers::FObjectFinder<UDataTable> FDataTableFinder;
+	static FDataTableFinder DataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/PredefinedBuildingData.PredefinedBuildingData'"));
+
 	if (!PredefinedBuildingData)
 	{
-		typedef ConstructorHelpers::FObjectFinder<UDataTable> FDataTableFinder;
-		static FDataTableFinder DataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/PredefinedBuildingData.PredefinedBuildingData'"));
-
 		DataTableFinder = FDataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/PredefinedBuildingData.PredefinedBuildingData'"));
 		if (DataTableFinder.Succeeded())
 		{
 			PredefinedBuildingData = DataTableFinder.Object;
 		}
+	}
 
+	if (!UpgradeData)
+	{
 		DataTableFinder = FDataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/UpgradeData.UpgradeData'"));
 		if (DataTableFinder.Succeeded())
 		{
 			UpgradeData = DataTableFinder.Object;
 		}
+	}
 
+	if (!TaxData)
+	{
 		DataTableFinder = FDataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/TaxData.TaxData'"));
 		if (DataTableFinder.Succeeded())
 		{
 			TaxData = DataTableFinder.Object;
+		}
+	}
+
+	DataTableFinder = FDataTableFinder(TEXT("DataTable'/Game/Blueprints/DataTables/ResourceIconPairings.ResourceIconPairings'"));
+	if (DataTableFinder.Succeeded())
+	{
+		UDataTable* Icons = DataTableFinder.Object;
+		const int32 pairCount = Icons->GetRowNames().Num();
+
+		Util::ResourceIcons.Empty(pairCount);
+
+		for (int32 i = 0; i < pairCount; ++i)
+		{
+			FResourceIconPair* pair = Icons->FindRow<FResourceIconPair>(*FString::FromInt(i), FString(TEXT("GameMode")));
+			Util::ResourceIcons.Add(pair->Resource, FIcon(pair->Icon_Smol, pair->Icon_Big));
 		}
 	}
 
@@ -43,6 +64,8 @@ AEtosGameMode::AEtosGameMode()
 			defaultTexture = TextureFinder.Object;
 		}
 	}
+
+	checkf(defaultTexture, TEXT("Default Texture could not be found"));
 
 	if (UWorld* const World = GetWorld())
 	{
@@ -117,12 +140,9 @@ FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(const int32& b
 	// DataTable.h:97 variable swap error
 	// UObjectGlobals.h typo in NewObject assert
 
-	//if(buildingID is valid)
-	//{
 	FPredefinedBuildingData* preDefData = PredefinedBuildingData->FindRow<FPredefinedBuildingData>(*FString::FromInt(buildingID), FString(TEXT("GameMode")));
 
 	return preDefData;
-	//}
 }
 
 FUpgradeData * AEtosGameMode::GetUpgradeData(const FName & upgrade)

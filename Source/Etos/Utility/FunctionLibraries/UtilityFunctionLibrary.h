@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Etos/Utility/Structs/ResourceIconPair.h"
 #include "Etos/Utility/EnumLibrary.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UtilityFunctionLibrary.generated.h"
@@ -18,6 +19,8 @@ public:
 
 	static TArray<TEnumAsByte<EObjectTypeQuery>> BuildingObjectType;
 	static TArray<TEnumAsByte<EObjectTypeQuery>> FloorObjectType;
+
+	static TMap <EResource, FIcon> ResourceIcons;
 
 public:
 
@@ -41,6 +44,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions", meta = (UnsafeDuringActorConstruction = "true"))
 		static UTexture2D* EnsureTexture(UTexture2D* Texture);
+
+	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions", meta = (UnsafeDuringActorConstruction = "true", AdvancedDisplay = "Size"))
+		static UTexture2D* GetIcon(EResource const& Resource, EIconSize const& Size = EIconSize::Big);
 
 	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static bool TraceSingleForBuildings(UObject* WorldContextObject, const FVector& Start, const FVector& End, FHitResult& HitResult);
