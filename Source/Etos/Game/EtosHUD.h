@@ -4,6 +4,7 @@
 
 class UInGameUI;
 class AResourcePopup;
+class UWarning;
 
 #include "GameFramework/HUD.h"
 #include "EtosHUD.generated.h"
@@ -35,6 +36,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 		TSubclassOf<AResourcePopup> TextPopupBlueprint;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+		TSubclassOf<UWarning> wWarning;
 
 private:
 

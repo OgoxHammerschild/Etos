@@ -93,6 +93,9 @@ private:
 	UPROPERTY(VisibleAnywhere)
 		float payedIncome = 0;
 
+	UPROPERTY()
+		FString tempSaveSlotName;
+
 public:
 
 	virtual void BeginPlay() override;
@@ -160,10 +163,19 @@ public:
 		bool Save(FString SaveSlotName = TEXT("NewSaveGame"));
 
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void SaveWithWarning(FString SaveSlotName = TEXT("NewSaveGame"));
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
 		bool Load(FString SaveSlotName = TEXT("NewSaveGame"));
 
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void LoadWithWarning(FString SaveSlotName = TEXT("NewSaveGame"));
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
 		bool LoadLatestSaveGame();
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void LoadLatestSaveGameWithWarning();
 
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
 		void QuickSave();
@@ -206,11 +218,20 @@ private:
 	UFUNCTION()
 		void OnBuildingDestroyed(AActor* DestroyedActor);
 
-	void AddIncome(float in DeltaTime);
+	UFUNCTION()
+		void SaveToTempSlot();
+
+	UFUNCTION()
+		void LoadFromTempSlot();
+
+	UFUNCTION()
+		void LoadLatestSaveGame_Wrapper();
+
+		void AddIncome(float in DeltaTime);
 
 	//ABuilding* GetBuildingUnderCursor();
 
-	void AddHUDToViewport();
+	void AddGUIToViewport();
 
 	void Panic(std::exception in e);
 
@@ -232,9 +253,9 @@ private:
 
 	void DestroyPathPreview(APath* in tempPath);
 
-	void UpdatePopulationUI( int32 in peasants,  int32 in citizens);
+	void UpdatePopulationUI(int32 in peasants, int32 in citizens);
 
-	void UpdateBalanceUI( int32 in income,  int32 in upkeep);
+	void UpdateBalanceUI(int32 in income, int32 in upkeep);
 
 	bool AddSlotNameToMeta(FString in slotName);
 

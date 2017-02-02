@@ -17,6 +17,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Etos/UI/ResourcePopup.h"
 #include "EtosMetaSaveGame.h"
+#include "Etos/Utility/FunctionLibraries/WarningDialogueFunctions.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -25,7 +26,7 @@ void AEtosPlayerController::BeginPlay()
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
 
-	AddHUDToViewport();
+	AddGUIToViewport();
 	UpdatePopulation(EResidentLevel::Peasant, 0); // updates UI
 	UpdateBalanceUI(totalIncome, totalUpkeep);
 	InitResourceMapping();
@@ -469,6 +470,21 @@ void AEtosPlayerController::OnBuildingDestroyed(AActor * DestroyedActor)
 	}
 }
 
+void AEtosPlayerController::SaveToTempSlot()
+{
+	Save(tempSaveSlotName);
+}
+
+void AEtosPlayerController::LoadFromTempSlot()
+{
+	Load(tempSaveSlotName);
+}
+
+void AEtosPlayerController::LoadLatestSaveGame_Wrapper()
+{
+	LoadLatestSaveGame();
+}
+
 void AEtosPlayerController::AddIncome(float in DeltaTime)
 {
 	incomeTimerPassed += DeltaTime;
@@ -630,6 +646,18 @@ bool AEtosPlayerController::Save(FString SaveSlotName)
 	return false;
 }
 
+void AEtosPlayerController::SaveWithWarning(FString SaveSlotName)
+{
+	tempSaveSlotName = SaveSlotName;
+
+	if (auto HUD = Util::GetEtosHUD(this))
+	{
+		checkf(HUD->wWarning, TEXT("No default Warning Widget was selected for EtosHUD"));
+
+		FWarning::ShowWarningDialogue(AEtosPlayerController, UObject, this, HUD->wWarning, this, &AEtosPlayerController::SaveToTempSlot, nullptr, nullptr);
+	}
+}
+
 bool AEtosPlayerController::Load(FString SaveSlotName)
 {
 	if (!UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
@@ -758,6 +786,18 @@ bool AEtosPlayerController::Load(FString SaveSlotName)
 	return false;
 }
 
+void AEtosPlayerController::LoadWithWarning(FString SaveSlotName)
+{
+	tempSaveSlotName = SaveSlotName;
+
+	if (auto HUD = Util::GetEtosHUD(this))
+	{
+		checkf(HUD->wWarning, TEXT("No default Warning Widget was selected for EtosHUD"));
+
+		FWarning::ShowWarningDialogue(AEtosPlayerController, UObject, this, HUD->wWarning, this, &AEtosPlayerController::LoadFromTempSlot, nullptr, nullptr);
+	}
+}
+
 bool AEtosPlayerController::LoadLatestSaveGame()
 {
 	if (auto* MetaSaveGameInstance = GetMetaSaveGame())
@@ -779,6 +819,16 @@ bool AEtosPlayerController::LoadLatestSaveGame()
 	}
 
 	return false;
+}
+
+void AEtosPlayerController::LoadLatestSaveGameWithWarning()
+{
+	if (auto HUD = Util::GetEtosHUD(this))
+	{
+		checkf(HUD->wWarning, TEXT("No default Warning Widget was selected for EtosHUD"));
+
+		FWarning::ShowWarningDialogue(AEtosPlayerController, UObject, this, HUD->wWarning, this, &AEtosPlayerController::LoadLatestSaveGame_Wrapper, nullptr, nullptr);
+	}
 }
 
 void AEtosPlayerController::QuickSave()
@@ -827,7 +877,7 @@ bool AEtosPlayerController::RemoveInvalidSaveGamesFromMeta(TArray<FString>in inv
 	return bRemovedAny;
 }
 
-FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
+FORCEINLINE void AEtosPlayerController::AddGUIToViewport()
 {
 #if WITH_EDITOR
 	try
