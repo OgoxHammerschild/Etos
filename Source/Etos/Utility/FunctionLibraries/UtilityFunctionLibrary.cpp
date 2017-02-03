@@ -86,7 +86,7 @@ UTexture2D * UUtilityFunctionLibrary::EnsureTexture(UTexture2D * Texture)
 	return GetDefaultTexture();
 }
 
-UTexture2D * UUtilityFunctionLibrary::GetIcon(EResource const & Resource, EIconSize const& Size)
+UTexture2D * UUtilityFunctionLibrary::GetIcon(EResource Resource, EIconSize Size)
 {
 	if (!Enum::IsValid(Resource))
 	{

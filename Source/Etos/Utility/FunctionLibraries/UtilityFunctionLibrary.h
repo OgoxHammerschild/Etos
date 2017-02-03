@@ -46,7 +46,7 @@ public:
 		static UTexture2D* EnsureTexture(UTexture2D* Texture);
 
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions", meta = (UnsafeDuringActorConstruction = "true", AdvancedDisplay = "Size"))
-		static UTexture2D* GetIcon(EResource const& Resource, EIconSize const& Size = EIconSize::Big);
+		static UTexture2D* GetIcon(EResource Resource, EIconSize Size = EIconSize::Big);
 
 	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static bool TraceSingleForBuildings(UObject* WorldContextObject, const FVector& Start, const FVector& End, FHitResult& HitResult);
