@@ -3,12 +3,13 @@
 #include "Etos.h"
 #include "RTSCamera.h"
 #include "Kismet/KismetMathLibrary.h"
+#include"Etos/Game/EtosPlayerController.h"
 
 // Sets default values
 ARTSCamera::ARTSCamera()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	Root = CreateDefaultSubobject<USceneComponent>("Root");
 	RootComponent = Root;
 
@@ -26,6 +27,14 @@ ARTSCamera::ARTSCamera()
 	Camera->SetRelativeLocation(FVector(256, 0, 256));
 }
 
+void ARTSCamera::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (bPanCamera_IE_Repeat)
+		Pan(FKey());
+}
+
 // Called to bind functionality to input
 void ARTSCamera::SetupPlayerInputComponent(UInputComponent* InputComponent)
 {
@@ -39,6 +48,9 @@ void ARTSCamera::SetupPlayerInputComponent(UInputComponent* InputComponent)
 	//InputComponent->BindAxis("LookUp", this, &ARTSCamera::LookUp);
 	InputComponent->BindAxis("MoveForward", this, &ARTSCamera::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ARTSCamera::MoveRight);
+	InputComponent->BindAction("PanCamera", IE_Pressed, this, &ARTSCamera::StartPanning);
+	//InputComponent->BindAction("PanCamera", IE_Repeat, this, &ARTSCamera::Pan); // not working for mouse button
+	InputComponent->BindAction("PanCamera", IE_Released, this, &ARTSCamera::StopPanning);
 }
 
 void ARTSCamera::OnConstruction(const FTransform & Transform)
@@ -66,6 +78,52 @@ void ARTSCamera::Rotate(FKey key)
 void ARTSCamera::StopRotation(FKey key)
 {
 	bRotateCamera = false;
+}
+
+void ARTSCamera::StartPanning(FKey key)
+{
+	bPanCamera_IE_Repeat = true;
+
+	FHitResult hit;
+	if (Util::TraceSingleAtMousePosition(this, hit))
+	{
+		myPlayerController = Util::GetFirstEtosPlayerController(this);
+		if (myPlayerController)
+		{
+			myPlayerController->GetMousePosition(panningStartPosition.X, panningStartPosition.Y);
+		}
+	}
+}
+
+void ARTSCamera::Pan(FKey key)
+{
+	if (myPlayerController)
+	{
+		FVector2D currentPosition;
+		myPlayerController->GetMousePosition(currentPosition.X, currentPosition.Y);
+
+		if (!bPanCamera)
+		{
+			if (FVector2D::Distance(currentPosition, panningStartPosition) > panningThreshold)
+			{
+				bPanCamera = true;
+			}
+		}
+		else
+		{
+			FVector2D panDirection = currentPosition - panningStartPosition;
+			panDirection.Normalize();
+
+			MoveForward(-panDirection.Y * panningSpeed);
+			MoveRight(panDirection.X * panningSpeed);
+		}
+	}
+}
+
+void ARTSCamera::StopPanning(FKey key)
+{
+	bPanCamera = false;
+	bPanCamera_IE_Repeat = false;
 }
 
 void ARTSCamera::Turn(float axisValue)

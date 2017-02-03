@@ -67,18 +67,18 @@ void AEtosPlayerController::Tick(float DeltaTime)
 void AEtosPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	InputComponent->BindAction("Build", IE_Pressed, this, &AEtosPlayerController::BuildNewBuilding);
-	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame).bExecuteWhenPaused = true;
-	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu).bExecuteWhenPaused = true;
-	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly);
-	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding);
-	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding);
-	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding);
-	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding);
-
+	InputComponent->BindAction("Build", IE_Pressed, this, &AEtosPlayerController::BuildNewBuilding); // LMB
+	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame).bExecuteWhenPaused = true; // P
+	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu).bExecuteWhenPaused = true; // ESC
+	InputComponent->BindAction("ClickRepeatedly", IE_Released, this, &AEtosPlayerController::ClickRepeatedly); // Shift + LMB
+	InputComponent->BindAction("CancelBuilding", IE_Released, this, &AEtosPlayerController::CancelPlacementOfBuilding).bConsumeInput = false; // RMB
+	InputComponent->BindAction("Select", IE_Released, this, &AEtosPlayerController::SelectBuilding); // LMB
+	InputComponent->BindAction("Demolish", IE_Released, this, &AEtosPlayerController::DemolishBuilding); // LMB
+	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding); // ,
+	
 #if WITH_EDITOR
-	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::QuickSave);
-	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::QuickLoad);
+	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::QuickSave); // F5
+	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::QuickLoad); // F9
 #endif
 }
 
