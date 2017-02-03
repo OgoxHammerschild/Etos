@@ -70,10 +70,10 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Build", IE_Pressed, this, &AEtosPlayerController::BuildNewBuilding); // LMB
 	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame).bExecuteWhenPaused = true; // P
 	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu).bExecuteWhenPaused = true; // ESC
-	InputComponent->BindAction("ClickRepeatedly", IE_Released, this, &AEtosPlayerController::ClickRepeatedly); // Shift + LMB
-	InputComponent->BindAction("CancelBuilding", IE_Released, this, &AEtosPlayerController::CancelPlacementOfBuilding).bConsumeInput = false; // RMB
-	InputComponent->BindAction("Select", IE_Released, this, &AEtosPlayerController::SelectBuilding); // LMB
-	InputComponent->BindAction("Demolish", IE_Released, this, &AEtosPlayerController::DemolishBuilding); // LMB
+	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly); // Shift + LMB
+	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding).bConsumeInput = false; // RMB
+	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding); // LMB
+	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding); // LMB
 	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding); // ,
 	
 #if WITH_EDITOR
