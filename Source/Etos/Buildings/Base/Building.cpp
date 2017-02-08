@@ -46,6 +46,10 @@ ABuilding::ABuilding()
 	Radius->SetSphereRadius(Data.Radius);
 	Radius->SetCanEverAffectNavigation(false);
 
+	OnBuild_ParticleSystem = CreateDefaultSubobject<UParticleSystemComponent>("OnBuild ParticleSystem");
+	OnBuild_ParticleSystem->SetupAttachment(RootComponent);
+	OnBuild_ParticleSystem->bAutoActivate = false;
+
 	if (!ResourcePopup)
 	{
 		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopup_2017-01-11-21-50-04.BP_ResourcePopup'"));
@@ -205,6 +209,8 @@ void ABuilding::OnBuild()
 	{
 		PC->UpdateUpkeep(Data.Upkeep);
 	}
+
+	OnBuild_ParticleSystem->Activate(true);
 
 	BuildEvent.Broadcast(this);
 
@@ -732,10 +738,18 @@ FORCEINLINE AEtosPlayerController * ABuilding::GetMyPlayerController()
 	return MyPlayerController;
 }
 
-void ABuilding::RefreshBuildingsInRadius()
+void ABuilding::RefreshBuildingsInRadius(bool useSphereTrace)
 {
 	TArray<ABuilding*> OverlappingBulidings;
-	GetOverlappingBulidings(OverlappingBulidings);
+
+	if (useSphereTrace)
+	{
+		OverlappingBulidings = GetBuildingsInRange();
+	}
+	else
+	{
+		GetOverlappingBulidings(OverlappingBulidings);
+	}
 
 	if (Data.BuildingsInRadius.Num() != OverlappingBulidings.Num())
 	{
@@ -762,7 +776,7 @@ void ABuilding::OnBuildingDestroyed(AActor * DestroyedActor)
 
 void ABuilding::AddNewBuildingInRange(ABuilding * buildingInRange)
 {
-	if (buildingInRange && !buildingInRange->IsPendingKillOrUnreachable())
+	if (buildingInRange->IsValidLowLevel())
 	{
 		Data.BuildingsInRadius.AddUnique(buildingInRange);
 	}
@@ -826,7 +840,7 @@ void ABuilding::GetNeededResources()
 	{
 		if (BP_MarketBarrow)
 		{
-			RefreshBuildingsInRadius();
+			RefreshBuildingsInRadius(true);
 
 			Data.BuildingsInRadius.Sort([](ABuilding in A, ABuilding in B)
 			{
