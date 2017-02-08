@@ -11,6 +11,8 @@ class UEtosMetaSaveGame;
 #include "GameFramework/PlayerController.h"
 #include "EtosPlayerController.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDemolishDelegate, ABuilding*, DemolishedBuilding);
+
 USTRUCT()
 struct FResidenceArray
 {
@@ -37,6 +39,9 @@ private:
 
 	UPROPERTY()
 		bool bIsInDemolishMode = false;
+
+	UPROPERTY(BlueprintAssignable, Category = "Demolish")
+		FOnDemolishDelegate OnDemolish;
 
 	UPROPERTY(VisibleAnywhere)
 		TMap<EResource, int32> resourceAmounts;
@@ -227,7 +232,7 @@ private:
 	UFUNCTION()
 		void LoadLatestSaveGame_Wrapper();
 
-		void AddIncome(float in DeltaTime);
+	void AddIncome(float in DeltaTime);
 
 	//ABuilding* GetBuildingUnderCursor();
 
@@ -260,6 +265,8 @@ private:
 	bool AddSlotNameToMeta(FString in slotName);
 
 	bool RemoveSlotNameFromMeta(FString in slotName);
+
+	void SetDemolishMode(bool in newState);
 
 	UEtosMetaSaveGame* GetMetaSaveGame();
 };

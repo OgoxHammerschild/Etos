@@ -75,7 +75,7 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding); // LMB
 	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding); // LMB
 	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding); // ,
-	
+
 #if WITH_EDITOR
 	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::QuickSave); // F5
 	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::QuickLoad); // F9
@@ -444,6 +444,10 @@ void AEtosPlayerController::DemolishBuilding(FKey key)
 		{
 			if (ABuilding* const building = dynamic_cast<ABuilding*, AActor>(&*Hit.Actor))
 			{
+				if (OnDemolish.IsBound())
+				{
+					OnDemolish.Broadcast(building);
+				}
 				building->Demolish();
 			}
 		}
@@ -853,7 +857,7 @@ void AEtosPlayerController::ToggleGameMenu()
 
 void AEtosPlayerController::StartDemolishMode()
 {
-	bIsInDemolishMode = true;
+	SetDemolishMode(true);
 }
 
 bool AEtosPlayerController::RemoveInvalidSaveGamesFromMeta(TArray<FString>in invalidSaveSlots)
@@ -949,7 +953,7 @@ void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 
 	if (bIsInDemolishMode)
 	{
-		bIsInDemolishMode = false;
+		SetDemolishMode(false);
 	}
 }
 
@@ -976,7 +980,7 @@ ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * in Class, FBu
 	if (bIsHoldingObject)
 		CancelPlacementOfBuilding(FKey());
 
-	bIsInDemolishMode = false;
+	SetDemolishMode(false);
 
 	if (!Class)
 		return nullptr;
@@ -1154,6 +1158,23 @@ bool AEtosPlayerController::RemoveSlotNameFromMeta(FString in slotName)
 	MetaSaveGameInstance->SaveSlots.Remove(slotName);
 
 	return UGameplayStatics::SaveGameToSlot(MetaSaveGameInstance, MetaSaveGameInstance->SaveSlotName, 0);
+}
+
+void AEtosPlayerController::SetDemolishMode(bool in newState)
+{
+	if (newState != bIsInDemolishMode)
+	{
+		bIsInDemolishMode = newState;
+
+		if (bIsInDemolishMode)
+		{
+			CurrentMouseCursor = EMouseCursor::Crosshairs;
+		}
+		else
+		{
+			CurrentMouseCursor = EMouseCursor::Default;
+		}
+	}
 }
 
 UEtosMetaSaveGame * AEtosPlayerController::GetMetaSaveGame()
