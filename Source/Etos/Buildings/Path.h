@@ -19,7 +19,7 @@ public:
 
 	//virtual void OnConstruction(const FTransform& Transform) override;
 
-	virtual void OnBuild() override;
+	virtual void Build() override;
 
 	void ReconnectToSurroundings();
 

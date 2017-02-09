@@ -101,6 +101,12 @@ private:
 	UPROPERTY()
 		FString tempSaveSlotName;
 
+	UPROPERTY()
+		bool bWarehouseWasBuilt = false;
+
+	UPROPERTY()
+		bool bMarketWasBuilt = false;
+
 public:
 
 	virtual void BeginPlay() override;
@@ -160,6 +166,10 @@ public:
 	void ReportDestroyedBuilding(ABuilding* in destroyedBuilding);
 
 	void StartDemolishMode();
+
+	bool GetWarehouseWasBuilt();
+
+	bool GetMarketWasBuilt();
 
 	// returns: whether any save games were removed from meta
 	bool RemoveInvalidSaveGamesFromMeta(TArray<FString> in invalidSaveSlots);

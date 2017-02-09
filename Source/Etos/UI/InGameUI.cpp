@@ -358,10 +358,9 @@ void UInGameUI::CreateButtons()
 					if (tempButton)
 					{
 						tempButton->Data = FBuildingData(*preDefData);
+						tempButton->Enabled = preDefData->BuildingButtonEnabled;
 
-						//check(button->BuildingIcon);
-						//button->BuildingIcon->SetBrushFromTexture(button->Data.BuildingIcon);
-						tempButton->IconusRectus = tempButton->Data.BuildingIcon;
+						tempButton->IconTexture = tempButton->Data.BuildingIcon;
 
 						tempButton->Building = preDefData->BuildingBlueprint;
 						tempButton->SetPadding(FMargin(5));

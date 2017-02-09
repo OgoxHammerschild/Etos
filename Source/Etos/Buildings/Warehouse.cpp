@@ -63,14 +63,14 @@ void AWarehouse::BindDelayAction()
 	Action.BindDynamic(this, &AWarehouse::SendMarketBarrows);
 }
 
-void AWarehouse::OnBuild()
+void AWarehouse::Build()
 {
 	if (GetMyPlayerController())
 	{
 		MyPlayerController->UpdateStorage(storageSpace);
 	}
 
-	Super::OnBuild();
+	Super::Build();
 }
 
 void AWarehouse::SendMarketBarrows()

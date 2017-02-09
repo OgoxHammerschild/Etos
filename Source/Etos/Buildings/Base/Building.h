@@ -81,7 +81,7 @@ protected:
 		FDelayedActionDelegate Action;
 
 	UPROPERTY(BlueprintAssignable, Category = "Build")
-		FBuildingDelegate BuildEvent;
+		FBuildingDelegate OnBuilt;
 
 	UPROPERTY(VisibleAnywhere)
 		int32 BarrowsInUse = 0;
@@ -138,7 +138,7 @@ public:
 
 	virtual void BeginDestroy() override;
 
-	virtual void OnBuild();
+	virtual void Build();
 	 
 	// @resource = EResource::None returns the produced resource
 	virtual FResource HandOutResource( EResource in resource = EResource::None);

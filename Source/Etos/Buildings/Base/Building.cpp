@@ -184,7 +184,7 @@ void ABuilding::PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEv
 }
 #endif
 
-void ABuilding::OnBuild()
+void ABuilding::Build()
 {
 	Data.PathConnections = Data.PossibleConnections;
 	Data.PossibleConnections.Empty();
@@ -212,7 +212,7 @@ void ABuilding::OnBuild()
 
 	OnBuild_ParticleSystem->Activate(true);
 
-	BuildEvent.Broadcast(this);
+	OnBuilt.Broadcast(this);
 
 	Data.bIsBuilt = true;
 }
@@ -615,7 +615,7 @@ void ABuilding::BuildingEnteredRadius(UPrimitiveComponent * OverlappedComponent,
 		{
 			if (this->Data.bIsBuilt)
 			{
-				building->BuildEvent.AddDynamic(this, &ABuilding::AddNewBuildingInRange);
+				building->OnBuilt.AddDynamic(this, &ABuilding::AddNewBuildingInRange);
 			}
 		}
 	}
@@ -643,7 +643,7 @@ void ABuilding::BuildingLeftRadius(UPrimitiveComponent * OverlappedComponent, AA
 		{
 			if (this->Data.bIsBuilt)
 			{
-				building->BuildEvent.RemoveDynamic(this, &ABuilding::AddNewBuildingInRange);
+				building->OnBuilt.RemoveDynamic(this, &ABuilding::AddNewBuildingInRange);
 			}
 		}
 	}

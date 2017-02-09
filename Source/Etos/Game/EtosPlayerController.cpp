@@ -860,6 +860,16 @@ void AEtosPlayerController::StartDemolishMode()
 	SetDemolishMode(true);
 }
 
+bool AEtosPlayerController::GetWarehouseWasBuilt()
+{
+	return bWarehouseWasBuilt;
+}
+
+bool AEtosPlayerController::GetMarketWasBuilt()
+{
+	return bMarketWasBuilt;
+}
+
 bool AEtosPlayerController::RemoveInvalidSaveGamesFromMeta(TArray<FString>in invalidSaveSlots)
 {
 	bool bRemovedAny = false;
@@ -1016,10 +1026,18 @@ void AEtosPlayerController::BuildNewBuilding_Internal(bool in skipCosts)
 		{
 			builtResidences.FindOrAdd(residence->MyLevel).Residences.AddUnique(residence);
 		}
+		else if (!bWarehouseWasBuilt)
+		{
+			bWarehouseWasBuilt = dynamic_cast<AWarehouse*, ABuilding>(newBuilding) != nullptr;
+		}
+		else if (!bMarketWasBuilt)
+		{
+			bMarketWasBuilt = dynamic_cast<ATownCenter*, ABuilding>(newBuilding) != nullptr;
+		}
 
 		newBuilding->OnDestroyed.AddDynamic(this, &AEtosPlayerController::OnBuildingDestroyed);
 
-		newBuilding->OnBuild();
+		newBuilding->Build();
 	}
 }
 
