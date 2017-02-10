@@ -24,6 +24,8 @@ public:
 
 public:
 
+	UUtilityFunctionLibrary();
+
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static class AEtosGameMode* GetEtosGameMode(UObject* WorldContextObject);
 

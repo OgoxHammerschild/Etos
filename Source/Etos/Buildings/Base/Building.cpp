@@ -52,19 +52,19 @@ ABuilding::ABuilding()
 
 	if (!ResourcePopup)
 	{
-		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopup_2017-01-11-21-50-04.BP_ResourcePopup'"));
+		ConstructorHelpers::FObjectFinder<UClass> popupFinder = ConstructorHelpers::FObjectFinder<UClass>(TEXT("Class'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopup.BP_ResourcePopup_C'"));
 		if (popupFinder.Succeeded())
 		{
-			ResourcePopup = (UClass*)popupFinder.Object->GeneratedClass;
+			ResourcePopup = popupFinder.Object;
 		}
 	}
 
 	if (!ResourcePopupList)
 	{
-		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopupList_2017-01-11-21-49-32.BP_ResourcePopupList'"));
+		ConstructorHelpers::FObjectFinder<UClass> popupFinder = ConstructorHelpers::FObjectFinder<UClass>(TEXT("Class'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopupList.BP_ResourcePopupList_C'"));
 		if (popupFinder.Succeeded())
 		{
-			ResourcePopupList = (UClass*)popupFinder.Object->GeneratedClass;
+			ResourcePopupList = popupFinder.Object;
 		}
 	}
 
