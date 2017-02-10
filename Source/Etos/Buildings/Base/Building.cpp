@@ -46,21 +46,25 @@ ABuilding::ABuilding()
 	Radius->SetSphereRadius(Data.Radius);
 	Radius->SetCanEverAffectNavigation(false);
 
+	OnBuild_ParticleSystem = CreateDefaultSubobject<UParticleSystemComponent>("OnBuild ParticleSystem");
+	OnBuild_ParticleSystem->SetupAttachment(RootComponent);
+	OnBuild_ParticleSystem->bAutoActivate = false;
+
 	if (!ResourcePopup)
 	{
-		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopup_2017-01-11-21-50-04.BP_ResourcePopup'"));
+		ConstructorHelpers::FObjectFinder<UClass> popupFinder = ConstructorHelpers::FObjectFinder<UClass>(TEXT("Class'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopup.BP_ResourcePopup_C'"));
 		if (popupFinder.Succeeded())
 		{
-			ResourcePopup = (UClass*)popupFinder.Object->GeneratedClass;
+			ResourcePopup = popupFinder.Object;
 		}
 	}
 
 	if (!ResourcePopupList)
 	{
-		ConstructorHelpers::FObjectFinder<UBlueprint> popupFinder = ConstructorHelpers::FObjectFinder<UBlueprint>(TEXT("Blueprint'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopupList_2017-01-11-21-49-32.BP_ResourcePopupList'"));
+		ConstructorHelpers::FObjectFinder<UClass> popupFinder = ConstructorHelpers::FObjectFinder<UClass>(TEXT("Class'/Game/Blueprints/UI/ResourcePopup/BP_ResourcePopupList.BP_ResourcePopupList_C'"));
 		if (popupFinder.Succeeded())
 		{
-			ResourcePopupList = (UClass*)popupFinder.Object->GeneratedClass;
+			ResourcePopupList = popupFinder.Object;
 		}
 	}
 
@@ -180,7 +184,7 @@ void ABuilding::PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEv
 }
 #endif
 
-void ABuilding::OnBuild()
+void ABuilding::Build()
 {
 	Data.PathConnections = Data.PossibleConnections;
 	Data.PossibleConnections.Empty();
@@ -206,7 +210,9 @@ void ABuilding::OnBuild()
 		PC->UpdateUpkeep(Data.Upkeep);
 	}
 
-	BuildEvent.Broadcast(this);
+	OnBuild_ParticleSystem->Activate(true);
+
+	OnBuilt.Broadcast(this);
 
 	Data.bIsBuilt = true;
 }
@@ -609,7 +615,7 @@ void ABuilding::BuildingEnteredRadius(UPrimitiveComponent * OverlappedComponent,
 		{
 			if (this->Data.bIsBuilt)
 			{
-				building->BuildEvent.AddDynamic(this, &ABuilding::AddNewBuildingInRange);
+				building->OnBuilt.AddDynamic(this, &ABuilding::AddNewBuildingInRange);
 			}
 		}
 	}
@@ -637,7 +643,7 @@ void ABuilding::BuildingLeftRadius(UPrimitiveComponent * OverlappedComponent, AA
 		{
 			if (this->Data.bIsBuilt)
 			{
-				building->BuildEvent.RemoveDynamic(this, &ABuilding::AddNewBuildingInRange);
+				building->OnBuilt.RemoveDynamic(this, &ABuilding::AddNewBuildingInRange);
 			}
 		}
 	}
@@ -732,15 +738,29 @@ FORCEINLINE AEtosPlayerController * ABuilding::GetMyPlayerController()
 	return MyPlayerController;
 }
 
-void ABuilding::RefreshBuildingsInRadius()
+void ABuilding::RefreshBuildingsInRadius(bool useSphereTrace)
 {
 	TArray<ABuilding*> OverlappingBulidings;
-	GetOverlappingBulidings(OverlappingBulidings);
+
+	if (useSphereTrace)
+	{
+		OverlappingBulidings = GetBuildingsInRange();
+	}
+	else
+	{
+		GetOverlappingBulidings(OverlappingBulidings);
+	}
 
 	if (Data.BuildingsInRadius.Num() != OverlappingBulidings.Num())
 	{
 		Data.BuildingsInRadius = OverlappingBulidings;
 	}
+}
+
+FVector2Di ABuilding::GetRotatedSize()
+{
+	FRotator rotation = GetActorRotation();
+	return FMath::Abs(FMath::RoundToInt(rotation.Yaw) % 180) == 90 ? FVector2Di(Height, Width) : FVector2Di(Width, Height);
 }
 
 void ABuilding::OnBuildingDestroyed(AActor * DestroyedActor)
@@ -756,7 +776,7 @@ void ABuilding::OnBuildingDestroyed(AActor * DestroyedActor)
 
 void ABuilding::AddNewBuildingInRange(ABuilding * buildingInRange)
 {
-	if (buildingInRange && !buildingInRange->IsPendingKillOrUnreachable())
+	if (buildingInRange->IsValidLowLevel())
 	{
 		Data.BuildingsInRadius.AddUnique(buildingInRange);
 	}
@@ -820,7 +840,7 @@ void ABuilding::GetNeededResources()
 	{
 		if (BP_MarketBarrow)
 		{
-			RefreshBuildingsInRadius();
+			RefreshBuildingsInRadius(true);
 
 			Data.BuildingsInRadius.Sort([](ABuilding in A, ABuilding in B)
 			{
@@ -870,7 +890,7 @@ void ABuilding::MoveToMouseLocation()
 	FHitResult Hit;
 	if (Util::TraceSingleAtMousePosition(this, Hit))
 	{
-		SetActorLocation(BFuncs::GetNextGridLocation(Hit.ImpactPoint, FVector2Di(Width, Height)));
+		SetActorLocation(BFuncs::GetNextGridLocation(Hit.ImpactPoint, GetRotatedSize()));
 		bMovedOnce = true;
 	}
 }

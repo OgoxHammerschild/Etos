@@ -35,7 +35,7 @@ void UInGameUI::SetBuildCostsPanel(UVerticalBox * panel)
 
 void UInGameUI::LinkTextToResource(UTextBlock* text, EResource resource)
 {
-	resourceTexts.Emplace(resource, text);
+	resourceTexts.Add(resource, text);
 }
 
 void UInGameUI::SetPopulationTexts(UTextBlock* population, UTextBlock* peasants, UTextBlock* citizens)
@@ -64,18 +64,9 @@ void UInGameUI::UpdateResourceAmounts()
 			FFormatNamedArguments args;
 			args.Add(TEXT("amount"), amount);
 
-			//const UEnum* enumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EResource"), true);
-			//if (enumPtr)
-			//{
-			//	FString resourceName = enumPtr->GetEnumName((int32)elem.Key);
-			args.Add(TEXT("resourceName"), FText::FromString(Enum::ToString(elem.Key)));
+			//args.Add(TEXT("resourceName"), FText::FromString(Enum::ToString(elem.Key)));
 
-			elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", "{resourceName}: {amount}"), args));
-			//}
-			//else
-			//{
-			//	elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", "{amount}"), args));
-			//}
+			elem.Value->SetText(FText::Format(LOCTEXT("RESOURCE_AMOUNT", /*"{resourceName}: */"{amount}"), args));
 		}
 	}
 }
@@ -367,10 +358,9 @@ void UInGameUI::CreateButtons()
 					if (tempButton)
 					{
 						tempButton->Data = FBuildingData(*preDefData);
+						tempButton->Enabled = preDefData->BuildingButtonEnabled;
 
-						//check(button->BuildingIcon);
-						//button->BuildingIcon->SetBrushFromTexture(button->Data.BuildingIcon);
-						tempButton->IconusRectus = tempButton->Data.BuildingIcon;
+						tempButton->IconTexture = tempButton->Data.BuildingIcon;
 
 						tempButton->Building = preDefData->BuildingBlueprint;
 						tempButton->SetPadding(FMargin(5));
@@ -398,7 +388,7 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 
 		if (auto layout = resources.FindOrAdd(resource.Key))
 		{
-			layout->Resource = FResource(resource.Key, resource.Value);
+			layout->Resource = FResource(resource.Key, resource.Value, Util::GetIcon(resource.Key));
 		}
 		else if (ResourceLayoutBlueprint)
 		{
@@ -407,7 +397,7 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 				tempLayout = CreateWidget<UResourceLayout>(PlayerController, ResourceLayoutBlueprint);
 				if (tempLayout)
 				{
-					tempLayout->Resource = FResource(resource.Key, resource.Value);
+					tempLayout->Resource = FResource(resource.Key, resource.Value, Util::GetIcon(resource.Key));
 					tempLayout->MaxStoredResources = 100;
 					tempLayout->ToolTipText = FText::FromString(Enum::ToString(resource.Key));
 					tempLayout->SetPadding(FMargin(10));

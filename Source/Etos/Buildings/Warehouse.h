@@ -32,7 +32,7 @@ protected:
 
 	virtual void BindDelayAction() override;
 
-	virtual void OnBuild() override;
+	virtual void Build() override;
 
 private:
 

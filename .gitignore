@@ -62,15 +62,12 @@ Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
-/Source/Etos/Buildings/Base/Building.cpp~RF97b8792.TMP
-/OpenDocument Tabellendokument (neu).ods
-/Source/Etos/MySceneComponent.h
-/Source/Etos/MySceneComponent.cpp
+
 /Content/StarterContent
 /enc_temp_folder
 /Content/Blueprints/Pawns/PeasantMan
 *.fbx
-/Content/Materials
-
 /Content/Meshes
 /Content/Textures
+/Content/Blueprints/Buildings/Chapel/Textures
+/Content/Blueprints/Buildings/Toolmaker/Textures

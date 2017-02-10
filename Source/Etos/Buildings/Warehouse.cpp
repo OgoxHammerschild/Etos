@@ -63,14 +63,14 @@ void AWarehouse::BindDelayAction()
 	Action.BindDynamic(this, &AWarehouse::SendMarketBarrows);
 }
 
-void AWarehouse::OnBuild()
+void AWarehouse::Build()
 {
 	if (GetMyPlayerController())
 	{
 		MyPlayerController->UpdateStorage(storageSpace);
 	}
 
-	Super::OnBuild();
+	Super::Build();
 }
 
 void AWarehouse::SendMarketBarrows()
@@ -79,7 +79,7 @@ void AWarehouse::SendMarketBarrows()
 	{
 		RefreshBuildingsInRadius();
 
-		Data.BuildingsInRadius.Sort([]( ABuilding in A,  ABuilding in B)
+		Data.BuildingsInRadius.Sort([](ABuilding in A, ABuilding in B)
 		{
 			return A.Data.ProducedResource.Amount > B.Data.ProducedResource.Amount;
 		});
@@ -92,20 +92,23 @@ void AWarehouse::SendMarketBarrows()
 			{
 				if (BarrowsInUse < MaxBarrows)
 				{
-					int32 producedAmount = building->Data.ProducedResource.Amount;
-					if (building && producedAmount > 0 && MyPlayerController->GetResourceAmount(building->Data.ProducedResource.Type) + producedAmount <= totalStorage)
+					if (building)
 					{
-						if (!building->Data.bBarrowIsOnTheWay)
+						int32 producedAmount = building->Data.ProducedResource.Amount;
+						if (producedAmount > 0 && MyPlayerController->GetResourceAmount(building->Data.ProducedResource.Type) + producedAmount <= totalStorage)
 						{
-							APath* start; APath* goal;
-							if (BFuncs::FindPath(this, building, start, goal))
+							if (!building->Data.bBarrowIsOnTheWay)
 							{
-								if (start && goal)
+								APath* start; APath* goal;
+								if (BFuncs::FindPath(this, building, start, goal))
 								{
-									SendMarketBarrow_Internal(building, // target building
-										building->Data.ProducedResource.Type, // ordered resource
-										start->GetActorLocation() + FVector(0, 0, 100), // spawn location
-										goal->GetActorLocation()); // target location
+									if (start && goal)
+									{
+										SendMarketBarrow_Internal(building, // target building
+											building->Data.ProducedResource.Type, // ordered resource
+											start->GetActorLocation() + FVector(0, 0, 100), // spawn location
+											goal->GetActorLocation()); // target location
+									}
 								}
 							}
 						}

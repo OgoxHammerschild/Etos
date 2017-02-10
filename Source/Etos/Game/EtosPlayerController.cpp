@@ -16,6 +16,8 @@
 #include "Etos/Game/EtosSaveGame.h"
 #include "Kismet/GameplayStatics.h"
 #include "Etos/UI/ResourcePopup.h"
+#include "EtosMetaSaveGame.h"
+#include "Etos/Utility/FunctionLibraries/WarningDialogueFunctions.h"
 
 void AEtosPlayerController::BeginPlay()
 {
@@ -24,7 +26,7 @@ void AEtosPlayerController::BeginPlay()
 	bEnableClickEvents = true;
 	bEnableMouseOverEvents = true;
 
-	AddHUDToViewport();
+	AddGUIToViewport();
 	UpdatePopulation(EResidentLevel::Peasant, 0); // updates UI
 	UpdateBalanceUI(totalIncome, totalUpkeep);
 	InitResourceMapping();
@@ -65,17 +67,18 @@ void AEtosPlayerController::Tick(float DeltaTime)
 void AEtosPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	InputComponent->BindAction("Build", IE_Pressed, this, &AEtosPlayerController::BuildNewBuilding);
-	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame).bExecuteWhenPaused = true;
-	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu).bExecuteWhenPaused = true;
-	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly);
-	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding);
-	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding);
-	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding);
+	InputComponent->BindAction("Build", IE_Pressed, this, &AEtosPlayerController::BuildNewBuilding); // LMB
+	InputComponent->BindAction("Pause", IE_Pressed, this, &AEtosPlayerController::PauseGame).bExecuteWhenPaused = true; // P
+	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu).bExecuteWhenPaused = true; // ESC
+	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly); // Shift + LMB
+	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding).bConsumeInput = false; // RMB
+	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding); // LMB
+	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding); // LMB
+	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding); // ,
 
 #if WITH_EDITOR
-	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::Save);
-	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::Load);
+	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::QuickSave); // F5
+	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::QuickLoad); // F9
 #endif
 }
 
@@ -441,8 +444,24 @@ void AEtosPlayerController::DemolishBuilding(FKey key)
 		{
 			if (ABuilding* const building = dynamic_cast<ABuilding*, AActor>(&*Hit.Actor))
 			{
+				if (OnDemolish.IsBound())
+				{
+					OnDemolish.Broadcast(building);
+				}
 				building->Demolish();
 			}
+		}
+	}
+}
+
+void AEtosPlayerController::RotateHeldBuilding(FKey key)
+{
+	if (bIsHoldingObject)
+	{
+		if (!newBuilding->Data.bIsBuilt)
+		{
+			FRotator rotation = newBuilding->GetActorRotation();
+			newBuilding->SetActorRotation(FRotator(0, FMath::RoundToInt(rotation.Yaw) % 360 + 90, 0));
 		}
 	}
 }
@@ -453,6 +472,21 @@ void AEtosPlayerController::OnBuildingDestroyed(AActor * DestroyedActor)
 	{
 		ReportDestroyedBuilding(building);
 	}
+}
+
+void AEtosPlayerController::SaveToTempSlot()
+{
+	Save(tempSaveSlotName);
+}
+
+void AEtosPlayerController::LoadFromTempSlot()
+{
+	Load(tempSaveSlotName);
+}
+
+void AEtosPlayerController::LoadLatestSaveGame_Wrapper()
+{
+	LoadLatestSaveGame();
 }
 
 void AEtosPlayerController::AddIncome(float in DeltaTime)
@@ -559,11 +593,22 @@ void AEtosPlayerController::ReportDestroyedBuilding(ABuilding * in destroyedBuil
 	}
 }
 
-void AEtosPlayerController::Save()
+bool AEtosPlayerController::Save(FString SaveSlotName)
 {
-	//UGameplayStatics::DoesSaveGameExist...
+	//if (UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
+	//{
+		// display warning
+		//if (warning says no)
+		//{
+		//	return false;
+		//}
+	//}
+
 	UEtosSaveGame* SaveGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosSaveGame::StaticClass()));
 	SaveGameInstance->PlayerName = TEXT("Player 1");
+	SaveGameInstance->SaveSlotName = SaveSlotName;
+	SaveGameInstance->UserIndex = 0;
+
 	SaveGameInstance->ResourceAmounts = this->resourceAmounts;
 	SaveGameInstance->PopulationPerLevel = this->populationPerLevel;
 	SaveGameInstance->UsedPromotions = this->usedPromotions;
@@ -598,19 +643,36 @@ void AEtosPlayerController::Save()
 		}
 	}
 
-	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->SaveSlotName, SaveGameInstance->UserIndex);
+	if (UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->SaveSlotName, SaveGameInstance->UserIndex))
+	{
+		return AddSlotNameToMeta(SaveGameInstance->SaveSlotName);
+	}
+	return false;
 }
 
-void AEtosPlayerController::Load()
+void AEtosPlayerController::SaveWithWarning(FString SaveSlotName)
 {
-	if (!UGameplayStatics::DoesSaveGameExist(TEXT("NewSaveGame"), 0))
+	tempSaveSlotName = SaveSlotName;
+
+	if (auto HUD = Util::GetEtosHUD(this))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("NewSaveGame was not found"));
-		return;
+		checkf(HUD->wWarning, TEXT("No default Warning Widget was selected for EtosHUD"));
+
+		FWarning::ShowWarningDialogue(AEtosPlayerController, UObject, this, HUD->wWarning, this, &AEtosPlayerController::SaveToTempSlot, nullptr, nullptr);
+	}
+}
+
+bool AEtosPlayerController::Load(FString SaveSlotName)
+{
+	if (!UGameplayStatics::DoesSaveGameExist(SaveSlotName, 0))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s was not found"), *SaveSlotName);
+		RemoveSlotNameFromMeta(SaveSlotName);
+		return false;
 	}
 
 	UEtosSaveGame* LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosSaveGame::StaticClass()));
-	LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->SaveSlotName, LoadGameInstance->UserIndex));
+	LoadGameInstance = Cast<UEtosSaveGame>(UGameplayStatics::LoadGameFromSlot(SaveSlotName, LoadGameInstance->UserIndex));
 
 	if (LoadGameInstance->IsValidLowLevel())
 	{
@@ -723,7 +785,64 @@ void AEtosPlayerController::Load()
 				}
 			}
 		}
+		return true;
 	}
+	return false;
+}
+
+void AEtosPlayerController::LoadWithWarning(FString SaveSlotName)
+{
+	tempSaveSlotName = SaveSlotName;
+
+	if (auto HUD = Util::GetEtosHUD(this))
+	{
+		checkf(HUD->wWarning, TEXT("No default Warning Widget was selected for EtosHUD"));
+
+		FWarning::ShowWarningDialogue(AEtosPlayerController, UObject, this, HUD->wWarning, this, &AEtosPlayerController::LoadFromTempSlot, nullptr, nullptr);
+	}
+}
+
+bool AEtosPlayerController::LoadLatestSaveGame()
+{
+	if (auto* MetaSaveGameInstance = GetMetaSaveGame())
+	{
+		TArray<FDateTime> saveDates;
+		MetaSaveGameInstance->SaveSlots.GenerateValueArray(saveDates);
+		saveDates.Sort();
+
+		FString latestSlotName = *MetaSaveGameInstance->SaveSlots.FindKey(saveDates.Last());
+
+		if (UGameplayStatics::DoesSaveGameExist(latestSlotName, 0))
+		{
+			return Load(latestSlotName);
+		}
+		else
+		{
+			RemoveSlotNameFromMeta(latestSlotName);
+		}
+	}
+
+	return false;
+}
+
+void AEtosPlayerController::LoadLatestSaveGameWithWarning()
+{
+	if (auto HUD = Util::GetEtosHUD(this))
+	{
+		checkf(HUD->wWarning, TEXT("No default Warning Widget was selected for EtosHUD"));
+
+		FWarning::ShowWarningDialogue(AEtosPlayerController, UObject, this, HUD->wWarning, this, &AEtosPlayerController::LoadLatestSaveGame_Wrapper, nullptr, nullptr);
+	}
+}
+
+void AEtosPlayerController::QuickSave()
+{
+	Save(TEXT("QuickSave"));
+}
+
+void AEtosPlayerController::QuickLoad()
+{
+	Load(TEXT("QuickSave"));
 }
 
 void AEtosPlayerController::TogglePause()
@@ -738,10 +857,41 @@ void AEtosPlayerController::ToggleGameMenu()
 
 void AEtosPlayerController::StartDemolishMode()
 {
-	bIsInDemolishMode = true;
+	SetDemolishMode(true);
 }
 
-FORCEINLINE void AEtosPlayerController::AddHUDToViewport()
+bool AEtosPlayerController::GetWarehouseWasBuilt()
+{
+	return bWarehouseWasBuilt;
+}
+
+bool AEtosPlayerController::GetMarketWasBuilt()
+{
+	return bMarketWasBuilt;
+}
+
+bool AEtosPlayerController::RemoveInvalidSaveGamesFromMeta(TArray<FString>in invalidSaveSlots)
+{
+	bool bRemovedAny = false;
+
+	if (invalidSaveSlots.Num() > 0)
+	{
+		for (auto& slotName : invalidSaveSlots)
+		{
+			if (!UGameplayStatics::DoesSaveGameExist(slotName, 0))
+			{
+				if (RemoveSlotNameFromMeta(slotName))
+				{
+					bRemovedAny = true;
+				}
+			}
+		}
+	}
+
+	return bRemovedAny;
+}
+
+FORCEINLINE void AEtosPlayerController::AddGUIToViewport()
 {
 #if WITH_EDITOR
 	try
@@ -813,7 +963,7 @@ void AEtosPlayerController::CancelPlacementOfBuilding(FKey key)
 
 	if (bIsInDemolishMode)
 	{
-		bIsInDemolishMode = false;
+		SetDemolishMode(false);
 	}
 }
 
@@ -840,7 +990,7 @@ ABuilding * AEtosPlayerController::SpawnBuilding_Internal(UClass * in Class, FBu
 	if (bIsHoldingObject)
 		CancelPlacementOfBuilding(FKey());
 
-	bIsInDemolishMode = false;
+	SetDemolishMode(false);
 
 	if (!Class)
 		return nullptr;
@@ -876,10 +1026,18 @@ void AEtosPlayerController::BuildNewBuilding_Internal(bool in skipCosts)
 		{
 			builtResidences.FindOrAdd(residence->MyLevel).Residences.AddUnique(residence);
 		}
+		else if (!bWarehouseWasBuilt)
+		{
+			bWarehouseWasBuilt = dynamic_cast<AWarehouse*, ABuilding>(newBuilding) != nullptr;
+		}
+		else if (!bMarketWasBuilt)
+		{
+			bMarketWasBuilt = dynamic_cast<ATownCenter*, ABuilding>(newBuilding) != nullptr;
+		}
 
 		newBuilding->OnDestroyed.AddDynamic(this, &AEtosPlayerController::OnBuildingDestroyed);
 
-		newBuilding->OnBuild();
+		newBuilding->Build();
 	}
 }
 
@@ -1000,4 +1158,57 @@ void AEtosPlayerController::UpdateBalanceUI(int32 in income, int32 in upkeep)
 	{
 		GUI->UpdateBalance(income, upkeep);
 	}
+}
+
+bool AEtosPlayerController::AddSlotNameToMeta(FString in slotName)
+{
+	UEtosMetaSaveGame* MetaSaveGameInstance = GetMetaSaveGame();
+
+	MetaSaveGameInstance->SaveSlots.Add(slotName, FDateTime::Now());
+
+	return UGameplayStatics::SaveGameToSlot(MetaSaveGameInstance, MetaSaveGameInstance->SaveSlotName, 0);
+}
+
+bool AEtosPlayerController::RemoveSlotNameFromMeta(FString in slotName)
+{
+	UEtosMetaSaveGame* MetaSaveGameInstance = GetMetaSaveGame();
+
+	MetaSaveGameInstance->SaveSlots.Remove(slotName);
+
+	return UGameplayStatics::SaveGameToSlot(MetaSaveGameInstance, MetaSaveGameInstance->SaveSlotName, 0);
+}
+
+void AEtosPlayerController::SetDemolishMode(bool in newState)
+{
+	if (newState != bIsInDemolishMode)
+	{
+		bIsInDemolishMode = newState;
+
+		if (bIsInDemolishMode)
+		{
+			CurrentMouseCursor = EMouseCursor::Crosshairs;
+		}
+		else
+		{
+			CurrentMouseCursor = EMouseCursor::Default;
+		}
+	}
+}
+
+UEtosMetaSaveGame * AEtosPlayerController::GetMetaSaveGame()
+{
+	FString metaName = TEXT("Meta");
+	UEtosMetaSaveGame* MetaSaveGameInstance = Cast<UEtosMetaSaveGame>(UGameplayStatics::CreateSaveGameObject(UEtosMetaSaveGame::StaticClass()));
+	if (UGameplayStatics::DoesSaveGameExist(metaName, 0))
+	{
+		MetaSaveGameInstance = Cast<UEtosMetaSaveGame>(UGameplayStatics::LoadGameFromSlot(metaName, 0));
+	}
+	else
+	{
+		MetaSaveGameInstance->PlayerName = TEXT("Player 1");
+		MetaSaveGameInstance->SaveSlotName = metaName;
+		MetaSaveGameInstance->UserIndex = 0;
+	}
+
+	return MetaSaveGameInstance;
 }

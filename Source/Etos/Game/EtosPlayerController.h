@@ -3,11 +3,15 @@
 #pragma once
 
 class AResidence;
+class UEtosMetaSaveGame;
+
 #include "Etos/Utility/InOut.h"
 #include "Etos/ObjectPool/ObjectPool.h"
 #include "Etos/Buildings/Base/Building.h"
 #include "GameFramework/PlayerController.h"
 #include "EtosPlayerController.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDemolishDelegate, ABuilding*, DemolishedBuilding);
 
 USTRUCT()
 struct FResidenceArray
@@ -35,6 +39,9 @@ private:
 
 	UPROPERTY()
 		bool bIsInDemolishMode = false;
+
+	UPROPERTY(BlueprintAssignable, Category = "Demolish")
+		FOnDemolishDelegate OnDemolish;
 
 	UPROPERTY(VisibleAnywhere)
 		TMap<EResource, int32> resourceAmounts;
@@ -90,6 +97,15 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 		float payedIncome = 0;
+
+	UPROPERTY()
+		FString tempSaveSlotName;
+
+	UPROPERTY()
+		bool bWarehouseWasBuilt = false;
+
+	UPROPERTY()
+		bool bMarketWasBuilt = false;
 
 public:
 
@@ -151,11 +167,36 @@ public:
 
 	void StartDemolishMode();
 
-	UFUNCTION(BlueprintCallable, Category = "Save / Load")
-		void Save();
+	bool GetWarehouseWasBuilt();
+
+	bool GetMarketWasBuilt();
+
+	// returns: whether any save games were removed from meta
+	bool RemoveInvalidSaveGamesFromMeta(TArray<FString> in invalidSaveSlots);
 
 	UFUNCTION(BlueprintCallable, Category = "Save / Load")
-		void Load();
+		bool Save(FString SaveSlotName = TEXT("NewSaveGame"));
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void SaveWithWarning(FString SaveSlotName = TEXT("NewSaveGame"));
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		bool Load(FString SaveSlotName = TEXT("NewSaveGame"));
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void LoadWithWarning(FString SaveSlotName = TEXT("NewSaveGame"));
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		bool LoadLatestSaveGame();
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void LoadLatestSaveGameWithWarning();
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void QuickSave();
+
+	UFUNCTION(BlueprintCallable, Category = "Save / Load")
+		void QuickLoad();
 
 	UFUNCTION(BlueprintCallable, Category = "Pause")
 		void TogglePause();
@@ -187,13 +228,25 @@ private:
 		void DemolishBuilding(FKey key);
 
 	UFUNCTION()
+		void RotateHeldBuilding(FKey key);
+
+	UFUNCTION()
 		void OnBuildingDestroyed(AActor* DestroyedActor);
+
+	UFUNCTION()
+		void SaveToTempSlot();
+
+	UFUNCTION()
+		void LoadFromTempSlot();
+
+	UFUNCTION()
+		void LoadLatestSaveGame_Wrapper();
 
 	void AddIncome(float in DeltaTime);
 
 	//ABuilding* GetBuildingUnderCursor();
 
-	void AddHUDToViewport();
+	void AddGUIToViewport();
 
 	void Panic(std::exception in e);
 
@@ -215,7 +268,15 @@ private:
 
 	void DestroyPathPreview(APath* in tempPath);
 
-	void UpdatePopulationUI( int32 in peasants,  int32 in citizens);
+	void UpdatePopulationUI(int32 in peasants, int32 in citizens);
 
-	void UpdateBalanceUI( int32 in income,  int32 in upkeep);
+	void UpdateBalanceUI(int32 in income, int32 in upkeep);
+
+	bool AddSlotNameToMeta(FString in slotName);
+
+	bool RemoveSlotNameFromMeta(FString in slotName);
+
+	void SetDemolishMode(bool in newState);
+
+	UEtosMetaSaveGame* GetMetaSaveGame();
 };

@@ -24,7 +24,25 @@ public:
 private:
 
 	UPROPERTY()
+		class AEtosPlayerController* myPlayerController;
+
+	UPROPERTY()
 		bool bRotateCamera = false;
+
+	UPROPERTY()
+		bool bPanCamera = false;
+	
+	UPROPERTY()
+		bool bPanCamera_IE_Repeat = false;
+
+	UPROPERTY()
+		FVector2D panningStartPosition;
+
+	UPROPERTY()
+		float panningSpeed = 1.5f;
+
+	UPROPERTY()
+		float panningThreshold = 20;
 
 	UPROPERTY()
 		float cameraZAngle = 0.f;
@@ -68,6 +86,8 @@ public:
 	// Sets default values for this pawn's properties
 	ARTSCamera();
 
+	virtual void Tick(float DeltaTime) override;
+
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
@@ -86,6 +106,15 @@ private:
 
 	UFUNCTION()
 		void StopRotation(FKey key);
+
+	UFUNCTION()
+		void StartPanning(FKey key);
+
+	UFUNCTION()
+		void Pan(FKey key);
+
+	UFUNCTION()
+		void StopPanning(FKey key);
 
 	UFUNCTION()
 		void Turn(float axisValue);

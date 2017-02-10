@@ -49,7 +49,7 @@ private:
 	UPROPERTY()
 		float checkWinTimerPassed = 0;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		int32 populationWinAmount = 200;
 
 public:

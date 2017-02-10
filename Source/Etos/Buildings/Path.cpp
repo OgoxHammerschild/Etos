@@ -8,7 +8,7 @@ APath::APath()
 	FoundationMesh->SetCanEverAffectNavigation(false);
 }
 
-void APath::OnBuild()
+void APath::Build()
 {
 	FoundationMesh->SetCanEverAffectNavigation(true);
 
@@ -35,7 +35,7 @@ void APath::OnBuild()
 void APath::ReconnectToSurroundings()
 {
 	GetSurroundingBuildings();
-	OnBuild();
+	Build();
 }
 
 void APath::CreateTracePoints()

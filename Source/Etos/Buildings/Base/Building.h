@@ -45,6 +45,9 @@ public:
 	UPROPERTY()
 		USphereComponent* Radius;
 
+	UPROPERTY(EditAnywhere)
+		UParticleSystemComponent* OnBuild_ParticleSystem;
+
 public:
 
 	UPROPERTY(EditDefaultsOnly)
@@ -77,8 +80,8 @@ protected:
 	UPROPERTY()
 		FDelayedActionDelegate Action;
 
-	UPROPERTY()
-		FBuildingDelegate BuildEvent;
+	UPROPERTY(BlueprintAssignable, Category = "Build")
+		FBuildingDelegate OnBuilt;
 
 	UPROPERTY(VisibleAnywhere)
 		int32 BarrowsInUse = 0;
@@ -135,8 +138,8 @@ public:
 
 	virtual void BeginDestroy() override;
 
-	virtual void OnBuild();
-
+	virtual void Build();
+	 
 	// @resource = EResource::None returns the produced resource
 	virtual FResource HandOutResource( EResource in resource = EResource::None);
 
@@ -206,7 +209,10 @@ protected:
 
 	AEtosPlayerController * GetMyPlayerController();
 
-	void RefreshBuildingsInRadius();
+	// @useSphereTrace = if true, traces a sphere with the size of the radius, otherwise uses sphere collider
+	void RefreshBuildingsInRadius(bool useSphereTrace = false);
+
+	FVector2Di GetRotatedSize();
 
 	UFUNCTION()
 		void OnBuildingDestroyed(AActor* DestroyedActor);
