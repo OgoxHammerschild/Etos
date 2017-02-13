@@ -44,7 +44,7 @@ AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassO
 // called by garbage collection (default 60sec interval)
 void AMarketBarrow::BeginDestroy()
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s: Fuck this shit I'm out"), *GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("%s: Fuck this shit I'm out"), *GetName());
 
 	CheckOut_Checked();
 

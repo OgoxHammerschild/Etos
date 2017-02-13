@@ -74,4 +74,7 @@ public:
 
 	// Returns the payed Tax per Resident per Minute for the specified ResidentLevel
 	float GetBaseTaxForResident(const EResidentLevel& level);
+
+	UFUNCTION(BlueprintPure, Category = GameMode)
+		int32 GetPopulationWinAmount();
 };

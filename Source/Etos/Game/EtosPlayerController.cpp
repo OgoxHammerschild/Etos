@@ -238,9 +238,12 @@ FORCEINLINE void AEtosPlayerController::PauseGame(FKey key)
 	{
 		if (auto* const World = GetWorld())
 		{
-			if (auto* const Viewport = World->GetGameViewport())
+			if (auto* const HUD = Util::GetEtosHUD(this))
 			{
-				Viewport->RemoveAllViewportWidgets();
+				if (auto* const PausedScreen = HUD->GetPausedScreen())
+				{
+					PausedScreen->RemoveFromParent();
+				}
 			}
 		}
 
@@ -360,13 +363,17 @@ inline void AEtosPlayerController::BuildNewBuilding(FKey key)
 void AEtosPlayerController::ShowGameMenu(FKey key)
 {
 	PauseGame(key);
-	if (IsPaused())
+	if (auto* const HUD = Util::GetEtosHUD(this))
 	{
-		if (auto* const HUD = Util::GetEtosHUD(this))
+		if (auto* const GameMenu = HUD->GetGameMenu())
 		{
-			if (auto* const GameMenu = HUD->GetGameMenu())
+			if (IsPaused())
 			{
 				GameMenu->AddToViewport();
+			}
+			else
+			{
+				GameMenu->RemoveFromParent();
 			}
 		}
 	}

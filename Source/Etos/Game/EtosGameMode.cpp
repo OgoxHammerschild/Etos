@@ -137,7 +137,7 @@ FPredefinedBuildingData* AEtosGameMode::GetPredefinedBuildingData(const int32& b
 {
 	check(PredefinedBuildingData);
 
-	// DataTable.h:97 variable swap error
+	// DataTable.h:97 variable swap error -> fixed in 4.15 or earlier
 	// UObjectGlobals.h typo in NewObject assert
 
 	FPredefinedBuildingData* preDefData = PredefinedBuildingData->FindRow<FPredefinedBuildingData>(*FString::FromInt(buildingID), FString(TEXT("GameMode")));
@@ -217,6 +217,11 @@ float AEtosGameMode::GetBaseTaxForResident(const EResidentLevel& level)
 	}
 
 	return tax;
+}
+
+int32 AEtosGameMode::GetPopulationWinAmount()
+{
+	return populationWinAmount;
 }
 
 UTexture2D * AEtosGameMode::GetDefaultTexture()
