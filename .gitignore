@@ -71,3 +71,5 @@ DerivedDataCache/*
 /Content/Textures
 /Content/Blueprints/Buildings/Chapel/Textures
 /Content/Blueprints/Buildings/Toolmaker/Textures
+*.tmp0
+*.tmp1
