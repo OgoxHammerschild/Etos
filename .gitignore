@@ -73,3 +73,4 @@ DerivedDataCache/*
 /Content/Blueprints/Buildings/Toolmaker/Textures
 *.tmp0
 *.tmp1
+/Content/Blueprints/UI/Credits/zbrush-logo.png
