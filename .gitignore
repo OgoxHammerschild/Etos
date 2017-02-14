@@ -63,14 +63,15 @@ Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
+*.fbx
+*.tmp0
+*.tmp1
 /Content/StarterContent
 /enc_temp_folder
 /Content/Blueprints/Pawns/PeasantMan
-*.fbx
 /Content/Meshes
 /Content/Textures
 /Content/Blueprints/Buildings/Chapel/Textures
 /Content/Blueprints/Buildings/Toolmaker/Textures
-*.tmp0
-*.tmp1
+/Content/Blueprints/UI/InGameUI/Textures/
 /Content/Blueprints/UI/Credits/zbrush-logo.png
