@@ -10,8 +10,17 @@ APath::APath()
 
 void APath::Build()
 {
-	FoundationMesh->SetCanEverAffectNavigation(true);
+	FVector start = GetActorLocation();
+	FVector end = start + (FVector::UpVector * 10000.f);
+	FHitResult Hit;
+	if (Util::TraceSingleForBuildings(this, start, end, Hit))
+	{
+		Demolish();
+		return;
+	}
 
+	FoundationMesh->SetCanEverAffectNavigation(true);
+	
 	Connections = PossibleConnections;
 	PossibleConnections.Empty();
 
