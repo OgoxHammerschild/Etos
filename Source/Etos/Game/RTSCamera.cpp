@@ -130,7 +130,7 @@ void ARTSCamera::Turn(float axisValue)
 {
 	if (bRotateCamera)
 	{
-		cameraZAngle += (axisValue*rotationSpeed);
+		cameraZAngle += (axisValue * rotationSpeed * UGameplayStatics::GetWorldDeltaSeconds(this));
 		UpdateCameraLocationAndRotation();
 	}
 }
@@ -139,14 +139,14 @@ void ARTSCamera::LookUp(float axisValue)
 {
 	if (bRotateCamera)
 	{
-		cameraHeightAngle = UKismetMathLibrary::Clamp(cameraHeightAngle + (axisValue*rotationSpeed), cameraHeightAngleMin, cameraHeightAngleMax);
+		cameraHeightAngle = UKismetMathLibrary::Clamp(cameraHeightAngle + (axisValue * rotationSpeed * UGameplayStatics::GetWorldDeltaSeconds(this)), cameraHeightAngleMin, cameraHeightAngleMax);
 		UpdateCameraLocationAndRotation();
 	}
 }
 
 void ARTSCamera::MoveForward(float axisValue)
 {
-	float distance = (axisValue + edgeForwardAxis)*movementSpeed;
+	float distance = (axisValue + edgeForwardAxis) * movementSpeed * UGameplayStatics::GetWorldDeltaSeconds(this);
 
 	FRotator viewRotation = FRotator(0, Camera->GetComponentRotation().Yaw, 0);
 	FVector forwardVector = UKismetMathLibrary::GetForwardVector(viewRotation);
@@ -158,7 +158,7 @@ void ARTSCamera::MoveForward(float axisValue)
 
 void ARTSCamera::MoveRight(float axisValue)
 {
-	float distance = (axisValue + edgeRightAxis)*movementSpeed;
+	float distance = (axisValue + edgeRightAxis) * movementSpeed * UGameplayStatics::GetWorldDeltaSeconds(this);
 
 	FRotator viewRotation = FRotator(0, Camera->GetComponentRotation().Yaw, 0);
 	FVector rightVector = UKismetMathLibrary::GetRightVector(viewRotation);

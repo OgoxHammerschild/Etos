@@ -38,48 +38,48 @@ private:
 	UPROPERTY()
 		FVector2D panningStartPosition;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float panningSpeed = 1.5f;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float panningThreshold = 20;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float cameraZAngle = 0.f;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float cameraHeightAngle = 27.5f;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float cameraHeightAngleMin = 10;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float cameraHeightAngleMax = 70;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float rotationSpeed = 4.0f;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float cameraRadius = 2048.f;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float zoomSpeed = 768.f;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float radiusMin = 256.f;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float radiusMax = 1792.f;
 
-	UPROPERTY()
-		float movementSpeed = 10.f;
+	UPROPERTY(EditDefaultsOnly)
+		float movementSpeed = 100.f;
 
 	//idk what that is good for
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float edgeForwardAxis = 0.f;
 
 	//idk what that is good for
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 		float edgeRightAxis = 0.f;
 
 public:
