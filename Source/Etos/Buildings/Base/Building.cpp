@@ -105,6 +105,15 @@ void ABuilding::BeginPlay()
 	GetMyPlayerController();
 }
 
+void ABuilding::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UWorld* const World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(DelayActionTimerHandle);
+	}
+	Super::EndPlay(EndPlayReason);
+}
+
 // Called every frame
 void ABuilding::Tick(float DeltaTime)
 {
@@ -112,6 +121,7 @@ void ABuilding::Tick(float DeltaTime)
 	if (Data.bIsBuilt)
 	{
 		CallDelayAction(DeltaTime, Data.ProductionTime);
+		SetActorTickEnabled(false);
 	}
 	else
 	{
@@ -186,6 +196,31 @@ void ABuilding::PostEditChangeProperty(FPropertyChangedEvent & PropertyChangedEv
 
 void ABuilding::Build()
 {
+	if (auto PC = Util::GetFirstEtosPlayerController(this))
+	{
+		PC->UpdateUpkeep(Data.Upkeep);
+	}
+
+	FVector start = GetActorLocation() - (FVector::UpVector * 100.f);
+	FVector end = start + (FVector::UpVector * 300.f);
+	FHitResult Hit;
+	if (bUseCustomBoxCollider)
+	{
+		if (Util::TraceBoxForBuildings(this, start, end, OccupiedBuildSpace_Custom->Collider->GetScaledBoxExtent(), Hit))
+		{
+			Demolish();
+			return;
+		}
+	}
+	else
+	{
+		if (Util::TraceBoxForBuildings(this, start, end, OccupiedBuildSpace->GetScaledBoxExtent(), Hit))
+		{
+			Demolish();
+			return;
+		}
+	}
+
 	Data.PathConnections = Data.PossibleConnections;
 	Data.PossibleConnections.Empty();
 
@@ -203,11 +238,7 @@ void ABuilding::Build()
 	if (bUseCustomBoxCollider)
 	{
 		OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
-	}
-
-	if (auto PC = Util::GetFirstEtosPlayerController(this))
-	{
-		PC->UpdateUpkeep(Data.Upkeep);
+		OccupiedBuildSpace_Custom->SetMobilityType(EComponentMobility::Static);
 	}
 
 	OnBuild_ParticleSystem->Activate(true);
@@ -690,18 +721,23 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 	return BuildingsInRange;
 }
 
-void ABuilding::CallDelayAction(float in pastTime, float in delayDuration)
+inline void ABuilding::CallDelayAction(float in pastTime, float in delayDuration)
 {
 	if (delayDuration <= 0)
 		return;
 
-	this->pastDelayTimerTime += pastTime;
-
-	if (this->pastDelayTimerTime >= delayDuration)
+	if (UWorld* const World = GetWorld())
 	{
-		this->pastDelayTimerTime = 0;
-		this->Action.ExecuteIfBound();
+		World->GetTimerManager().SetTimer(DelayActionTimerHandle, Action, delayDuration, true);
 	}
+
+	//this->pastDelayTimerTime += pastTime;
+
+	//if (this->pastDelayTimerTime >= delayDuration)
+	//{
+	//	this->pastDelayTimerTime = 0;
+	//	this->Action.ExecuteIfBound();
+	//}
 }
 
 void ABuilding::SpawnResourcePopup(FVector in offset)
@@ -1021,4 +1057,9 @@ void ABuilding::GetOverlappingBulidings(TArray<ABuilding*> out OverlappingBuildi
 
 		OverlappingBuildings.Add((ABuilding*)building);
 	}
+}
+
+void ABuilding::TestFunction()
+{
+	UE_LOG(LogTemp, Warning, TEXT("I was called on %s"), *GetName());
 }

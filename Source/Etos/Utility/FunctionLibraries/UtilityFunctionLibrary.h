@@ -59,6 +59,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static bool TraceSingleForFloor(UObject* WorldContextObject, const FVector& Start, const FVector& End, FHitResult& Hit);
 
+	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
+		static bool TraceBoxForBuildings(UObject * WorldContextObject, const FVector & Start, const FVector & End, const FVector & HalfSize, FHitResult & HitResult, const FRotator & Orientation = FRotator::ZeroRotator);
+
 	// Trace line at mouse position into the screen
 	// Call this from a blueprint
 	// @ObjectTypes = Considered ObjectTypes. Defaults to Floor.

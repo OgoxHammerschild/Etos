@@ -85,7 +85,7 @@ UTexture2D * UUtilityFunctionLibrary::GetDefaultTexture()
 
 UTexture2D * UUtilityFunctionLibrary::EnsureTexture(UTexture2D * Texture)
 {
-	if (Texture->IsValidLowLevel())
+	if (Texture && Texture->IsValidLowLevel())
 	{
 		return Texture;
 	}
@@ -128,6 +128,11 @@ bool UUtilityFunctionLibrary::TraceMultiForBuildings(UObject* WorldContextObject
 bool UUtilityFunctionLibrary::TraceSingleForFloor(UObject* WorldContextObject, const FVector & Start, const FVector & End, FHitResult & Hit)
 {
 	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
+}
+
+bool UUtilityFunctionLibrary::TraceBoxForBuildings(UObject * WorldContextObject, const FVector & Start, const FVector & End, const FVector & HalfSize, FHitResult & HitResult, const FRotator & Orientation)
+{
+	return UKismetSystemLibrary::BoxTraceSingleForObjects(WorldContextObject, Start, End, HalfSize, Orientation, BuildingObjectType, true, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
 }
 
 bool UUtilityFunctionLibrary::BP_TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes, float Range)

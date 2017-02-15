@@ -2,6 +2,7 @@
 
 #include "Etos.h"
 #include "Path.h"
+#include "Etos/Collision/BoxCollider.h"
 
 APath::APath()
 {
@@ -37,7 +38,14 @@ void APath::Build()
 		}
 	}
 
-	PrimaryActorTick.bCanEverTick = false;
+	if (bUseCustomBoxCollider)
+	{
+		OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
+		OccupiedBuildSpace_Custom->SetMobilityType(EComponentMobility::Static);
+	}
+
+	OnBuilt.Broadcast(this);
+
 	Data.bIsBuilt = true;
 }
 
