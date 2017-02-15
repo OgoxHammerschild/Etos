@@ -388,7 +388,7 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 
 		if (auto layout = resources.FindOrAdd(resource.Key))
 		{
-			layout->Resource = FResource(resource.Key, resource.Value, Util::GetIcon(resource.Key));
+			layout->Resource = resource.Key;
 		}
 		else if (ResourceLayoutBlueprint)
 		{
@@ -397,8 +397,8 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 				tempLayout = CreateWidget<UResourceLayout>(PlayerController, ResourceLayoutBlueprint);
 				if (tempLayout)
 				{
-					tempLayout->Resource = FResource(resource.Key, resource.Value, Util::GetIcon(resource.Key));
-					tempLayout->MaxStoredResources = 100;
+					tempLayout->Resource = resource.Key;
+					tempLayout->MyPlayerController = PlayerController;
 					tempLayout->ToolTipText = FText::FromString(Enum::ToString(resource.Key));
 					tempLayout->SetPadding(FMargin(10));
 
