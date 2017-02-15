@@ -206,7 +206,7 @@ void ABuilding::Build()
 	FHitResult Hit;
 	if (bUseCustomBoxCollider)
 	{
-		if (Util::TraceBoxForBuildings(this, start, end, OccupiedBuildSpace_Custom->Collider->GetScaledBoxExtent(), Hit))
+		if (Util::TraceBoxForBuildings(this, start, end, OccupiedBuildSpace_Custom->Collider->GetScaledBoxExtent(), Hit, GetActorRotation()))
 		{
 			Demolish();
 			return;
@@ -703,7 +703,7 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 
 	TArray<ABuilding*> BuildingsInRange = TArray<ABuilding*>();
 
-	if (UKismetSystemLibrary::SphereTraceMultiForObjects(this, Location, Location, Data.Radius, Util::BuildingObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true))
+	if (UKismetSystemLibrary::SphereTraceMultiForObjects(this, Location, Location, Data.Radius, Util::BuildingObjectType, true, TArray<AActor*>(), EDrawDebugTrace::None, HitResults, true))
 	{
 		for (FHitResult hit : HitResults)
 		{
@@ -711,7 +711,7 @@ TArray<ABuilding*> ABuilding::GetBuildingsInRange()
 				continue;
 
 			ABuilding * const building = dynamic_cast<ABuilding*, AActor>(&*hit.Actor);
-			if (building->IsValidLowLevel() && building->Data.bIsBuilt)
+			if (building && building->IsValidLowLevel() && building->Data.bIsBuilt)
 			{
 				BuildingsInRange.Add(building);
 			}
@@ -876,7 +876,7 @@ void ABuilding::GetNeededResources()
 	{
 		if (BP_MarketBarrow)
 		{
-			RefreshBuildingsInRadius(true);
+			RefreshBuildingsInRadius(false);
 
 			Data.BuildingsInRadius.Sort([](ABuilding in A, ABuilding in B)
 			{
@@ -1047,12 +1047,11 @@ void ABuilding::GetOverlappingBulidings(TArray<ABuilding*> out OverlappingBuildi
 	TArray<AActor*> actors;
 	Radius->GetOverlappingActors(actors, TSubclassOf<ABuilding>());
 
+	actors.RemoveAll([](AActor* actor) { return dynamic_cast<APath*, AActor>(actor) != nullptr; });
+
 	for (AActor* building : actors)
 	{
 		if (this == building)
-			continue;
-
-		if (dynamic_cast<APath*, AActor>(building))
 			continue;
 
 		OverlappingBuildings.Add((ABuilding*)building);
