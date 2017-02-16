@@ -79,3 +79,6 @@ DerivedDataCache/*
 Content/Blueprints/Buildings/IronMine/Textures/
 Content/Movies/
 Content/Blueprints/Buildings/PlaceholderNames/
+Content/Blueprints/Buildings/MarketPlace/Textures/ground/T_GROUND_Opacity01.uasset
+Content/Blueprints/Buildings/MarketPlace/Textures/
+Content/Blueprints/Buildings/MarketPlace/Meshes/
