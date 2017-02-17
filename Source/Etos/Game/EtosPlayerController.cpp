@@ -357,9 +357,9 @@ inline void AEtosPlayerController::BuildNewBuilding(FKey key)
 					}
 				}
 			}
-			else SpawnTextPopup(newBuilding->GetActorLocation() + FVector(0,0,300), FText::FromName(TEXT("Not enough resources"))); 
+			else SpawnTextPopup(newBuilding->GetActorLocation() + FVector(0, 0, 300), FText::FromName(TEXT("Not enough resources")));
 		}
-		else SpawnTextPopup(newBuilding->GetActorLocation() + FVector(0, 0, 300), FText::FromName(TEXT("Position is blocked"))); 
+		else SpawnTextPopup(newBuilding->GetActorLocation() + FVector(0, 0, 300), FText::FromName(TEXT("Position is blocked")));
 	}
 }
 
@@ -416,7 +416,7 @@ void AEtosPlayerController::ClickRepeatedly(FKey key)
 
 void AEtosPlayerController::SelectBuilding(FKey key)
 {
-	if (bIsHoldingObject)
+	if (bIsHoldingObject || bJustBuiltABuilding)
 		return;
 
 	FHitResult Hit = FHitResult();
@@ -1070,6 +1070,13 @@ void AEtosPlayerController::BuildNewBuilding_Internal(bool in skipCosts)
 		newBuilding->OnDestroyed.AddDynamic(this, &AEtosPlayerController::OnBuildingDestroyed);
 
 		newBuilding->Build();
+
+		bJustBuiltABuilding = true;
+		if (UWorld* const World = GetWorld())
+		{
+			FTimerDelegate timerDelegate; timerDelegate.BindLambda([&] { bJustBuiltABuilding = false; });
+			World->GetTimerManager().SetTimer(JustBuiltTimerHandle, timerDelegate, 0.1f, false, 0.1f);
+		}
 	}
 }
 
