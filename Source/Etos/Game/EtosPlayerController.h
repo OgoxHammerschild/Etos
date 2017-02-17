@@ -40,6 +40,9 @@ public:
 private:
 
 	UPROPERTY()
+		bool bIsInGameMenu;
+
+	UPROPERTY()
 		bool bIsHoldingObject = false;
 
 	UPROPERTY()
