@@ -357,9 +357,9 @@ inline void AEtosPlayerController::BuildNewBuilding(FKey key)
 					}
 				}
 			}
-			else SpawnTextPopup(newBuilding->GetActorLocation(), FText::FromName(TEXT("Not enough resources")));  // UE_LOG(LogTemp, Warning, TEXT("Not enough resources"));
+			else SpawnTextPopup(newBuilding->GetActorLocation() + FVector(0,0,300), FText::FromName(TEXT("Not enough resources"))); 
 		}
-		else SpawnTextPopup(newBuilding->GetActorLocation(), FText::FromName(TEXT("Position is blocked"))); // UE_LOG(LogTemp, Warning, TEXT("Position is blocked"));
+		else SpawnTextPopup(newBuilding->GetActorLocation() + FVector(0, 0, 300), FText::FromName(TEXT("Position is blocked"))); 
 	}
 }
 
