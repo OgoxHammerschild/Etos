@@ -182,6 +182,15 @@ FString UUtilityFunctionLibrary::ConvertEnumValueToString(const FString& EnumNam
 	return enumPtr->GetEnumName((int32)Value);
 }
 
+template<typename ObjClass>
+ObjClass * UUtilityFunctionLibrary::LoadObjFromPath(const FName & Path)
+{
+	if (Path == NAME_None)
+		return NULL;
+
+	return Cast<ObjClass>(StaticLoadObject(ObjClass::StaticClass(), NULL, *Path.ToString()));
+}
+
 bool UUtilityFunctionLibrary::IsValidR(EResource value)
 {
 	return Enum::IsValid(value);

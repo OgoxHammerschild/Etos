@@ -94,6 +94,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions")
 		static bool IsValidN(EResidentNeed value);
 	//
+
+	// TEMPLATE Load Obj From Path
+	// https://wiki.unrealengine.com/Dynamic_Load_Object
+	template <typename ObjClass>
+		static FORCEINLINE ObjClass* LoadObjFromPath(const FName& Path);
+
 private:
 
 	static TArray<TEnumAsByte<EObjectTypeQuery>> InitBuildingObjectType();
