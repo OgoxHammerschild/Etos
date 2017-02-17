@@ -13,6 +13,12 @@
 void UInGameUI::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	buttonToolTipTexts.Add(EEnableBuilding::Always, FText::FromString(TEXT("This building is always available.")));
+	buttonToolTipTexts.Add(EEnableBuilding::MarketBuilt, FText::FromString(TEXT("This building is available after you built a market place.")));
+	buttonToolTipTexts.Add(EEnableBuilding::OnFirstCitizen, FText::FromString(TEXT("This building is available after the first citizen moved to your settlement.")));
+	buttonToolTipTexts.Add(EEnableBuilding::WarehouseBuilt, FText::FromString(TEXT("This building is available after you built a warehouse.")));
+
 	UpdateResourceAmounts();
 	CreateButtons();
 }
@@ -359,6 +365,7 @@ void UInGameUI::CreateButtons()
 					{
 						tempButton->Data = FBuildingData(*preDefData);
 						tempButton->Enabled = preDefData->BuildingButtonEnabled;
+						tempButton->SetToolTipText(buttonToolTipTexts[preDefData->BuildingButtonEnabled]);
 
 						tempButton->IconTexture = tempButton->Data.BuildingIcon;
 
@@ -366,7 +373,7 @@ void UInGameUI::CreateButtons()
 						tempButton->SetPadding(FMargin(5));
 
 						AddChildToGridPanel(buildButtonGridPanel, tempButton, (buildingID - 1) % ButtonsPerRow, (buildingID - 1) / ButtonsPerRow);
-
+						
 						tempButton->OnHovered.AddDynamic(this, &UInGameUI::ShowBuildCost);
 						tempButton->OnUnhovered.AddDynamic(this, &UInGameUI::HideBuildCost);
 

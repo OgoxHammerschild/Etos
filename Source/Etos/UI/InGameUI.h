@@ -102,6 +102,9 @@ private:
 	UPROPERTY()
 		UBuildMenuButton* tempButton;
 
+	UPROPERTY()
+		TMap<EEnableBuilding, FText> buttonToolTipTexts;
+
 public:
 
 	virtual void NativeConstruct() override;
