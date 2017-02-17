@@ -32,6 +32,11 @@ class ETOS_API AEtosPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+
+	UPROPERTY(BlueprintReadWrite)
+		bool bIsInMainMenu;
+
 private:
 
 	UPROPERTY()

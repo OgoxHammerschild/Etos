@@ -218,6 +218,9 @@ int32 AEtosPlayerController::GetAvailablePromotions(EResidentLevel in to)
 
 FORCEINLINE void AEtosPlayerController::PauseGame(FKey key)
 {
+	if (bIsInMainMenu)
+		return;
+
 	ServerPause();
 
 	if (IsPaused())
@@ -362,6 +365,9 @@ inline void AEtosPlayerController::BuildNewBuilding(FKey key)
 
 void AEtosPlayerController::ShowGameMenu(FKey key)
 {
+	if (bIsInMainMenu)
+		return;
+
 	PauseGame(key);
 	if (auto* const HUD = Util::GetEtosHUD(this))
 	{
