@@ -813,6 +813,9 @@ bool AEtosPlayerController::LoadLatestSaveGame()
 {
 	if (auto* MetaSaveGameInstance = GetMetaSaveGame())
 	{
+		if (MetaSaveGameInstance->SaveSlots.Num() <= 0)
+			return false;
+
 		TArray<FDateTime> saveDates;
 		MetaSaveGameInstance->SaveSlots.GenerateValueArray(saveDates);
 		saveDates.Sort();
