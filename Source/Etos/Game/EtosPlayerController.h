@@ -293,4 +293,6 @@ private:
 	void SetDemolishMode(bool in newState);
 
 	UEtosMetaSaveGame* GetMetaSaveGame();
+
+	void StartSelectionCooldown();
 };

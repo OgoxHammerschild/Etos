@@ -72,8 +72,8 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu).bExecuteWhenPaused = true; // ESC
 	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly); // Shift + LMB
 	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding).bConsumeInput = false; // RMB
-	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding); // LMB
 	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding); // LMB
+	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding); // LMB
 	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding); // ,
 
 #if WITH_EDITOR
@@ -478,6 +478,8 @@ void AEtosPlayerController::DemolishBuilding(FKey key)
 					OnDemolish.Broadcast(building);
 				}
 				building->Demolish();
+
+				StartSelectionCooldown();
 			}
 		}
 	}
@@ -1071,12 +1073,7 @@ void AEtosPlayerController::BuildNewBuilding_Internal(bool in skipCosts)
 
 		newBuilding->Build();
 
-		bJustBuiltABuilding = true;
-		if (UWorld* const World = GetWorld())
-		{
-			FTimerDelegate timerDelegate; timerDelegate.BindLambda([&] { bJustBuiltABuilding = false; });
-			World->GetTimerManager().SetTimer(JustBuiltTimerHandle, timerDelegate, 0.1f, false, 0.1f);
-		}
+		StartSelectionCooldown();
 	}
 }
 
@@ -1250,4 +1247,14 @@ UEtosMetaSaveGame * AEtosPlayerController::GetMetaSaveGame()
 	}
 
 	return MetaSaveGameInstance;
+}
+
+void AEtosPlayerController::StartSelectionCooldown()
+{
+	bJustBuiltABuilding = true;
+	if (UWorld* const World = GetWorld())
+	{
+		FTimerDelegate timerDelegate; timerDelegate.BindLambda([&] { bJustBuiltABuilding = false; });
+		World->GetTimerManager().SetTimer(JustBuiltTimerHandle, timerDelegate, 0.1f, false, 0.1f);
+	}
 }
