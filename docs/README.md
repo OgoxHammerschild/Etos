@@ -18,13 +18,13 @@ Build a strong economy with complex ware production chains and fulfil the challe
 <iframe width="640" height="360" src="https://www.youtube.com/embed/pd9AR2BzJ0E?rel=0" frameborder="0" allowfullscreen></iframe>   
 
 <a name="Chain"/>   
+   
 ***   
-   
-
-   
+      
 # Wareproduction-Chain for Tools   
    
 ![tools](https://raw.githubusercontent.com/OgoxHammerschild/Etos/master/docs/images/Produktionskette_White.png)   
+
 ***   
 
 <a name="Gource"/>   
