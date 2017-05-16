@@ -32,7 +32,7 @@ Build a strong economy with complex ware production chains and fulfil the challe
 # Etos Repository Visualisation using [Gource](https://gource.io)
 
 ***   
-<iframe width="640" height="360" src="https://www.youtube.com/embed/uBaK0XQHS3c?rel=0&autoplay=1&loop=1" frameborder="0" allowfullscreen></iframe>   
+<iframe width="640" height="360" src="https://www.youtube.com/embed/uBaK0XQHS3c?rel=0" frameborder="0" allowfullscreen></iframe>   
 ***   
 
 [Back to Main Page](https://ogoxhammerschild.github.io/)   
