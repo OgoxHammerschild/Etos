@@ -8,6 +8,8 @@
 <a name="Etos_Video"/>
 
 ***   
+# Etos   
+
 Real-Time-Strategy City-Building Game in the style of the ANNO series
 
 Build a strong economy with complex ware production chains and fulfil the challenging needs of your settlers to become the ultimate mayor.
@@ -22,3 +24,5 @@ Build a strong economy with complex ware production chains and fulfil the challe
 ***   
 <iframe width="640" height="360" src="https://www.youtube.com/embed/uBaK0XQHS3c?rel=0" frameborder="0" allowfullscreen></iframe>   
 ***   
+
+[Back to Main Page](https://ogoxhammerschild.github.io/)   
