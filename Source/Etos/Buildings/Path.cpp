@@ -2,6 +2,7 @@
 
 #include "Etos.h"
 #include "Path.h"
+#include "Etos/Collision/BoxCollider.h"
 
 APath::APath()
 {
@@ -10,8 +11,17 @@ APath::APath()
 
 void APath::Build()
 {
-	FoundationMesh->SetCanEverAffectNavigation(true);
+	FVector start = GetActorLocation();
+	FVector end = start + (FVector::UpVector * 10000.f);
+	FHitResult Hit;
+	if (Util::TraceSingleForBuildings(this, start, end, Hit))
+	{
+		Demolish();
+		return;
+	}
 
+	FoundationMesh->SetCanEverAffectNavigation(true);
+	
 	Connections = PossibleConnections;
 	PossibleConnections.Empty();
 
@@ -28,7 +38,14 @@ void APath::Build()
 		}
 	}
 
-	PrimaryActorTick.bCanEverTick = false;
+	if (bUseCustomBoxCollider)
+	{
+		OccupiedBuildSpace_Custom->SetGenerateCollisionEvents(false);
+		OccupiedBuildSpace_Custom->SetMobilityType(EComponentMobility::Static);
+	}
+
+	OnBuilt.Broadcast(this);
+
 	Data.bIsBuilt = true;
 }
 

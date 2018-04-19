@@ -72,14 +72,14 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Escape", IE_Pressed, this, &AEtosPlayerController::ShowGameMenu).bExecuteWhenPaused = true; // ESC
 	InputComponent->BindAction("ClickRepeatedly", IE_Pressed, this, &AEtosPlayerController::ClickRepeatedly); // Shift + LMB
 	InputComponent->BindAction("CancelBuilding", IE_Pressed, this, &AEtosPlayerController::CancelPlacementOfBuilding).bConsumeInput = false; // RMB
-	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding); // LMB
 	InputComponent->BindAction("Demolish", IE_Pressed, this, &AEtosPlayerController::DemolishBuilding); // LMB
+	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding); // LMB
 	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding); // ,
 
-#if WITH_EDITOR
+//#if WITH_EDITOR
 	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::QuickSave); // F5
 	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::QuickLoad); // F9
-#endif
+//#endif
 }
 
 FORCEINLINE void AEtosPlayerController::AddResource(FResource in resource)
@@ -218,6 +218,9 @@ int32 AEtosPlayerController::GetAvailablePromotions(EResidentLevel in to)
 
 FORCEINLINE void AEtosPlayerController::PauseGame(FKey key)
 {
+	if (bIsInMainMenu || bIsInGameMenu)
+		return;
+
 	ServerPause();
 
 	if (IsPaused())
@@ -238,9 +241,12 @@ FORCEINLINE void AEtosPlayerController::PauseGame(FKey key)
 	{
 		if (auto* const World = GetWorld())
 		{
-			if (auto* const Viewport = World->GetGameViewport())
+			if (auto* const HUD = Util::GetEtosHUD(this))
 			{
-				Viewport->RemoveAllViewportWidgets();
+				if (auto* const PausedScreen = HUD->GetPausedScreen())
+				{
+					PausedScreen->RemoveFromParent();
+				}
 			}
 		}
 
@@ -351,22 +357,45 @@ inline void AEtosPlayerController::BuildNewBuilding(FKey key)
 					}
 				}
 			}
-			else SpawnTextPopup(newBuilding->GetActorLocation(), FText::FromName(TEXT("Not enough resources")));  // UE_LOG(LogTemp, Warning, TEXT("Not enough resources"));
+			else SpawnTextPopup(newBuilding->GetActorLocation() + FVector(0, 0, 300), FText::FromName(TEXT("Not enough resources")));
 		}
-		else SpawnTextPopup(newBuilding->GetActorLocation(), FText::FromName(TEXT("Position is blocked"))); // UE_LOG(LogTemp, Warning, TEXT("Position is blocked"));
+		else SpawnTextPopup(newBuilding->GetActorLocation() + FVector(0, 0, 300), FText::FromName(TEXT("Position is blocked")));
 	}
 }
 
 void AEtosPlayerController::ShowGameMenu(FKey key)
 {
-	PauseGame(key);
-	if (IsPaused())
+	if (bIsInMainMenu)
+		return;
+
+	if (bIsInGameMenu)
 	{
-		if (auto* const HUD = Util::GetEtosHUD(this))
+		bIsInGameMenu = false;
+		if (IsPaused())
 		{
-			if (auto* const GameMenu = HUD->GetGameMenu())
+			PauseGame(key);
+		}
+	}
+	else
+	{
+		if (!IsPaused())
+		{
+			PauseGame(key);
+		}
+		bIsInGameMenu = true;
+	}
+
+	if (auto* const HUD = Util::GetEtosHUD(this))
+	{
+		if (auto* const GameMenu = HUD->GetGameMenu())
+		{
+			if (IsPaused())
 			{
 				GameMenu->AddToViewport();
+			}
+			else
+			{
+				GameMenu->RemoveFromParent();
 			}
 		}
 	}
@@ -387,7 +416,7 @@ void AEtosPlayerController::ClickRepeatedly(FKey key)
 
 void AEtosPlayerController::SelectBuilding(FKey key)
 {
-	if (bIsHoldingObject)
+	if (bIsHoldingObject || bJustBuiltABuilding)
 		return;
 
 	FHitResult Hit = FHitResult();
@@ -449,6 +478,8 @@ void AEtosPlayerController::DemolishBuilding(FKey key)
 					OnDemolish.Broadcast(building);
 				}
 				building->Demolish();
+
+				StartSelectionCooldown();
 			}
 		}
 	}
@@ -759,10 +790,24 @@ bool AEtosPlayerController::Load(FString SaveSlotName)
 							residence->Residents = residenceData.Residents;
 							residence->MaxResidents = residenceData.MaxResidents;
 							BuildLoadedBuilding(residenceData);
+							
 							if (residence->MyLevel == EResidentLevel::Citizen)
 							{
-								residence->UpgradeToCitizen();
+								auto upgradeData = *GM->GetUpgradeData(TEXT("CitizenUpgrade"));
+								
+								residence->Data.BuildingIcon = upgradeData.BuildingIcon;
+								residence->BuildingMesh->SetStaticMesh(Util::LoadObjFromPath<UStaticMesh>(upgradeData.MeshPath));
+								residence->Data.Name = upgradeData.Name;
+
+								if (upgradeData.ProductionTime >= 0)
+								{
+									residence->Data.ProductionTime = upgradeData.ProductionTime;
+								}
+
+								ReportUpgrade(residence, EResidentLevel::Peasant, EResidentLevel::Citizen);
+								UpdatePopulation(EResidentLevel::Peasant, EResidentLevel::Citizen, residence->Residents);
 							}
+
 							residence->SetAllSatisfactions(residenceData.ResourceSatisfaction, residenceData.NeedsSatisfaction, residenceData.TotalSatisfaction);
 						}
 					}
@@ -806,6 +851,9 @@ bool AEtosPlayerController::LoadLatestSaveGame()
 {
 	if (auto* MetaSaveGameInstance = GetMetaSaveGame())
 	{
+		if (MetaSaveGameInstance->SaveSlots.Num() <= 0)
+			return false;
+
 		TArray<FDateTime> saveDates;
 		MetaSaveGameInstance->SaveSlots.GenerateValueArray(saveDates);
 		saveDates.Sort();
@@ -1038,6 +1086,8 @@ void AEtosPlayerController::BuildNewBuilding_Internal(bool in skipCosts)
 		newBuilding->OnDestroyed.AddDynamic(this, &AEtosPlayerController::OnBuildingDestroyed);
 
 		newBuilding->Build();
+
+		StartSelectionCooldown();
 	}
 }
 
@@ -1211,4 +1261,14 @@ UEtosMetaSaveGame * AEtosPlayerController::GetMetaSaveGame()
 	}
 
 	return MetaSaveGameInstance;
+}
+
+void AEtosPlayerController::StartSelectionCooldown()
+{
+	bJustBuiltABuilding = true;
+	if (UWorld* const World = GetWorld())
+	{
+		FTimerDelegate timerDelegate; timerDelegate.BindLambda([&] { bJustBuiltABuilding = false; });
+		World->GetTimerManager().SetTimer(JustBuiltTimerHandle, timerDelegate, 0.1f, false, 0.1f);
+	}
 }

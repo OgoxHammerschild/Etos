@@ -12,9 +12,9 @@ AMarketBarrow::AMarketBarrow()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	UCapsuleComponent* CapsuleComponent = dynamic_cast<UCapsuleComponent*, USceneComponent>(RootComponent);
-	CapsuleComponent->bDynamicObstacle = false;
-	CapsuleComponent->AreaClass = nullptr;
+	UCapsuleComponent* capsuleComponent = dynamic_cast<UCapsuleComponent*, USceneComponent>(RootComponent);
+	capsuleComponent->bDynamicObstacle = false;
+	capsuleComponent->AreaClass = nullptr;
 }
 
 AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassOf<AMarketBarrow> ClassToSpawn, const FVector & SpawnLocation, const FVector & TargetLocation, ABuilding * MyWorkplace, ABuilding * TargetBuilding, EResource OrderedResource, const FRotator & Rotation, const FActorSpawnParameters & SpawnParameters)
@@ -44,14 +44,14 @@ AMarketBarrow * AMarketBarrow::Construct(UObject* WorldContextObject, TSubclassO
 // called by garbage collection (default 60sec interval)
 void AMarketBarrow::BeginDestroy()
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s: Fuck this shit I'm out"), *GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("%s: Fuck this shit I'm out"), *GetName());
 
 	CheckOut_Checked();
 
 	Super::BeginDestroy();
 }
 
-void AMarketBarrow::ResetBarrow(const FVector & SpawnLocation, const FVector & TargetLocation, ABuilding * MyWorkplace, ABuilding * TargetBuilding, EResource OrderedResource, const FRotator & Rotation)
+void AMarketBarrow::ResetBarrow(const FVector & spawnLocation, const FVector & targetLocation, ABuilding * myWorkplace, ABuilding * targetBuilding, EResource orderedResource, const FRotator & rotation)
 {
 	if (!this->GetController())
 	{
@@ -66,15 +66,15 @@ void AMarketBarrow::ResetBarrow(const FVector & SpawnLocation, const FVector & T
 		}
 	}
 
-	this->SetActorLocationAndRotation(SpawnLocation, Rotation);
+	this->SetActorLocationAndRotation(spawnLocation, rotation);
 	this->bArrivedAtTarget = false;
-	this->TargetBuilding = TargetBuilding;
-	this->MyWorkplace = MyWorkplace;
-	this->StartLocation = SpawnLocation;
-	this->TargetLocation = TargetLocation;
+	this->TargetBuilding = targetBuilding;
+	this->MyWorkplace = myWorkplace;
+	this->StartLocation = spawnLocation;
+	this->TargetLocation = targetLocation;
 	this->TargetBuilding->Data.bBarrowIsOnTheWay = true;
 	this->bCheckedOut = false;
-	this->Resource.Type = OrderedResource;
+	this->Resource.Type = orderedResource;
 	this->Resource.Amount = 0;
 	this->SetCanEverAffectNavigationOnComponents(false);
 	this->SetActive(true);
@@ -109,7 +109,7 @@ namespace EPathFollowingResult
 		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EPathFollowingResult"), true);
 		if (!EnumPtr) return FString("InvalidEnum");
 
-		return EnumPtr->GetEnumName((int32)EnumValue);
+		return EnumPtr->GetNameStringByIndex((int32)EnumValue);
 	}
 }
 #endif

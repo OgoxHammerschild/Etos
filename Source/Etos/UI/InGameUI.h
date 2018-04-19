@@ -102,6 +102,9 @@ private:
 	UPROPERTY()
 		UBuildMenuButton* tempButton;
 
+	UPROPERTY()
+		TMap<EEnableBuilding, FText> buttonToolTipTexts;
+
 public:
 
 	virtual void NativeConstruct() override;
@@ -159,7 +162,7 @@ public:
 
 	//Note: Make to FResource-array ?
 	UFUNCTION(BlueprintCallable, Category = "Info|Resource", meta = (DisplayName = "Show Resource-Info"))
-		void ShowResourceInfo(const TArray<TEnumAsByte<EResource>>& playerResources, const  TArray<int32>& playerResourceAmounts);
+		void ShowResourceInfo(const TArray<EResource>& playerResources, const  TArray<int32>& playerResourceAmounts);
 
 	void ShowResourceInfo(const TMap<EResource, int32>& playerResourceAmounts);
 

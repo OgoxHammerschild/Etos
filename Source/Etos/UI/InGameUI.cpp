@@ -13,6 +13,12 @@
 void UInGameUI::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	buttonToolTipTexts.Add(EEnableBuilding::Always, FText::FromString(TEXT("This building is always available.")));
+	buttonToolTipTexts.Add(EEnableBuilding::MarketBuilt, FText::FromString(TEXT("This building is available after you built a market place.")));
+	buttonToolTipTexts.Add(EEnableBuilding::OnFirstCitizen, FText::FromString(TEXT("This building is available after the first citizen moved to your settlement.")));
+	buttonToolTipTexts.Add(EEnableBuilding::WarehouseBuilt, FText::FromString(TEXT("This building is available after you built a warehouse.")));
+
 	UpdateResourceAmounts();
 	CreateButtons();
 }
@@ -95,9 +101,9 @@ void UInGameUI::UpdateBalance(const int32& income, const int32& upkeep)
 	args.Add(TEXT("upkeep"), upkeep);
 	args.Add(TEXT("balance"), income - upkeep);
 
-	incomeText->SetText(FText::Format(LOCTEXT("INCOME_AMOUNT", "Income: {income}"), args));
-	upkeepText->SetText(FText::Format(LOCTEXT("UPKEEP_AMOUNT", "Upkeep: {upkeep}"), args));
-	balanceText->SetText(FText::Format(LOCTEXT("BALANCE_AMOUNT", "Balance: {balance}"), args));
+	incomeText->SetText(FText::Format(LOCTEXT("INCOME_AMOUNT", "{income}"), args));
+	upkeepText->SetText(FText::Format(LOCTEXT("UPKEEP_AMOUNT", "{upkeep}"), args));
+	balanceText->SetText(FText::Format(LOCTEXT("BALANCE_AMOUNT", "{balance}"), args));
 }
 #undef LOCTEXT_NAMESPACE 
 
@@ -115,7 +121,7 @@ void UInGameUI::ShowBuildingInfo(ABuilding * SelectedBuilding)
 	}
 }
 
-void UInGameUI::ShowResourceInfo(const TArray<TEnumAsByte<EResource>>& playerResources, const TArray<int32>& playerResourceAmounts)
+void UInGameUI::ShowResourceInfo(const TArray<EResource>& playerResources, const TArray<int32>& playerResourceAmounts)
 {
 	if (playerResources.Num() != playerResourceAmounts.Num())
 		return;
@@ -359,6 +365,7 @@ void UInGameUI::CreateButtons()
 					{
 						tempButton->Data = FBuildingData(*preDefData);
 						tempButton->Enabled = preDefData->BuildingButtonEnabled;
+						tempButton->SetToolTipText(buttonToolTipTexts[preDefData->BuildingButtonEnabled]);
 
 						tempButton->IconTexture = tempButton->Data.BuildingIcon;
 
@@ -366,7 +373,7 @@ void UInGameUI::CreateButtons()
 						tempButton->SetPadding(FMargin(5));
 
 						AddChildToGridPanel(buildButtonGridPanel, tempButton, (buildingID - 1) % ButtonsPerRow, (buildingID - 1) / ButtonsPerRow);
-
+						
 						tempButton->OnHovered.AddDynamic(this, &UInGameUI::ShowBuildCost);
 						tempButton->OnUnhovered.AddDynamic(this, &UInGameUI::HideBuildCost);
 
@@ -388,7 +395,7 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 
 		if (auto layout = resources.FindOrAdd(resource.Key))
 		{
-			layout->Resource = FResource(resource.Key, resource.Value, Util::GetIcon(resource.Key));
+			layout->Resource = resource.Key;
 		}
 		else if (ResourceLayoutBlueprint)
 		{
@@ -397,8 +404,8 @@ void UInGameUI::UpdateResourceLayouts(const TMap<EResource, int32>& playerResour
 				tempLayout = CreateWidget<UResourceLayout>(PlayerController, ResourceLayoutBlueprint);
 				if (tempLayout)
 				{
-					tempLayout->Resource = FResource(resource.Key, resource.Value, Util::GetIcon(resource.Key));
-					tempLayout->MaxStoredResources = 100;
+					tempLayout->Resource = resource.Key;
+					tempLayout->MyPlayerController = PlayerController;
 					tempLayout->ToolTipText = FText::FromString(Enum::ToString(resource.Key));
 					tempLayout->SetPadding(FMargin(10));
 

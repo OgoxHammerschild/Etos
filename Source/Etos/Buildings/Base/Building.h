@@ -17,7 +17,7 @@ class AMarketBarrow;
 #include "GameFramework/Actor.h"
 #include "Building.generated.h"
 
-DECLARE_DYNAMIC_DELEGATE(FDelayedActionDelegate);
+//DECLARE_DYNAMIC_DELEGATE(FDelayedActionDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBuildingDelegate, ABuilding*, sender);
 
 UCLASS()
@@ -73,12 +73,15 @@ public:
 protected:
 
 	const bool bUseCustomBoxCollider = true;
-
+		 
 	UPROPERTY()
 		AEtosPlayerController* MyPlayerController;
 
 	UPROPERTY()
-		FDelayedActionDelegate Action;
+		FTimerDynamicDelegate Action;
+
+	UPROPERTY()
+		FTimerHandle DelayActionTimerHandle;
 
 	UPROPERTY(BlueprintAssignable, Category = "Build")
 		FBuildingDelegate OnBuilt;
@@ -121,6 +124,8 @@ public:
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
@@ -255,4 +260,7 @@ private:
 	void DetermineOrderedResource(EResource out OrderedResource, ABuilding* TargetBuilding);
 
 	AResourcePopup* SpawnResourcePopup_Internal(FVector in Offset, TSubclassOf<AResourcePopup> in AlternativeBlueprint = nullptr);
+
+	UFUNCTION()
+		void TestFunction();
 };

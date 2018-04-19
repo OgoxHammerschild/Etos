@@ -4,10 +4,10 @@ using UnrealBuildTool;
 
 public class Etos : ModuleRules
 {
-	public Etos(TargetInfo Target)
+	public Etos(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AIModule", "UMG" });
-
+        
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
         // Uncomment if you are using Slate UI

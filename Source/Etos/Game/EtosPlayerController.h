@@ -32,7 +32,15 @@ class ETOS_API AEtosPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+
+	UPROPERTY(BlueprintReadWrite)
+		bool bIsInMainMenu;
+
 private:
+
+	UPROPERTY()
+		bool bIsInGameMenu;
 
 	UPROPERTY()
 		bool bIsHoldingObject = false;
@@ -55,7 +63,7 @@ private:
 	UPROPERTY()
 		TMap<EResidentLevel, int32> populationPerLevel;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		// @key = level promoted to
 		TMap<EResidentLevel, int32> usedPromotions;
 
@@ -106,6 +114,12 @@ private:
 
 	UPROPERTY()
 		bool bMarketWasBuilt = false;
+
+	UPROPERTY()
+		bool bJustBuiltABuilding = false;
+
+	UPROPERTY()
+		FTimerHandle JustBuiltTimerHandle;
 
 public:
 
@@ -279,4 +293,6 @@ private:
 	void SetDemolishMode(bool in newState);
 
 	UEtosMetaSaveGame* GetMetaSaveGame();
+
+	void StartSelectionCooldown();
 };

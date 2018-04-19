@@ -36,21 +36,21 @@ void ARTSCamera::Tick(float DeltaTime)
 }
 
 // Called to bind functionality to input
-void ARTSCamera::SetupPlayerInputComponent(UInputComponent* InputComponent)
+void ARTSCamera::SetupPlayerInputComponent(UInputComponent* inputComponent)
 {
-	Super::SetupPlayerInputComponent(InputComponent);
+	Super::SetupPlayerInputComponent(inputComponent);
 
-	InputComponent->BindAction("ZoomIn", IE_Pressed, this, &ARTSCamera::ZoomIn);
-	InputComponent->BindAction("ZoomOut", IE_Pressed, this, &ARTSCamera::ZoomOut);
-	InputComponent->BindAction("RotateCamera", IE_Pressed, this, &ARTSCamera::Rotate);
-	InputComponent->BindAction("RotateCamera", IE_Released, this, &ARTSCamera::StopRotation);
-	InputComponent->BindAxis("Turn", this, &ARTSCamera::Turn);
-	//InputComponent->BindAxis("LookUp", this, &ARTSCamera::LookUp);
-	InputComponent->BindAxis("MoveForward", this, &ARTSCamera::MoveForward);
-	InputComponent->BindAxis("MoveRight", this, &ARTSCamera::MoveRight);
-	InputComponent->BindAction("PanCamera", IE_Pressed, this, &ARTSCamera::StartPanning);
-	//InputComponent->BindAction("PanCamera", IE_Repeat, this, &ARTSCamera::Pan); // not working for mouse button
-	InputComponent->BindAction("PanCamera", IE_Released, this, &ARTSCamera::StopPanning);
+	inputComponent->BindAction("ZoomIn", IE_Pressed, this, &ARTSCamera::ZoomIn);
+	inputComponent->BindAction("ZoomOut", IE_Pressed, this, &ARTSCamera::ZoomOut);
+	inputComponent->BindAction("RotateCamera", IE_Pressed, this, &ARTSCamera::Rotate);
+	inputComponent->BindAction("RotateCamera", IE_Released, this, &ARTSCamera::StopRotation);
+	inputComponent->BindAxis("Turn", this, &ARTSCamera::Turn);
+	//inputComponent->BindAxis("LookUp", this, &ARTSCamera::LookUp);
+	inputComponent->BindAxis("MoveForward", this, &ARTSCamera::MoveForward);
+	inputComponent->BindAxis("MoveRight", this, &ARTSCamera::MoveRight);
+	inputComponent->BindAction("PanCamera", IE_Pressed, this, &ARTSCamera::StartPanning);
+	//inputComponent->BindAction("PanCamera", IE_Repeat, this, &ARTSCamera::Pan); // not working for mouse button
+	inputComponent->BindAction("PanCamera", IE_Released, this, &ARTSCamera::StopPanning);
 }
 
 void ARTSCamera::OnConstruction(const FTransform & Transform)
@@ -130,7 +130,7 @@ void ARTSCamera::Turn(float axisValue)
 {
 	if (bRotateCamera)
 	{
-		cameraZAngle += (axisValue*rotationSpeed);
+		cameraZAngle += (axisValue * rotationSpeed * UGameplayStatics::GetWorldDeltaSeconds(this));
 		UpdateCameraLocationAndRotation();
 	}
 }
@@ -139,14 +139,14 @@ void ARTSCamera::LookUp(float axisValue)
 {
 	if (bRotateCamera)
 	{
-		cameraHeightAngle = UKismetMathLibrary::Clamp(cameraHeightAngle + (axisValue*rotationSpeed), cameraHeightAngleMin, cameraHeightAngleMax);
+		cameraHeightAngle = UKismetMathLibrary::Clamp(cameraHeightAngle + (axisValue * rotationSpeed * UGameplayStatics::GetWorldDeltaSeconds(this)), cameraHeightAngleMin, cameraHeightAngleMax);
 		UpdateCameraLocationAndRotation();
 	}
 }
 
 void ARTSCamera::MoveForward(float axisValue)
 {
-	float distance = (axisValue + edgeForwardAxis)*movementSpeed;
+	float distance = (axisValue + edgeForwardAxis) * movementSpeed * UGameplayStatics::GetWorldDeltaSeconds(this);
 
 	FRotator viewRotation = FRotator(0, Camera->GetComponentRotation().Yaw, 0);
 	FVector forwardVector = UKismetMathLibrary::GetForwardVector(viewRotation);
@@ -158,7 +158,7 @@ void ARTSCamera::MoveForward(float axisValue)
 
 void ARTSCamera::MoveRight(float axisValue)
 {
-	float distance = (axisValue + edgeRightAxis)*movementSpeed;
+	float distance = (axisValue + edgeRightAxis) * movementSpeed * UGameplayStatics::GetWorldDeltaSeconds(this);
 
 	FRotator viewRotation = FRotator(0, Camera->GetComponentRotation().Yaw, 0);
 	FVector rightVector = UKismetMathLibrary::GetRightVector(viewRotation);

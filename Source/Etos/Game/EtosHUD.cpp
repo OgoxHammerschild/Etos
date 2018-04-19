@@ -44,9 +44,9 @@ UUserWidget * AEtosHUD::GetGameMenu()
 	{
 		checkf(wGameMenu, TEXT("No default Game Menu Widget was selected for EtosHUD"));
 
-		loseScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wGameMenu);
+		gameMenu = CreateWidget<UUserWidget>(GetOwningPlayerController(), wGameMenu);
 	}
-	return loseScreen;
+	return gameMenu;
 }
 
 UUserWidget * AEtosHUD::GetPausedScreen()
@@ -55,9 +55,9 @@ UUserWidget * AEtosHUD::GetPausedScreen()
 	{
 		checkf(wPausedScreen, TEXT("No default Paused Screen Widget was selected for EtosHUD"));
 
-		loseScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wPausedScreen);
+		pausedScreen = CreateWidget<UUserWidget>(GetOwningPlayerController(), wPausedScreen);
 	}
-	return loseScreen;
+	return pausedScreen;
 }
 
 void AEtosHUD::BeginDestroy()

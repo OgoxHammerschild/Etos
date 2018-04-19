@@ -59,15 +59,20 @@ private:
 
 public:
 
-	UInGameUI* GetInGameUI();
+	UFUNCTION(BluePrintpure, Category = HUD)
+		UInGameUI* GetInGameUI();
 
-	UUserWidget* GetWinScreen();
+	UFUNCTION(BluePrintpure, Category = HUD)
+		UUserWidget* GetWinScreen();
 
-	UUserWidget* GetLoseScreen();
+	UFUNCTION(BluePrintpure, Category = HUD)
+		UUserWidget* GetLoseScreen();
 
-	UUserWidget* GetGameMenu();
+	UFUNCTION(BluePrintpure, Category = HUD)
+		UUserWidget* GetGameMenu();
 
-	UUserWidget* GetPausedScreen();
+	UFUNCTION(BluePrintpure, Category = HUD)
+		UUserWidget* GetPausedScreen();
 
 	virtual void BeginDestroy() override;
 };

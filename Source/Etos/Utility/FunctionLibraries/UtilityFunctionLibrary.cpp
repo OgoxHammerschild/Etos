@@ -9,10 +9,10 @@
 
 #define DEFINE_ENUM_ISVALID(EnumType) bool UUtilityFunctionLibrary::IsValid(EnumType value) { return Enum::IsValid(value); }
 
-TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::BuildingObjectType;// = InitBuildingObjectType();
-TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::FloorObjectType;// = InitFloorObjectType();
+TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::BuildingObjectType;
+TArray<TEnumAsByte<EObjectTypeQuery>> UUtilityFunctionLibrary::FloorObjectType;
 
-TMap <EResource, FIcon> UUtilityFunctionLibrary::ResourceIcons;// = TMap<EResource, FIcon>();
+TMap <EResource, FIcon> UUtilityFunctionLibrary::ResourceIcons;
 
 //DEFINE_ENUM_ISVALID(EResource);
 //DEFINE_ENUM_ISVALID(EResidentLevel);
@@ -23,13 +23,14 @@ UUtilityFunctionLibrary::UUtilityFunctionLibrary()
 	BuildingObjectType = InitBuildingObjectType();
 	FloorObjectType = InitFloorObjectType();
 	ResourceIcons = TMap<EResource, FIcon>();
+	//FConsoleManager::RegisterConsoleCommand()
 }
 
 FORCEINLINE AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
-		AEtosGameMode* gm = dynamic_cast<AEtosGameMode*, AGameMode>(World->GetAuthGameMode());
+		AEtosGameMode* gm = dynamic_cast<AEtosGameMode*, AGameModeBase>(World->GetAuthGameMode());
 		return gm;
 	}
 	return nullptr;
@@ -43,7 +44,7 @@ FORCEINLINE AEtosHUD * UUtilityFunctionLibrary::GetEtosHUD(UObject* WorldContext
 
 FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerController(UObject* WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		AEtosPlayerController* pc = dynamic_cast<AEtosPlayerController*, APlayerController>(World->GetFirstPlayerController());
 		return pc;
@@ -53,12 +54,12 @@ FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerC
 
 FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerController(UObject* WorldContextObject, int32 PlayerIndex)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		uint32 Index = 0;
 		for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
-			APlayerController* PlayerController = *Iterator;
+			APlayerController* PlayerController = (*Iterator).Get();
 			if (Index == PlayerIndex)
 			{
 				return dynamic_cast<AEtosPlayerController*, APlayerController>(PlayerController);
@@ -85,7 +86,7 @@ UTexture2D * UUtilityFunctionLibrary::GetDefaultTexture()
 
 UTexture2D * UUtilityFunctionLibrary::EnsureTexture(UTexture2D * Texture)
 {
-	if (Texture->IsValidLowLevel())
+	if (Texture && Texture->IsValidLowLevel())
 	{
 		return Texture;
 	}
@@ -130,6 +131,11 @@ bool UUtilityFunctionLibrary::TraceSingleForFloor(UObject* WorldContextObject, c
 	return UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, FloorObjectType, false, TArray<AActor*>(), EDrawDebugTrace::None, Hit, true);
 }
 
+bool UUtilityFunctionLibrary::TraceBoxForBuildings(UObject * WorldContextObject, const FVector & Start, const FVector & End, const FVector & HalfSize, FHitResult & HitResult, const FRotator & Orientation)
+{
+	return UKismetSystemLibrary::BoxTraceSingleForObjects(WorldContextObject, Start, End, HalfSize, Orientation, BuildingObjectType, true, TArray<AActor*>(), EDrawDebugTrace::None, HitResult, true);
+}
+
 bool UUtilityFunctionLibrary::BP_TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes, float Range)
 {
 	return TraceSingleAtMousePosition(WorldContextObject, Hit, Range, ObjectTypes);
@@ -137,7 +143,7 @@ bool UUtilityFunctionLibrary::BP_TraceSingleAtMousePosition(UObject * WorldConte
 
 inline bool UUtilityFunctionLibrary::TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, float Range, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		if (APlayerController* const PlayerController = World->GetFirstPlayerController())
 		{
@@ -174,6 +180,15 @@ FString UUtilityFunctionLibrary::ConvertEnumValueToString(const FString& EnumNam
 	}
 
 	return enumPtr->GetEnumName((int32)Value);
+}
+
+template<typename ObjClass>
+ObjClass * UUtilityFunctionLibrary::LoadObjFromPath(const FName & Path)
+{
+	if (Path == NAME_None)
+		return NULL;
+
+	return Cast<ObjClass>(StaticLoadObject(ObjClass::StaticClass(), NULL, *Path.ToString()));
 }
 
 bool UUtilityFunctionLibrary::IsValidR(EResource value)

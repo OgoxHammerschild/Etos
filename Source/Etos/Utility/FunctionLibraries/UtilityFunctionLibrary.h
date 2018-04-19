@@ -59,6 +59,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
 		static bool TraceSingleForFloor(UObject* WorldContextObject, const FVector& Start, const FVector& End, FHitResult& Hit);
 
+	UFUNCTION(BlueprintCallable, Category = "EtosUtilityFunctions", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject", UnsafeDuringActorConstruction = "true"))
+		static bool TraceBoxForBuildings(UObject * WorldContextObject, const FVector & Start, const FVector & End, const FVector & HalfSize, FHitResult & HitResult, const FRotator & Orientation = FRotator::ZeroRotator);
+
 	// Trace line at mouse position into the screen
 	// Call this from a blueprint
 	// @ObjectTypes = Considered ObjectTypes. Defaults to Floor.
@@ -91,6 +94,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "EtosUtilityFunctions")
 		static bool IsValidN(EResidentNeed value);
 	//
+
+	// TEMPLATE Load Obj From Path
+	// https://wiki.unrealengine.com/Dynamic_Load_Object
+	template <typename ObjClass>
+		static FORCEINLINE ObjClass* LoadObjFromPath(const FName& Path);
+
 private:
 
 	static TArray<TEnumAsByte<EObjectTypeQuery>> InitBuildingObjectType();
