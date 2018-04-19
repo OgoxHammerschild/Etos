@@ -28,9 +28,9 @@ UUtilityFunctionLibrary::UUtilityFunctionLibrary()
 
 FORCEINLINE AEtosGameMode* UUtilityFunctionLibrary::GetEtosGameMode(UObject* WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
-		AEtosGameMode* gm = dynamic_cast<AEtosGameMode*, AGameMode>(World->GetAuthGameMode());
+		AEtosGameMode* gm = dynamic_cast<AEtosGameMode*, AGameModeBase>(World->GetAuthGameMode());
 		return gm;
 	}
 	return nullptr;
@@ -44,7 +44,7 @@ FORCEINLINE AEtosHUD * UUtilityFunctionLibrary::GetEtosHUD(UObject* WorldContext
 
 FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerController(UObject* WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		AEtosPlayerController* pc = dynamic_cast<AEtosPlayerController*, APlayerController>(World->GetFirstPlayerController());
 		return pc;
@@ -54,12 +54,12 @@ FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetFirstEtosPlayerC
 
 FORCEINLINE AEtosPlayerController * UUtilityFunctionLibrary::GetEtosPlayerController(UObject* WorldContextObject, int32 PlayerIndex)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		uint32 Index = 0;
 		for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
 		{
-			APlayerController* PlayerController = *Iterator;
+			APlayerController* PlayerController = (*Iterator).Get();
 			if (Index == PlayerIndex)
 			{
 				return dynamic_cast<AEtosPlayerController*, APlayerController>(PlayerController);
@@ -143,7 +143,7 @@ bool UUtilityFunctionLibrary::BP_TraceSingleAtMousePosition(UObject * WorldConte
 
 inline bool UUtilityFunctionLibrary::TraceSingleAtMousePosition(UObject * WorldContextObject, FHitResult & Hit, float Range, TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		if (APlayerController* const PlayerController = World->GetFirstPlayerController())
 		{

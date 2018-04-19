@@ -76,10 +76,10 @@ void AEtosPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Select", IE_Pressed, this, &AEtosPlayerController::SelectBuilding); // LMB
 	InputComponent->BindAction("RotateBuilding", IE_Pressed, this, &AEtosPlayerController::RotateHeldBuilding); // ,
 
-#if WITH_EDITOR
+//#if WITH_EDITOR
 	InputComponent->BindAction("QuickSave", IE_Pressed, this, &AEtosPlayerController::QuickSave); // F5
 	InputComponent->BindAction("QuickLoad", IE_Pressed, this, &AEtosPlayerController::QuickLoad); // F9
-#endif
+//#endif
 }
 
 FORCEINLINE void AEtosPlayerController::AddResource(FResource in resource)
@@ -790,10 +790,24 @@ bool AEtosPlayerController::Load(FString SaveSlotName)
 							residence->Residents = residenceData.Residents;
 							residence->MaxResidents = residenceData.MaxResidents;
 							BuildLoadedBuilding(residenceData);
+							
 							if (residence->MyLevel == EResidentLevel::Citizen)
 							{
-								residence->UpgradeToCitizen();
+								auto upgradeData = *GM->GetUpgradeData(TEXT("CitizenUpgrade"));
+								
+								residence->Data.BuildingIcon = upgradeData.BuildingIcon;
+								residence->BuildingMesh->SetStaticMesh(Util::LoadObjFromPath<UStaticMesh>(upgradeData.MeshPath));
+								residence->Data.Name = upgradeData.Name;
+
+								if (upgradeData.ProductionTime >= 0)
+								{
+									residence->Data.ProductionTime = upgradeData.ProductionTime;
+								}
+
+								ReportUpgrade(residence, EResidentLevel::Peasant, EResidentLevel::Citizen);
+								UpdatePopulation(EResidentLevel::Peasant, EResidentLevel::Citizen, residence->Residents);
 							}
+
 							residence->SetAllSatisfactions(residenceData.ResourceSatisfaction, residenceData.NeedsSatisfaction, residenceData.TotalSatisfaction);
 						}
 					}

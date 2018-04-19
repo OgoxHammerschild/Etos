@@ -5,23 +5,25 @@ using System.Collections.Generic;
 
 public class EtosEditorTarget : TargetRules
 {
-	public EtosEditorTarget(TargetInfo Target)
-	{
-		Type = TargetType.Editor;
-	}
+    public EtosEditorTarget(TargetInfo Target) : base(Target)
+    {
+        Type = TargetType.Editor;
 
-	//
-	// TargetRules interface.
-	//
+        ExtraModuleNames.AddRange(new string[] { "Etos" });
+    }
 
-	public override void SetupBinaries(
-		TargetInfo Target,
-		ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
-		ref List<string> OutExtraModuleNames
-		)
-	{
-		OutExtraModuleNames.AddRange( new string[] { "Etos" } );
-	}
+    //
+    // TargetRules interface.
+    //
+
+    //public override void SetupBinaries(
+    //    TargetInfo Target,
+    //    ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
+    //    ref List<string> OutExtraModuleNames
+    //    )
+    //{
+    //    OutExtraModuleNames.AddRange(new string[] { "Etos" });
+    //}
 }
 
 //"Plugins": [

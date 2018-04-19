@@ -101,9 +101,9 @@ void UInGameUI::UpdateBalance(const int32& income, const int32& upkeep)
 	args.Add(TEXT("upkeep"), upkeep);
 	args.Add(TEXT("balance"), income - upkeep);
 
-	incomeText->SetText(FText::Format(LOCTEXT("INCOME_AMOUNT", "Income: {income}"), args));
-	upkeepText->SetText(FText::Format(LOCTEXT("UPKEEP_AMOUNT", "Upkeep: {upkeep}"), args));
-	balanceText->SetText(FText::Format(LOCTEXT("BALANCE_AMOUNT", "Balance: {balance}"), args));
+	incomeText->SetText(FText::Format(LOCTEXT("INCOME_AMOUNT", "{income}"), args));
+	upkeepText->SetText(FText::Format(LOCTEXT("UPKEEP_AMOUNT", "{upkeep}"), args));
+	balanceText->SetText(FText::Format(LOCTEXT("BALANCE_AMOUNT", "{balance}"), args));
 }
 #undef LOCTEXT_NAMESPACE 
 
@@ -121,7 +121,7 @@ void UInGameUI::ShowBuildingInfo(ABuilding * SelectedBuilding)
 	}
 }
 
-void UInGameUI::ShowResourceInfo(const TArray<TEnumAsByte<EResource>>& playerResources, const TArray<int32>& playerResourceAmounts)
+void UInGameUI::ShowResourceInfo(const TArray<EResource>& playerResources, const TArray<int32>& playerResourceAmounts)
 {
 	if (playerResources.Num() != playerResourceAmounts.Num())
 		return;
